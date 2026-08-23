@@ -20,16 +20,25 @@ async def http_exception_handler(request: Request, exc: Exception) -> JSONRespon
     Handles standard FastAPI/Starlette HTTPExceptions and returns uniform JSON shape.
     """
     status_code = getattr(exc, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR)
-    detail = getattr(exc, "detail", str(exc))
+    raw_detail = getattr(exc, "detail", str(exc))
+
+    if isinstance(raw_detail, dict):
+        error_code = raw_detail.get("code", f"HTTP_{status_code}")
+        error_message = raw_detail.get("message", "An error occurred during request processing.")
+        error_details = raw_detail.get("details", None)
+    else:
+        error_code = f"HTTP_{status_code}"
+        error_message = str(raw_detail)
+        error_details = None
 
     return JSONResponse(
         status_code=status_code,
         content={
             "success": False,
             "error": {
-                "code": f"HTTP_{status_code}",
-                "message": str(detail),
-                "details": None
+                "code": error_code,
+                "message": error_message,
+                "details": error_details
             },
             "schema_version": SCHEMA_VERSION
         }

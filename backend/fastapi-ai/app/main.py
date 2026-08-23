@@ -19,6 +19,7 @@ from app.routers.health import router as health_router
 from app.routers.risk import router as risk_router
 from app.routers.llm import router as llm_router
 from app.routers.summarization import router as summarization_router
+from app.routers.pdf import router as pdf_router
 
 # Initialize structured redacting logging
 setup_logging()
@@ -42,6 +43,7 @@ app.include_router(health_router)
 app.include_router(risk_router)
 app.include_router(llm_router)
 app.include_router(summarization_router)
+app.include_router(pdf_router)
 
 
 @app.get("/")

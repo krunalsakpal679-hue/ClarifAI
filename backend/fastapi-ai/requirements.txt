@@ -1,0 +1,15 @@
+# ClarifAI AI Microservice Pinned Dependencies (/backend/fastapi-ai)
+# All AI and runtime dependencies pinned to exact versions per AI-MODEL-VERSIONING-INVENTORY-01
+
+fastapi==0.129.0
+uvicorn[standard]==0.41.0
+pydantic==2.12.5
+torch==2.10.0
+transformers==5.3.0
+sentence-transformers==6.0.0
+pytesseract==0.3.13
+PyMuPDF==1.27.1
+qdrant-client==1.19.0
+groq==1.6.0
+httpx==0.28.1
+python-dotenv==1.2.1

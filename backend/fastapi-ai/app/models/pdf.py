@@ -23,6 +23,7 @@ class PDFExtractionResponse(BaseModel):
     ocr_performed_pages_count: int = Field(0, description="Number of pages on which OCR was executed")
     extraction_method: str = Field("digital", description="Overall document extraction method: digital, ocr, or hybrid")
     full_text: str = Field(..., description="Concatenated page-ordered document text")
+    cleaned_full_text: Optional[str] = Field(None, description="Cleaned and normalized full document text")
     pages: List[PageExtractionItem] = Field(..., description="Per-page text extraction items")
     file_size_bytes: int = Field(..., description="PDF file size in bytes")
     is_encrypted: bool = Field(False, description="Always False for successful extractions")

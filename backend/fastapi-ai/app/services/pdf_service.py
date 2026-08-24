@@ -11,6 +11,7 @@ from typing import Dict, Any, List
 from PIL import Image
 from fastapi import HTTPException, status
 from app.services.ocr_service import extract_text_from_image
+from app.services.text_cleaning_service import clean_legal_text
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +201,8 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
             full_text_parts.append(t)
 
     full_text = "\n\n".join(full_text_parts)
+    cleaned_result = clean_legal_text(full_text)
+    cleaned_full_text = cleaned_result["cleaned_text"]
 
     if ocr_performed_count == 0:
         overall_method = "digital"
@@ -220,6 +223,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
         "ocr_performed_pages_count": ocr_performed_count,
         "extraction_method": overall_method,
         "full_text": full_text,
+        "cleaned_full_text": cleaned_full_text,
         "pages": pages_list,
         "file_size_bytes": file_size_bytes,
         "is_encrypted": False,

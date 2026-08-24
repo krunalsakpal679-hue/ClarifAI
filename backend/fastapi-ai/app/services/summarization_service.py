@@ -1,10 +1,10 @@
 """
 ClarifAI BART-Base Automated Summarization Service Module
 Provides executive document summarization and clause-level highlight generation
-per ClarifAI PRD v2.3 Chapter 28.1 and Chapter 50.
+per ClarifAI PRD v2.3 Chapter 16.4, Chapter 28.1, and Chapter 50.
+Includes 4-field document-level executive summarization with document-level failure isolation.
 
 NOTE: Uses base 'facebook/bart-base' as an interim placeholder.
-The fine-tuned summarization checkpoint source/URL is IMPLEMENTATION DECISION REQUIRED.
 """
 
 import os
@@ -64,7 +64,7 @@ def chunk_text_tokens(text: str, tokenizer: AutoTokenizer) -> List[str]:
     chunks = []
     start = 0
     step = CHUNK_SIZE_TOKENS - CHUNK_OVERLAP_TOKENS
-    
+
     while start < len(tokens):
         end = min(start + CHUNK_SIZE_TOKENS, len(tokens))
         chunk_token_ids = tokens[start:end]
@@ -85,13 +85,13 @@ def summarize_text(
 ) -> Dict[str, Any]:
     """
     Generates a concise executive summary for a document or clause text using BART-base.
-    
+
     Args:
         text: Input document or section text.
         max_length: Maximum token length of generated summary.
         min_length: Minimum token length of generated summary.
         num_beams: Beam search size for generation decoding.
-        
+
     Returns:
         Dict containing summary text, token count, latency, and chunking metadata.
     """
@@ -131,7 +131,7 @@ def summarize_text(
                     early_stopping=True
                 )
             chunk_summaries.append(tokenizer.decode(c_ids[0], skip_special_tokens=True).strip())
-        
+
         combined_text = " ".join(chunk_summaries)
         comb_inputs = tokenizer(combined_text, return_tensors="pt", max_length=BART_MAX_CONTEXT_TOKENS, truncation=True)
         with torch.no_grad():
@@ -160,6 +160,121 @@ def summarize_text(
         "is_interim_placeholder": True,
         "schema_version": SCHEMA_VERSION
     }
+
+
+def generate_document_summary(
+    clauses: List[Dict[str, Any]],
+    rule_findings: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Any]:
+    """
+    Generates 4 structured executive document summary fields (purpose_text, obligations_text,
+    key_terms_text, key_risks_text) using BART-base with document-level failure isolation (Chapter 16.4).
+
+    Args:
+        clauses: List of document clause dict items.
+        rule_findings: Optional Stage 1 rule engine findings.
+
+    Returns:
+        Dict containing the 4 summary fields and summary_status ('AVAILABLE' or 'UNAVAILABLE').
+    """
+    model_name = get_summarization_model_name()
+    if not clauses:
+        logger.warning("Document summarization received empty clause list.")
+        return {
+            "success": True,
+            "summary_status": "AVAILABLE",
+            "purpose_text": "Empty document provided.",
+            "obligations_text": "No obligations identified.",
+            "key_terms_text": "No key terms identified.",
+            "key_risks_text": "No high-severity legal risks were identified in this document.",
+            "summary_error": None,
+            "latency_ms": 0.0,
+            "model_name": model_name,
+            "schema_version": SCHEMA_VERSION
+        }
+
+    t0 = time.time()
+
+    # Document-Level Failure Isolation (Chapter 16.4)
+    try:
+        # 1. Purpose Text: Summarize preamble & early clauses
+        purpose_clauses = [c.get("text", "") for c in clauses[:3] if c.get("text")]
+        purpose_combined = "\n".join(purpose_clauses) if purpose_clauses else "Contractual agreement between parties."
+        purpose_res = summarize_text(purpose_combined, max_length=120, min_length=20)
+        purpose_text = purpose_res["summary"]
+
+        # 2. Obligations Text: Summarize obligation-heavy clauses
+        obligation_clauses = [
+            c.get("text", "") for c in clauses
+            if any(cat in c.get("categories", []) for cat in ["Payment", "Renewal", "Termination", "Confidentiality"])
+            or any(kw in c.get("text", "").lower() for kw in ["shall", "must", "agree", "obligation"])
+        ]
+        if not obligation_clauses:
+            obligation_clauses = [c.get("text", "") for c in clauses]
+        obligations_combined = "\n".join(obligation_clauses[:5])
+        obligations_res = summarize_text(obligations_combined, max_length=150, min_length=30)
+        obligations_text = obligations_res["summary"]
+
+        # 3. Key Terms Text: Summarize core contractual terms
+        key_term_clauses = [
+            c.get("text", "") for c in clauses
+            if any(cat in c.get("categories", []) for cat in ["Payment", "Dispute Resolution", "Intellectual Property", "Privacy"])
+        ]
+        if not key_term_clauses:
+            key_term_clauses = [c.get("text", "") for c in clauses]
+        key_terms_combined = "\n".join(key_term_clauses[:5])
+        key_terms_res = summarize_text(key_terms_combined, max_length=150, min_length=30)
+        key_terms_text = key_terms_res["summary"]
+
+        # 4. Key Risks Text: Roll-up summary prioritizing flagged/high-severity clauses
+        flagged_clauses = [
+            c for c in clauses
+            if c.get("severity") in ["High", "Moderate", "Low"]
+            or c.get("final_severity") in ["High", "Moderate", "Low"]
+            or bool(c.get("rule_findings"))
+        ]
+
+        if flagged_clauses:
+            flagged_texts = [
+                f"[{c.get('severity', 'Flagged')}] {c.get('text', '')}"
+                for c in flagged_clauses
+            ]
+            risks_combined = "\n".join(flagged_texts[:6])
+            risks_res = summarize_text(risks_combined, max_length=150, min_length=25)
+            key_risks_text = risks_res["summary"]
+        else:
+            key_risks_text = "No high-severity legal risks were identified in this document."
+
+        latency_ms = (time.time() - t0) * 1000
+
+        logger.info(f"Document Executive Summarization Complete in {latency_ms:.2f}ms.")
+        return {
+            "success": True,
+            "summary_status": "AVAILABLE",
+            "purpose_text": purpose_text,
+            "obligations_text": obligations_text,
+            "key_terms_text": key_terms_text,
+            "key_risks_text": key_risks_text,
+            "summary_error": None,
+            "latency_ms": round(latency_ms, 2),
+            "model_name": model_name,
+            "schema_version": SCHEMA_VERSION
+        }
+
+    except Exception as exc:
+        logger.error(f"Document summary generation failed: {exc}. Surface as UNAVAILABLE without corrupting clauses.")
+        return {
+            "success": False,
+            "summary_status": "UNAVAILABLE",
+            "purpose_text": None,
+            "obligations_text": None,
+            "key_terms_text": None,
+            "key_risks_text": None,
+            "summary_error": f"Summary generation failed: {exc}",
+            "latency_ms": round((time.time() - t0) * 1000, 2),
+            "model_name": model_name,
+            "schema_version": SCHEMA_VERSION
+        }
 
 
 def get_summarization_status() -> Dict[str, Any]:

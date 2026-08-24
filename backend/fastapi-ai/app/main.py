@@ -28,6 +28,7 @@ from app.routers.simplification import router as simplification_router
 from app.routers.embedding import router as embedding_router
 from app.routers.qdrant import router as qdrant_router
 from app.routers.rag import router as rag_router
+from app.routers.chatbot import router as chatbot_router
 
 # Initialize structured redacting logging
 setup_logging()
@@ -60,6 +61,7 @@ app.include_router(simplification_router)
 app.include_router(embedding_router)
 app.include_router(qdrant_router)
 app.include_router(rag_router)
+app.include_router(chatbot_router)
 
 
 @app.get("/")

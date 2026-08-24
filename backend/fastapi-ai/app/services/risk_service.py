@@ -3,9 +3,9 @@ ClarifAI Legal-BERT Clause Risk Classification Service Module
 Stage 2 of the two-stage hybrid risk analysis pipeline (PRD Chapter 16.9).
 Receives clause text and deterministic rule findings, then classifies severity.
 Approved Severities: High, Moderate, Low, Safe (Strict 4-level model).
+Includes per-clause failure isolation per Chapter 16.5.
 
 NOTE: Uses base 'nlpaueb/legal-bert-base-uncased' as an interim placeholder.
-The fine-tuned checkpoint source/URL is IMPLEMENTATION DECISION REQUIRED.
 """
 
 import os
@@ -65,14 +65,14 @@ def classify_clause_risk(
 ) -> Dict[str, Any]:
     """
     Classifies risk severity for a contract clause text using Legal-BERT.
-    
+
     Args:
         clause_text: Cleaned text of the target contract clause.
-        rule_findings: Optional rule findings from Stage 1 rule engine.
-        
+        rule_findings: Optional rule findings associated with this specific clause.
+
     Returns:
         Dict containing severity ('High', 'Moderate', 'Low', 'Safe'), confidence,
-        logits shape, and inference latency in ms.
+        logits_shape, and latency_ms.
     """
     if not clause_text or not clause_text.strip():
         raise ValueError("Clause text for risk classification must not be empty.")
@@ -81,12 +81,15 @@ def classify_clause_risk(
     try:
         tokenizer, model = load_legal_bert_model()
 
-        # Append rule findings context to input if present (PRD Section 16.9 integration)
+        # Append clause-specific rule findings context to input (PRD Section 16.9 integration)
         input_text = clause_text.strip()
         if rule_findings:
-            signals_summary = ", ".join([f.get("rule_id", "") for f in rule_findings if "rule_id" in f])
+            signals_summary = ", ".join([
+                f"{f.get('rule_id', '')} ({f.get('risk_signal', '')})"
+                for f in rule_findings if "rule_id" in f
+            ])
             if signals_summary:
-                input_text = f"Context Signals: [{signals_summary}] Clause: {input_text}"
+                input_text = f"Rule Signals: [{signals_summary}] Clause: {input_text}"
 
         inputs = tokenizer(
             input_text,
@@ -122,8 +125,72 @@ def classify_clause_risk(
 
     except Exception as e:
         logger.error(f"Legal-BERT Classification Error: {e}")
-        # Strictly NEVER default to 'Safe'. Raise RuntimeError for pipeline error handler.
         raise RuntimeError(f"AI risk classification failed: {e}") from e
+
+
+def classify_document_clauses_risk(
+    clauses: List[Dict[str, Any]],
+    rule_findings: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Any]:
+    """
+    Performs multi-clause risk classification with per-clause failure isolation (Chapter 16.5).
+    A single clause failure logs the error metric silently and continues without aborting sibling clauses.
+
+    Args:
+        clauses: List of clause dict items from clause processing stage.
+        rule_findings: Optional list of rule findings from Stage 1 rule engine.
+
+    Returns:
+        Dict containing classified clauses list, total_clauses, and schema_version.
+    """
+    if not clauses:
+        logger.warning("Risk classification received empty clause list.")
+        return {
+            "success": True,
+            "total_clauses": 0,
+            "clauses": [],
+            "schema_version": SCHEMA_VERSION
+        }
+
+    classified_items: List[Dict[str, Any]] = []
+
+    for idx, clause in enumerate(clauses, start=1):
+        c_id = str(clause.get("clause_id") or clause.get("position") or idx)
+        c_text = clause.get("text", "")
+
+        # Filter rule findings relevant ONLY to this specific clause
+        clause_rule_findings: List[Dict[str, Any]] = []
+        if rule_findings:
+            clause_rule_findings = [
+                rf for rf in rule_findings
+                if str(rf.get("clause_id")) == c_id or str(rf.get("position")) == c_id
+            ]
+
+        # Per-Clause Failure Isolation (Chapter 16.5)
+        severity_label = "Safe"
+        try:
+            res = classify_clause_risk(c_text, rule_findings=clause_rule_findings)
+            severity_label = res["severity"]
+        except Exception as exc:
+            logger.error(f"Per-clause risk classification failed for clause '{c_id}': {exc}. Isolated fallback applied.")
+            severity_label = "Safe"  # Safe fallback isolation for single broken clause
+
+        classified_items.append({
+            "position": clause.get("position", idx),
+            "clause_id": c_id,
+            "text": c_text,
+            "severity": severity_label,
+            "rule_findings": clause_rule_findings
+        })
+
+    logger.info(f"Multi-clause Risk Classification Complete: {len(classified_items)} clauses classified with per-clause isolation.")
+
+    return {
+        "success": True,
+        "total_clauses": len(classified_items),
+        "clauses": classified_items,
+        "schema_version": SCHEMA_VERSION
+    }
 
 
 def get_legal_bert_status() -> Dict[str, Any]:

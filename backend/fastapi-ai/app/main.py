@@ -30,6 +30,7 @@ from app.routers.qdrant import router as qdrant_router
 from app.routers.rag import router as rag_router
 from app.routers.chatbot import router as chatbot_router
 from app.routers.comparison import comparison_router
+from app.routers.translation import router as translation_router
 
 # Initialize structured redacting logging
 setup_logging()
@@ -64,6 +65,7 @@ app.include_router(qdrant_router)
 app.include_router(rag_router)
 app.include_router(chatbot_router)
 app.include_router(comparison_router)
+app.include_router(translation_router)
 
 
 @app.get("/")

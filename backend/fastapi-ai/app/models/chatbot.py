@@ -1,6 +1,7 @@
 """
 ClarifAI Chatbot Schemas (AI-PHASE-CHATBOT)
 Defines request and response models for contract-grounded RAG chatbot conversation.
+Updated for AI-PHASE-MULTILINGUAL with target_language support.
 """
 
 from pydantic import BaseModel, Field
@@ -19,6 +20,7 @@ class ChatbotRequest(BaseModel):
     document_id: str = Field(..., description="Target document ID string (MANDATORY)")
     question: str = Field(..., description="User query question string")
     top_k: Optional[int] = Field(5, description="Candidate clause retrieval limit")
+    target_language: Optional[str] = Field("en", description="Target response language ('en' or 'hi')")
 
 
 class ChatbotResponse(BaseModel):
@@ -30,4 +32,5 @@ class ChatbotResponse(BaseModel):
     user_id: str = Field(..., description="Verified owner user ID")
     document_id: str = Field(..., description="Verified target document ID")
     question: str = Field(..., description="Evaluated question string")
+    target_language: str = Field("en", description="Response language tag ('en' or 'hi')")
     schema_version: str = Field(SCHEMA_VERSION, description="Semver schema version tag")

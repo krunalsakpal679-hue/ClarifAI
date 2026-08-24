@@ -264,6 +264,55 @@ def query_clauses_scoped(
         return []
 
 
+def retrieve_all_document_clauses(
+    user_id: str,
+    document_id: str,
+    client: Optional[QdrantClient] = None
+) -> List[Dict[str, Any]]:
+    """
+    STRICT OWNERSHIP-SCOPED DOCUMENT RETRIEVAL HELPER.
+    Retrieves all indexed clause records (including vectors and payloads)
+    for a specific document_id and user_id using dual-field hard filtering.
+    """
+    if not user_id or not user_id.strip():
+        raise ValueError("Ownership Violation: user_id is MANDATORY and cannot be empty for Qdrant retrieval.")
+    if not document_id or not document_id.strip():
+        raise ValueError("Ownership Violation: document_id is MANDATORY and cannot be empty for Qdrant retrieval.")
+
+    if client is None:
+        client = get_qdrant_client()
+
+    collection_name = settings.QDRANT_COLLECTION_NAME
+    ensure_collection_exists(client)
+
+    hard_filter = Filter(
+        must=[
+            FieldCondition(key="user_id", match=MatchValue(value=user_id)),
+            FieldCondition(key="document_id", match=MatchValue(value=document_id))
+        ]
+    )
+
+    try:
+        scroll_res, _ = client.scroll(
+            collection_name=collection_name,
+            scroll_filter=hard_filter,
+            limit=500,
+            with_payload=True,
+            with_vectors=True
+        )
+        results = []
+        for point in scroll_res:
+            payload = dict(point.payload)
+            payload["vector"] = point.vector
+            results.append(payload)
+        # Sort by clause position
+        results.sort(key=lambda x: x.get("position", 0))
+        return results
+    except Exception as exc:
+        logger.warning(f"Scroll query failed for user '{user_id}', doc '{document_id}': {exc}")
+        return []
+
+
 def delete_document_points(
     user_id: str,
     document_id: str,

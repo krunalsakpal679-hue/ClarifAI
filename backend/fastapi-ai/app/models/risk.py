@@ -30,7 +30,10 @@ class ClassifiedClauseItem(BaseModel):
     position: int = Field(..., description="1-indexed clause position")
     clause_id: Optional[str] = Field(None, description="Clause ID or position index")
     text: str = Field(..., description="Verbatim clause text")
-    severity: str = Field(..., description="Strict severity label: High, Moderate, Low, or Safe")
+    severity: Optional[str] = Field(None, description="Strict severity label: High, Moderate, Low, or Safe")
+    final_severity: Optional[str] = Field(None, description="Validated final severity label")
+    validation_status: str = Field("VALIDATED", description="Status tag: VALIDATED or FAILED_VALIDATION")
+    error_reason: Optional[str] = Field(None, description="Error reason if validation failed")
     rule_findings: List[Dict[str, Any]] = Field(default_factory=list, description="Associated Stage 1 rule findings preserved unaltered")
 
 
@@ -43,4 +46,16 @@ class DocumentRiskResponse(BaseModel):
     success: bool = Field(True, description="True on successful multi-clause risk classification")
     total_clauses: int = Field(..., description="Total count of processed clauses")
     clauses: List[ClassifiedClauseItem] = Field(..., description="List of classified clause items with per-clause isolation")
+    schema_version: str = Field(SCHEMA_VERSION, description="Semver schema version tag")
+
+
+class OutputValidationRequest(BaseModel):
+    clause: Dict[str, Any] = Field(..., description="Target clause dict")
+    raw_classification: Optional[Dict[str, Any]] = Field(None, description="Raw output dict from classifier")
+    rule_findings: Optional[List[Dict[str, Any]]] = Field(None, description="Optional Stage 1 rule findings")
+
+
+class OutputValidationResponse(BaseModel):
+    success: bool = Field(True, description="True on output validation completion")
+    result: ClassifiedClauseItem = Field(..., description="Validated clause risk item")
     schema_version: str = Field(SCHEMA_VERSION, description="Semver schema version tag")

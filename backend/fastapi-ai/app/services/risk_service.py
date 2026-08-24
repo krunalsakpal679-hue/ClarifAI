@@ -3,7 +3,7 @@ ClarifAI Legal-BERT Clause Risk Classification Service Module
 Stage 2 of the two-stage hybrid risk analysis pipeline (PRD Chapter 16.9).
 Receives clause text and deterministic rule findings, then classifies severity.
 Approved Severities: High, Moderate, Low, Safe (Strict 4-level model).
-Includes per-clause failure isolation per Chapter 16.5.
+Includes per-clause failure isolation per Chapter 16.5 and Output Validation.
 
 NOTE: Uses base 'nlpaueb/legal-bert-base-uncased' as an interim placeholder.
 """
@@ -14,6 +14,8 @@ import logging
 from typing import Dict, Any, Optional, List
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+from app.services.output_validator_service import validate_and_resolve_clause_risk, RUNTIME_ERROR_REJECTED
 
 logger = logging.getLogger(__name__)
 
@@ -133,8 +135,8 @@ def classify_document_clauses_risk(
     rule_findings: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
-    Performs multi-clause risk classification with per-clause failure isolation (Chapter 16.5).
-    A single clause failure logs the error metric silently and continues without aborting sibling clauses.
+    Performs multi-clause risk classification with per-clause failure isolation (Chapter 16.5)
+    and strict output validation / conflict resolution (Chapter 16.9, Decision R-03).
 
     Args:
         clauses: List of clause dict items from clause processing stage.
@@ -167,23 +169,25 @@ def classify_document_clauses_risk(
             ]
 
         # Per-Clause Failure Isolation (Chapter 16.5)
-        severity_label = "Safe"
+        raw_res: Optional[Dict[str, Any]] = None
         try:
-            res = classify_clause_risk(c_text, rule_findings=clause_rule_findings)
-            severity_label = res["severity"]
+            raw_res = classify_clause_risk(c_text, rule_findings=clause_rule_findings)
         except Exception as exc:
-            logger.error(f"Per-clause risk classification failed for clause '{c_id}': {exc}. Isolated fallback applied.")
-            severity_label = "Safe"  # Safe fallback isolation for single broken clause
+            logger.error(f"Per-clause risk classification failed for clause '{c_id}': {exc}.")
+            raw_res = {"error": str(exc)}
 
-        classified_items.append({
-            "position": clause.get("position", idx),
-            "clause_id": c_id,
-            "text": c_text,
-            "severity": severity_label,
-            "rule_findings": clause_rule_findings
-        })
+        # Strict Output Validation & Conflict Resolution (Chapter 16.9, Decision R-03)
+        validated_item = validate_and_resolve_clause_risk(
+            clause=clause,
+            raw_classification=raw_res,
+            rule_findings=clause_rule_findings
+        )
+        # Ensure backwards compatible severity field
+        validated_item["severity"] = validated_item["final_severity"] or "Safe"
 
-    logger.info(f"Multi-clause Risk Classification Complete: {len(classified_items)} clauses classified with per-clause isolation.")
+        classified_items.append(validated_item)
+
+    logger.info(f"Multi-clause Risk Classification Complete: {len(classified_items)} clauses classified & validated.")
 
     return {
         "success": True,

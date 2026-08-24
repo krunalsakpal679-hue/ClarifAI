@@ -8,7 +8,7 @@ secret redaction, and standardized failure classification for Groq Cloud API
 import os
 import time
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from groq import Groq, APIError, APIConnectionError, RateLimitError, NotFoundError, AuthenticationError
 
 logger = logging.getLogger(__name__)
@@ -113,19 +113,22 @@ def classify_llm_exception(e: Exception) -> Dict[str, Any]:
 
 
 def generate_llm_completion(
-    prompt: str,
+    prompt: str = "",
     system_prompt: str = "You are a legal contract AI assistant.",
+    messages: Optional[List[Dict[str, str]]] = None,
     temperature: float = 0.1,
     max_tokens: int = 500,
     override_client: Optional[Groq] = None
 ) -> Dict[str, Any]:
     """
     Executes a chat completion request against Groq API with exponential backoff retries.
+    Supports either single prompt or pre-formatted multi-turn messages array.
     Catches and classifies failures without fabricating outputs or silently substituting models.
     
     Args:
-        prompt: User message / structured query prompt.
-        system_prompt: System context instruction.
+        prompt: User message / structured query prompt (used if messages is None).
+        system_prompt: System context instruction (used if messages is None).
+        messages: Optional list of message dicts [{"role": "system"/"user"/"assistant", "content": "..."}]
         temperature: Sampling temperature.
         max_tokens: Maximum tokens in response.
         override_client: Optional Groq client override for testing.
@@ -133,8 +136,15 @@ def generate_llm_completion(
     Returns:
         Dict containing generated text or structured error response.
     """
-    if not prompt.strip():
-        raise ValueError("Prompt must not be empty.")
+    if messages is None:
+        if not prompt.strip():
+            raise ValueError("Prompt must not be empty.")
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+    elif not messages:
+        raise ValueError("Messages list must not be empty.")
 
     try:
         client = override_client or get_groq_client()
@@ -144,10 +154,6 @@ def generate_llm_completion(
         raise RuntimeError(f"{STANDARD_USER_ERROR_MESSAGE} ({diag['category']})") from e
 
     model_name = get_groq_model_name()
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
-    ]
     
     t0 = time.time()
     last_classified = None

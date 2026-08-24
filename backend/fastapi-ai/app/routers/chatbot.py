@@ -20,6 +20,7 @@ async def chat_endpoint(request: ChatbotRequest):
     """
     Internal endpoint for contract-grounded conversational RAG chatbot Q&A.
     Returns grounded answer with source clause IDs or controlled no-answer response.
+    Supports optional target_language ('en' or 'hi').
     """
     try:
         res = generate_chatbot_answer(
@@ -27,7 +28,8 @@ async def chat_endpoint(request: ChatbotRequest):
             user_id=request.user_id,
             document_id=request.document_id,
             question=request.question,
-            top_k=request.top_k or 5
+            top_k=request.top_k or 5,
+            target_language=request.target_language or "en"
         )
         return ChatbotResponse(**res)
     except ValueError as val_err:

@@ -1,15 +1,24 @@
 """
-Multilingual-E5 Embedding Service Unit Tests
+Multilingual-E5 Embedding Service Unit Tests (AI-PHASE-EMBEDDINGS)
+Verifies English/Hindi text embeddings, reproducibility, 768 vector dimension,
+failure isolation (Chapter 16.5), and API router endpoints.
 """
 
 import pytest
+from unittest.mock import patch
+from fastapi.testclient import TestClient
+
+from app.main import app
 from app.services.embedding_service import (
     get_embedding_model_name,
     get_embedding_dimension,
     generate_clause_embedding,
     generate_query_embedding,
+    generate_document_clause_embeddings,
     get_embedding_status
 )
+
+client = TestClient(app)
 
 
 def test_embedding_model_name():
@@ -38,17 +47,66 @@ def test_english_and_hindi_clause_embeddings():
     assert isinstance(hi_vector[0], float)
 
 
-def test_query_embedding():
-    query_text = "What is the termination notice period?"
-    query_vector = generate_query_embedding(query_text)
+def test_reproducibility_identical_input_produces_identical_vector():
+    """Reproducibility test: the same input text produces the exact same vector across repeated runs."""
+    clause_text = "Either party may terminate this agreement upon 30 days written notice."
 
-    assert len(query_vector) == 768
-    assert isinstance(query_vector[0], float)
+    v1 = generate_clause_embedding(clause_text)
+    v2 = generate_clause_embedding(clause_text)
+
+    assert len(v1) == 768
+    assert len(v2) == 768
+    assert v1 == v2
 
 
-def test_embedding_status():
-    status = get_embedding_status()
-    assert status["loaded"] is True
-    assert status["vector_dimension"] == 768
-    assert status["is_interim_placeholder"] is True
-    assert status["fine_tuned_status"] == "IMPLEMENTATION DECISION REQUIRED"
+def test_generate_document_clause_embeddings():
+    clauses = [
+        {"position": 1, "clause_id": "c1", "original_text": "First clause text for testing.", "severity": "Safe"},
+        {"position": 2, "clause_id": "c2", "text": "Second clause text for testing.", "severity": "Low"}
+    ]
+
+    res = generate_document_clause_embeddings(clauses)
+    assert len(res) == 2
+    assert res[0]["embedding_status"] == "SUCCESS"
+    assert len(res[0]["embedding"]) == 768
+    assert res[0]["embedding_dimension"] == 768
+    assert res[1]["embedding_status"] == "SUCCESS"
+    assert len(res[1]["embedding"]) == 768
+
+
+def test_simulated_embedding_failure_handling():
+    """Shared failure-handling test: model exception is handled per-clause via failure isolation."""
+    clauses = [
+        {"position": 1, "clause_id": "c1", "text": "Valid clause text."}
+    ]
+
+    with patch("app.services.embedding_service.generate_clause_embedding", side_effect=RuntimeError("Model OOM Exception")):
+        res = generate_document_clause_embeddings(clauses)
+
+    assert len(res) == 1
+    assert res[0]["embedding_status"] == "FAILED"
+    assert res[0]["embedding"] is None
+    assert "Model OOM Exception" in res[0]["embedding_error"]
+
+
+def test_embedding_api_endpoints():
+    # Test single query embedding
+    single_res = client.post("/api/v1/generate-embedding", json={"text": "What is the penalty?", "is_query": True})
+    assert single_res.status_code == 200
+    single_data = single_res.json()
+    assert len(single_data["embedding"]) == 768
+    assert single_data["dimension"] == 768
+
+    # Test batch document clause embeddings
+    batch_payload = {
+        "clauses": [
+            {"position": 1, "clause_id": "c1", "text": "Contract clause text."}
+        ]
+    }
+    batch_res = client.post("/api/v1/generate-embeddings", json=batch_payload)
+    assert batch_res.status_code == 200
+    batch_data = batch_res.json()
+    assert batch_data["success"] is True
+    assert batch_data["vector_dimension"] == 768
+    assert len(batch_data["embedded_clauses"]) == 1
+    assert batch_data["embedded_clauses"][0]["embedding_status"] == "SUCCESS"

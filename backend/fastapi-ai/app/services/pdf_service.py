@@ -1,13 +1,17 @@
 """
-ClarifAI PDF Validation & PyMuPDF Extraction Service
+ClarifAI PDF Validation, PyMuPDF Extraction & Adaptive OCR Pipeline Service
 Handles PDF file validation, size limits (Decision R-11), encryption rejection (Decision R-12),
-digital text extraction, and scanned page OCR heuristic detection.
+digital text extraction, and selective page-level Tesseract OCR processing.
 """
 
+import io
 import fitz  # PyMuPDF
 import logging
 from typing import Dict, Any, List
+from PIL import Image
 from fastapi import HTTPException, status
+from app.services.ocr_service import extract_text_from_image
+from app.services.text_cleaning_service import clean_legal_text
 
 logger = logging.getLogger(__name__)
 
@@ -17,13 +21,16 @@ MAX_PDF_SIZE_BYTES: int = 20 * 1024 * 1024
 # Scanned page OCR threshold: pages with < 50 non-whitespace characters are flagged as needing OCR
 OCR_CHARACTER_THRESHOLD: int = 50
 
+# Render DPI for converting PyMuPDF pages to images for Tesseract OCR
+OCR_RENDER_DPI: int = 150
+
 SCHEMA_VERSION: str = "1.0.0"
 
 
-def extract_pdf_text_service(pdf_bytes: bytes) -> Dict[str, Any]:
+def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[str, Any]:
     """
-    Validates PDF file, checks for encryption, extracts text per page using PyMuPDF,
-    and flags pages needing OCR via character count heuristic.
+    Validates PDF file, checks for encryption, extracts digital text per page using PyMuPDF,
+    evaluates scanned OCR heuristics, and selectively runs Tesseract OCR for flagged pages.
     """
     file_size_bytes = len(pdf_bytes)
 
@@ -86,7 +93,7 @@ def extract_pdf_text_service(pdf_bytes: bytes) -> Dict[str, Any]:
             }
         )
 
-    # 6. Extract Text & Evaluate Per-Page OCR Heuristic
+    # 6. First Pass: Digital Extraction & Scanned Heuristic Evaluation
     total_pages = len(doc)
     if total_pages == 0:
         doc.close()
@@ -99,7 +106,6 @@ def extract_pdf_text_service(pdf_bytes: bytes) -> Dict[str, Any]:
         )
 
     pages_list: List[Dict[str, Any]] = []
-    full_text_parts: List[str] = []
     ocr_required_count: int = 0
 
     for page_idx in range(total_pages):
@@ -107,7 +113,6 @@ def extract_pdf_text_service(pdf_bytes: bytes) -> Dict[str, Any]:
         raw_text = page.get_text("text") or ""
         stripped_text = raw_text.strip()
         
-        # Calculate non-whitespace character count
         non_ws_char_count = len("".join(stripped_text.split()))
 
         # Evaluate scanned/image OCR heuristic threshold
@@ -116,28 +121,109 @@ def extract_pdf_text_service(pdf_bytes: bytes) -> Dict[str, Any]:
             ocr_required_count += 1
 
         pages_list.append({
-            "page_number": page_idx + 1,  # 1-indexed for user readability
+            "page_number": page_idx + 1,
             "text": raw_text,
             "character_count": non_ws_char_count,
-            "ocr_required": ocr_required
+            "ocr_required": ocr_required,
+            "ocr_performed": False,
+            "extraction_method": "digital"
         })
 
-        if stripped_text:
-            full_text_parts.append(stripped_text)
+    # 7. Second Pass: Selective OCR Execution for Flagged Pages ONLY
+    ocr_performed_count: int = 0
+
+    if enable_ocr and ocr_required_count > 0:
+        logger.info(f"Selective OCR Triggered: {ocr_required_count} of {total_pages} pages flagged for OCR.")
+        
+        for page_item in pages_list:
+            if not page_item["ocr_required"]:
+                continue
+
+            page_idx = page_item["page_number"] - 1
+            page = doc.load_page(page_idx)
+
+            # Render PyMuPDF page to in-memory pixmap image
+            pix = page.get_pixmap(dpi=OCR_RENDER_DPI)
+            img_bytes = pix.tobytes("png")
+            
+            # Create PIL image stream in memory
+            pil_image = Image.open(io.BytesIO(img_bytes))
+
+            try:
+                ocr_text = extract_text_from_image(pil_image, dpi=OCR_RENDER_DPI)
+            except Exception as ocr_err:
+                doc.close()
+                pix = None
+                pil_image.close()
+                logger.error(f"Tesseract OCR failed on page {page_idx + 1}: {ocr_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={
+                        "code": "OCR_EXTRACTION_FAILED",
+                        "message": f"Tesseract OCR extraction failed on scanned page {page_idx + 1}."
+                    }
+                )
+
+            # Immediate in-memory image cleanup
+            pil_image.close()
+            pix = None
+            img_bytes = None
+
+            stripped_ocr = (ocr_text or "").strip()
+            ocr_non_ws_count = len("".join(stripped_ocr.split()))
+
+            # Validate OCR output: fail safely if OCR yielded no usable text
+            if ocr_non_ws_count == 0:
+                doc.close()
+                logger.warning(f"OCR produced 0 usable characters for scanned page {page_idx + 1}.")
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={
+                        "code": "OCR_EXTRACTION_FAILED",
+                        "message": f"OCR produced no usable text for scanned page {page_idx + 1}."
+                    }
+                )
+
+            # Update page extraction metadata
+            page_item["text"] = ocr_text
+            page_item["character_count"] = ocr_non_ws_count
+            page_item["ocr_performed"] = True
+            page_item["extraction_method"] = "ocr"
+            ocr_performed_count += 1
 
     doc.close()
+
+    # 8. Merge Page-Ordered Text & Determine Overall Extraction Method
+    full_text_parts: List[str] = []
+    for item in pages_list:
+        t = item["text"].strip()
+        if t:
+            full_text_parts.append(t)
+
     full_text = "\n\n".join(full_text_parts)
+    cleaned_result = clean_legal_text(full_text)
+    cleaned_full_text = cleaned_result["cleaned_text"]
+
+    if ocr_performed_count == 0:
+        overall_method = "digital"
+    elif ocr_performed_count == total_pages:
+        overall_method = "ocr"
+    else:
+        overall_method = "hybrid"
 
     logger.info(
         f"PDF Extraction Complete: Total Pages = {total_pages}, "
-        f"OCR Required Pages = {ocr_required_count}, Total Chars = {len(full_text)}"
+        f"Method = '{overall_method}', OCR Performed = {ocr_performed_count}, Total Chars = {len(full_text)}"
     )
 
     return {
         "success": True,
         "total_pages": total_pages,
         "ocr_required_pages_count": ocr_required_count,
+        "ocr_performed_pages_count": ocr_performed_count,
+        "extraction_method": overall_method,
         "full_text": full_text,
+        "cleaned_full_text": cleaned_full_text,
         "pages": pages_list,
         "file_size_bytes": file_size_bytes,
         "is_encrypted": False,

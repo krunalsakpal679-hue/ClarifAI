@@ -16,7 +16,10 @@ router = APIRouter(prefix="/api/v1", tags=["PDF Processing"])
     response_model=PDFExtractionResponse,
     dependencies=[Depends(verify_internal_secret)]
 )
-async def extract_pdf_endpoint(file: UploadFile = File(...)):
+async def extract_pdf_endpoint(
+    file: UploadFile = File(...),
+    enable_ocr: bool = True
+):
     """
     Internal endpoint to extract text and per-page OCR flags from uploaded PDF files.
     """
@@ -30,5 +33,5 @@ async def extract_pdf_endpoint(file: UploadFile = File(...)):
         )
 
     pdf_bytes = await file.read()
-    result = extract_pdf_text_service(pdf_bytes)
+    result = extract_pdf_text_service(pdf_bytes, enable_ocr=enable_ocr)
     return PDFExtractionResponse(**result)

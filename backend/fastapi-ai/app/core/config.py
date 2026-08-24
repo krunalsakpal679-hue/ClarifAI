@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: Optional[str] = None
     QDRANT_COLLECTION_NAME: str = "clarifai_clause_embeddings"
 
+    # RAG Gating Threshold Settings (Configurable, Internal Only)
+    RAG_RELEVANCE_THRESHOLD: float = 0.65
+    RAG_SUFFICIENCY_THRESHOLD: float = 0.70
+
     # Local AI Model Checkpoint Identifiers
     LEGAL_BERT_MODEL_NAME: str = "nlpaueb/legal-bert-base-uncased"
     EMBEDDING_MODEL_NAME: str = "intfloat/multilingual-e5-base"

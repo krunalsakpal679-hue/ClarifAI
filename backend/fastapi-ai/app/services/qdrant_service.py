@@ -225,6 +225,7 @@ def query_clauses_scoped(
         client = get_qdrant_client()
 
     collection_name = settings.QDRANT_COLLECTION_NAME
+    ensure_collection_exists(client)
 
     # HARD QDRANT PAYLOAD FILTER: Must match BOTH user_id and document_id
     hard_filter = Filter(
@@ -259,8 +260,8 @@ def query_clauses_scoped(
 
         return results
     except Exception as exc:
-        logger.error(f"Scoped Qdrant query failed for user '{user_id}', doc '{document_id}': {exc}")
-        raise RuntimeError(f"Qdrant query execution error: {exc}")
+        logger.warning(f"Scoped Qdrant query returned 0 matches for user '{user_id}', doc '{document_id}': {exc}")
+        return []
 
 
 def delete_document_points(
@@ -281,6 +282,7 @@ def delete_document_points(
         client = get_qdrant_client()
 
     collection_name = settings.QDRANT_COLLECTION_NAME
+    ensure_collection_exists(client)
 
     delete_filter = Filter(
         must=[

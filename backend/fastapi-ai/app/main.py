@@ -24,6 +24,7 @@ from app.routers.text_cleaning import router as text_cleaning_router
 from app.routers.clause_segmentation import router as clause_segmentation_router
 from app.routers.clause_categorization import router as clause_categorization_router
 from app.routers.rule_engine import router as rule_engine_router
+from app.routers.simplification import router as simplification_router
 
 # Initialize structured redacting logging
 setup_logging()
@@ -52,6 +53,7 @@ app.include_router(text_cleaning_router)
 app.include_router(clause_segmentation_router)
 app.include_router(clause_categorization_router)
 app.include_router(rule_engine_router)
+app.include_router(simplification_router)
 
 
 @app.get("/")

@@ -22,6 +22,7 @@ from app.routers.summarization import router as summarization_router
 from app.routers.pdf import router as pdf_router
 from app.routers.text_cleaning import router as text_cleaning_router
 from app.routers.clause_segmentation import router as clause_segmentation_router
+from app.routers.clause_categorization import router as clause_categorization_router
 
 # Initialize structured redacting logging
 setup_logging()
@@ -48,6 +49,7 @@ app.include_router(summarization_router)
 app.include_router(pdf_router)
 app.include_router(text_cleaning_router)
 app.include_router(clause_segmentation_router)
+app.include_router(clause_categorization_router)
 
 
 @app.get("/")

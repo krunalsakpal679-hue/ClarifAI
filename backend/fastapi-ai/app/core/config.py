@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     RAG_RELEVANCE_THRESHOLD: float = 0.65
     RAG_SUFFICIENCY_THRESHOLD: float = 0.70
 
+    # Pairwise Comparison Threshold Settings
+    COMPARISON_MATCHED_THRESHOLD: float = 0.88
+    COMPARISON_CHANGED_THRESHOLD: float = 0.65
+
     # Local AI Model Checkpoint Identifiers
     LEGAL_BERT_MODEL_NAME: str = "nlpaueb/legal-bert-base-uncased"
     EMBEDDING_MODEL_NAME: str = "intfloat/multilingual-e5-base"

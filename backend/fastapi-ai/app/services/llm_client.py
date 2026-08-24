@@ -1,14 +1,14 @@
 """
-ClarifAI Shared Groq LLM Client Module
+ClarifAI Shared Groq LLM Client Module (AI-PHASE-LLM-INTEGRATION)
 Provides unified connection, configuration, timeout, exponential backoff,
-secret redaction, and standardized failure classification for Groq Cloud API
-(openai/gpt-oss-20b) per PRD v2.3 Chapters 28.1, 28.4, 56.20, and Decision R-08.
+secret redaction, untrusted content framing, output safety validation, and standardized
+failure classification for Groq Cloud API (openai/gpt-oss-20b) per PRD v2.3 Chapters 28.1, 28.4, 56.20, and Decision R-08.
 """
 
 import os
 import time
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from groq import Groq, APIError, APIConnectionError, RateLimitError, NotFoundError, AuthenticationError
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,27 @@ SCHEMA_VERSION: str = "1.0.0"
 
 # Standardized PRD Section 56.20 User-Facing Error Message
 STANDARD_USER_ERROR_MESSAGE: str = "AI processing is temporarily unavailable. Please try again later."
+
+# Disallowed Legal Advice Phrasing per PRD Chapter 17.3 & Chapter 56.9
+DISALLOWED_LEGAL_ADVICE_PHRASES: List[str] = [
+    "i advise you",
+    "my legal advice",
+    "legal recommendation",
+    "you should sue",
+    "i strongly recommend suing",
+    "as your attorney"
+]
+
+# Prompt Injection Leak Delimiters & Instruction Overrides
+PROMPT_INJECTION_LEAK_MARKERS: List[str] = [
+    "<untrusted_clause_text>",
+    "</untrusted_clause_text>",
+    "<<<untrusted_evidence_start>>>",
+    "<<<untrusted_evidence_end>>>",
+    "ignore previous instructions",
+    "system prompt:",
+    "system instruction"
+]
 
 
 def get_groq_api_key() -> Optional[str]:
@@ -59,6 +80,49 @@ def sanitize_error_message(error_str: str) -> str:
     if key and key in error_str:
         error_str = error_str.replace(key, "gsk_***[REDACTED]***")
     return error_str
+
+
+def format_untrusted_evidence_block(content: str) -> str:
+    """
+    Standardized prompt-framing utility that clearly delimits untrusted evidence/document content
+    from system instructions across all LLM call sites.
+    """
+    return f"<<<UNTRUSTED_EVIDENCE_START>>>\n{content.strip()}\n<<<UNTRUSTED_EVIDENCE_END>>>"
+
+
+def check_for_legal_advice(text: str) -> bool:
+    """Returns True if text contains prohibited legal advice phrasing."""
+    lower_text = text.lower()
+    for phrase in DISALLOWED_LEGAL_ADVICE_PHRASES:
+        if phrase in lower_text:
+            return True
+    return False
+
+
+def check_for_prompt_injection_leak(text: str) -> bool:
+    """Returns True if text contains leaked prompt delimiters or instruction overrides."""
+    lower_text = text.lower()
+    for marker in PROMPT_INJECTION_LEAK_MARKERS:
+        if marker in lower_text:
+            return True
+    return False
+
+
+def validate_untrusted_llm_output(output_text: str) -> Tuple[bool, str]:
+    """
+    Unified safety validator for untrusted LLM outputs.
+    Ensures output contains no prohibited legal advice phrasing or prompt injection leaks.
+    """
+    if not output_text or not output_text.strip():
+        return False, "Output text is empty."
+
+    if check_for_legal_advice(output_text):
+        return False, "Output contained prohibited legal advice phrasing."
+
+    if check_for_prompt_injection_leak(output_text):
+        return False, "Output contained leaked prompt delimiters or instruction override attempts."
+
+    return True, output_text.strip()
 
 
 def get_groq_client(override_api_key: Optional[str] = None, timeout: Optional[int] = None) -> Groq:
@@ -124,6 +188,7 @@ def generate_llm_completion(
     Executes a chat completion request against Groq API with exponential backoff retries.
     Supports either single prompt or pre-formatted multi-turn messages array.
     Catches and classifies failures without fabricating outputs or silently substituting models.
+    LOG SAFETY: Logs ONLY stage-level timing & token metrics, never document text or API keys.
     
     Args:
         prompt: User message / structured query prompt (used if messages is None).
@@ -180,6 +245,12 @@ def generate_llm_completion(
                     "completion_tokens": response.usage.completion_tokens,
                     "total_tokens": response.usage.total_tokens
                 }
+
+            # Safe Metric Logging: ONLY log latency, model, tokens — NO document text or secrets
+            logger.info(
+                f"Groq LLM Completion SUCCESS: latency_ms={round(latency_ms, 2)}, "
+                f"model='{model_name}', attempt={attempt}, tokens={usage_dict.get('total_tokens', 0)}."
+            )
 
             return {
                 "success": True,

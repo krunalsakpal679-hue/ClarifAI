@@ -46,6 +46,21 @@ PROMPT_INJECTION_LEAK_MARKERS: List[str] = [
     "system instruction"
 ]
 
+# Ungrounded General-Knowledge & Hallucination Claim Markers per PRD Chapter 56.26
+HALLUCINATION_UNGROUNDED_CLAIM_PATTERNS: List[str] = [
+    "according to general legal principles",
+    "as per standard commercial law",
+    "generally in contract law",
+    "under federal law",
+    "under state law",
+    "in most jurisdictions",
+    "it is common knowledge that",
+    "although not mentioned in the contract",
+    "not stated in the document, but",
+    "assuming typical contract terms",
+    "as an ai language model, i assume"
+]
+
 
 def get_groq_api_key() -> Optional[str]:
     """
@@ -108,10 +123,20 @@ def check_for_prompt_injection_leak(text: str) -> bool:
     return False
 
 
+def check_for_hallucinated_claims(text: str) -> bool:
+    """Returns True if text contains ungrounded general-knowledge claims presented as contract facts."""
+    lower_text = text.lower()
+    for pattern in HALLUCINATION_UNGROUNDED_CLAIM_PATTERNS:
+        if pattern in lower_text:
+            return True
+    return False
+
+
 def validate_untrusted_llm_output(output_text: str) -> Tuple[bool, str]:
     """
     Unified safety validator for untrusted LLM outputs.
-    Ensures output contains no prohibited legal advice phrasing or prompt injection leaks.
+    Ensures output contains no prohibited legal advice phrasing, prompt injection leaks,
+    or ungrounded hallucination claim patterns per PRD Chapter 56.26.
     """
     if not output_text or not output_text.strip():
         return False, "Output text is empty."
@@ -121,6 +146,9 @@ def validate_untrusted_llm_output(output_text: str) -> Tuple[bool, str]:
 
     if check_for_prompt_injection_leak(output_text):
         return False, "Output contained leaked prompt delimiters or instruction override attempts."
+
+    if check_for_hallucinated_claims(output_text):
+        return False, "Output contained ungrounded general-knowledge claims or hallucinated assumptions."
 
     return True, output_text.strip()
 

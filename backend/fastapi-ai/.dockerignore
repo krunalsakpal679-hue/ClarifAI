@@ -1,0 +1,45 @@
+# .dockerignore for /backend/fastapi-ai microservice
+
+# Git metadata
+.git
+.gitignore
+.github
+
+# Virtual Environments
+.venv
+venv
+ENV
+env
+
+# Python bytecode and caches
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+
+# Local secrets and environment files (MUST NOT BE BAKED INTO IMAGE)
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# Local model caches & heavy weights (Downloaded at container startup/runtime)
+.cache
+.huggingface
+huggingface_cache
+models
+*.bin
+*.pth
+*.safetensors
+*.onnx
+
+# IDE and temporary files
+.vscode
+.idea
+*.swp
+*.log
+scratch

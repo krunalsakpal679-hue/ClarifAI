@@ -21,7 +21,7 @@ This document establishes the official AI dependency inventory for the `/backend
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Legal-BERT (fine-tuned)** | Clause risk classification (High, Moderate, Low, Safe), risk type, explanation, and evidence generation. | Hugging Face (`nlpaueb/legal-bert-base-uncased` base) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~440 MB<br>**RAM:** ~1.5 GB<br>**VRAM:** ~1.0 GB (GPU) | `LEGAL_BERT_MODEL_PATH`<br>`LEGAL_BERT_MODEL_NAME` | Invalid/failed output is rejected (never defaults to Safe). Logs error; pipeline task marked failed. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Fine-tuned checkpoint path.* |
 | **BART-base** | Executive summary generation (document-level and clause-level summaries). | Hugging Face (`facebook/bart-base`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~500 MB<br>**RAM:** ~1.5–2.0 GB<br>**VRAM:** ~1.5 GB (GPU) | `BART_MODEL_PATH`<br>`BART_MODEL_NAME` | Logs error; marks summarization pipeline stage as failed. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Summarization prompt parameters.* |
-| **Llama 3.1 8B via Groq** | Chatbot answer generation (RAG) and plain-language clause simplification. | Groq Cloud API (`llama-3.1-8b-instant`) | External API (Groq Cloud) | No | Yes | **Storage:** 0 MB<br>**RAM:** Negligible<br>**Network:** Low latency HTTPS | `GROQ_API_KEY`<br>`GROQ_MODEL_NAME` | Catch timeout/rate-limit/5xx. Return controlled error message ("AI service temporarily unavailable"). | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Groq exact model ID identifier.* |
+| **Groq LLM Service (`openai/gpt-oss-20b`)** | Chatbot answer generation (RAG) and plain-language clause simplification. | Groq Cloud API (`openai/gpt-oss-20b`) | External API (Groq Cloud) | No | Yes | **Storage:** 0 MB<br>**RAM:** Negligible<br>**Network:** Low latency HTTPS | `GROQ_API_KEY`<br>`GROQ_MODEL_NAME` | Catch timeout/rate-limit/5xx. Return controlled error message ("AI service temporarily unavailable"). | **VERIFIED OPERATIONAL (RESOLVED 2026-08-23)**<br>*Note: Original model llama-3.1-8b-instant was retired by Groq (shutdown 2026-08-16). Migrated per PRD Chapter 44 to provider-recommended replacement openai/gpt-oss-20b.* |
 | **Multilingual-E5 (fine-tuned)** | Clause embedding generation for Qdrant vector search, RAG retrieval, and pairwise comparison similarity. | Hugging Face (`intfloat/multilingual-e5-base` / `small`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~470 MB – 1.1 GB<br>**RAM:** ~1.0–2.0 GB<br>**VRAM:** ~1.0 GB (GPU) | `EMBEDDING_MODEL_NAME`<br>`EMBEDDING_MODEL_PATH` | Logs embedding error; aborts vector indexing and comparison processing. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Small vs. Base variant selection.* |
 | **sentence-transformers** | Python framework powering embedding generation (Multilingual-E5) and vector ops. | PyPI (`sentence-transformers`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~50 MB<br>**RAM:** Negligible (uses PyTorch) | None | FastAPI app fails startup if import or instantiation fails. | `VERIFIED FUNCTIONAL`<br>*Standard library requirement.* |
 | **IndicTrans2** | English $\leftrightarrow$ Hindi translation for summaries, simplifications, explanations, reports, and chatbot responses. | AI4Bharat / Hugging Face (`ai4bharat/indictrans2-en-indic-1B`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~2.0–4.0 GB<br>**RAM:** ~4.0–8.0 GB<br>**VRAM:** ~4.0 GB (FP16) | `INDICTRANS_MODEL_PATH`<br>`TRANSLATION_ENABLED` | **Graceful Fallback:** If translation fails, English remains available and user is informed Hindi is temporarily unavailable. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Quantization (FP16/INT8/ONNX).* |
@@ -166,9 +166,8 @@ The inventory findings have been cross-checked against the local environment har
    * *Action for `AI-FEASIBILITY-01`:* Benchmark IndicTrans2 VRAM/RAM consumption and test INT8/ONNX quantization feasibility.
 
 3. **Groq Cloud API Offloading:**
-   * *Status:* Llama 3.1 8B is hosted on Groq Cloud API.
-   * *Impact:* Extremely low local hardware footprint (0 MB VRAM/RAM). Feasibility depends on network connectivity, Groq API key validity, and rate limits.
-   * *Action for `AI-FEASIBILITY-01`:* Validate Groq API key reachability and latency benchmarks.
+   * *Status:* Groq LLM service (`openai/gpt-oss-20b`) is hosted on Groq Cloud API.
+   * *Impact:* Extremely low local hardware footprint (0 MB VRAM/RAM). Verified working with HTTP 200 responses.
 
 4. **Tesseract Pathing:**
    * *Status:* Tesseract binary exists at `C:\Program Files\Tesseract-OCR\tesseract.exe`, but is not in Windows system `PATH`.
@@ -193,11 +192,52 @@ Per security directives:
 
 ## 6. Decision Register & Open Items
 
-| Item # | Component | Description of Open Decision | Interim Safe Approach |
+| Item # | Component | Description of Open Decision | Interim Safe Approach | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **DEC-AI-01** | Legal-BERT | Fine-tuned Legal-BERT checkpoint Hugging Face repository URL is not specified in PRD v2.3. | Use base `nlpaueb/legal-bert-base-uncased` with classification head stub for initial integration testing. | OPEN |
+| **DEC-AI-02** | Multilingual-E5 | Exact model size (`intfloat/multilingual-e5-small` vs `base`) and fine-tuned checkpoint repo path are unspecified. | Default to `intfloat/multilingual-e5-base` (768 dimensions) for semantic embedding evaluation. | OPEN |
+| **DEC-AI-03** | IndicTrans2 | Quantization format (FP16 / INT8 / ONNX) for 1B parameter model on 6 GB GPU VRAM / 16 GB RAM is unspecified. | Implement lazy model loading and evaluate INT8 / ONNX quantization during feasibility benchmarking. | OPEN |
+| **DEC-AI-04** | Groq LLM | Llama 3.1 8B (`llama-3.1-8b-instant`) retired by Groq (shutdown 2026-08-16). Migrated per PRD Chapter 44. | Resolved model ID: `openai/gpt-oss-20b` (Groq provider-recommended same-platform replacement). | **RESOLVED (2026-08-23)** |
+| **DEC-AI-05** | Qdrant Vector DB | Vector distance metric (Cosine / Dot / Euclidean) and collection payload schema parameters are unspecified. | Utilize Cosine similarity metric (`Distance.COSINE`) and payload schema indexed by `document_id` and `clause_id`. | OPEN |
+
+---
+
+## 7. Pinned Dependencies & Versioning Registry (`AI-MODEL-VERSIONING-INVENTORY-01`)
+
+### 7.1 Pinned Python Library Dependencies (`requirements.txt`)
+
+Every AI and microservice runtime library is strictly pinned to an exact version:
+
+```ini
+fastapi==0.129.0
+uvicorn[standard]==0.41.0
+pydantic==2.12.5
+torch==2.10.0
+transformers==5.3.0
+sentence-transformers==6.0.0
+pytesseract==0.3.13
+PyMuPDF==1.27.1
+qdrant-client==1.19.0
+groq==1.6.0
+httpx==0.28.1
+python-dotenv==1.2.1
+```
+
+### 7.2 Active Model Checkpoints & Interim Implementation Decisions
+
+| Component | Exact Model Checkpoint String / Path | Source / Hosting | Versioning & Implementation Notes |
 | :--- | :--- | :--- | :--- |
-| **DEC-AI-01** | Legal-BERT | Fine-tuned Legal-BERT checkpoint Hugging Face repository URL is not specified in PRD v2.3. | Use base `nlpaueb/legal-bert-base-uncased` with classification head stub for initial integration testing. |
-| **DEC-AI-02** | Multilingual-E5 | Exact model size (`intfloat/multilingual-e5-small` vs `base`) and fine-tuned checkpoint repo path are unspecified. | Default to `intfloat/multilingual-e5-base` (768 dimensions) for semantic embedding evaluation. |
-| **DEC-AI-03** | IndicTrans2 | Quantization format (FP16 / INT8 / ONNX) for 1B parameter model on 6 GB GPU VRAM / 16 GB RAM is unspecified. | Implement lazy model loading and evaluate INT8 / ONNX quantization during feasibility benchmarking. |
-| **DEC-AI-04** | Groq Llama 3.1 | Exact model identifier string (`llama-3.1-8b-instant`) and rate-limit backoff policy are unspecified. | Configure configurable environment variable `GROQ_MODEL_NAME=llama-3.1-8b-instant` with 3-tier exponential backoff. |
-| **DEC-AI-05** | Qdrant Vector DB | Vector distance metric (Cosine / Dot / Euclidean) and collection payload schema parameters are unspecified. | Utilize Cosine similarity metric (`Distance.COSINE`) and payload schema indexed by `document_id` and `clause_id`. |
+| **Legal-BERT** | `nlpaueb/legal-bert-base-uncased` | Hugging Face Hub | **Interim Base Placeholder**: Fine-tuned checkpoint URL unassigned in PRD v2.3. Developer implementation decision to use base uncased checkpoint. |
+| **BART-base** | `facebook/bart-base` | Hugging Face Hub | **Interim Base Placeholder**: Fine-tuned summarization checkpoint URL unassigned in PRD v2.3. Developer implementation decision to use base model. |
+| **Multilingual-E5** | `intfloat/multilingual-e5-base` | Hugging Face Hub | **Interim Base Placeholder**: 768-dim base variant selected as developer implementation decision pending fine-tuned embedding URL. |
+| **Groq LLM** | `openai/gpt-oss-20b` | Groq Cloud API | **Resolved Model**: Migrated per PRD Chapter 44 from retired `llama-3.1-8b-instant`. |
+| **Tesseract OCR** | `v5.4.0.20240606` | Native OS / Image Layer | System binary `tesseract.exe` distribution with `eng+hin` language data. |
+
+### 7.3 Schema & Prompt Versioning Registry
+
+All microservice outputs and system prompt templates are tagged with explicit semver version strings to ensure future changes are traceable across microservice updates:
+
+- **Global Schema Version (`SCHEMA_VERSION`):** `"1.0.0"`
+- **LLM System Prompt Version (`PROMPT_VERSION`):** `"1.0.0"`
+- **API Request/Response Models:** `ClauseRiskRequest`, `LLMCompletionRequest`, `SummarizationRequest` include `"schema_version": "1.0.0"`.
 

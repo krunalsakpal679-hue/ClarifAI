@@ -3,6 +3,7 @@ Base Django settings for ClarifAI project.
 """
 import os
 from pathlib import Path
+import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -64,7 +65,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# Django REST Framework Settings
+# Database Configuration (PostgreSQL dynamically parsed from DATABASE_URL per Ch. 35.2)
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.getenv(
+            'DATABASE_URL',
+            f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+        ),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+}
+
+# Django REST Framework Settings (Standardized Error Handler & Pagination per Ch. 30.8)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -72,14 +85,19 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardPageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 
-# CORS Configuration
+# CORS Configuration (Restricted strictly to approved origins per Ch. 26.7)
+RAW_CORS_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:8000')
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:8000').split(',')
-    if origin.strip()
+    for origin in RAW_CORS_ORIGINS.split(',')
+    if origin.strip() and origin.strip() != '*'
 ]
+CORS_ALLOW_ALL_ORIGINS = False
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

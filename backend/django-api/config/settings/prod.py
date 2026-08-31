@@ -1,17 +1,22 @@
 """
 Production settings for ClarifAI Django service.
 """
+import os
+import dj_database_url
 from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if host.strip()
+]
 
-# Production PostgreSQL Database Configuration Placeholder
-# Full PostgreSQL wiring per DATABASE_URL configured in Phase 1
+# Production PostgreSQL Database Configuration parsed from DATABASE_URL
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }

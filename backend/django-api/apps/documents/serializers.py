@@ -5,7 +5,7 @@ import uuid
 from django.core.files.storage import default_storage
 from rest_framework import serializers
 
-from apps.documents.models import Document, DocumentStatus
+from apps.documents.models import Clause, Document, DocumentStatus, DocumentSummary
 from apps.documents.validators import validate_pdf_upload
 
 
@@ -57,3 +57,73 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = fields
+
+
+class DocumentSummarySerializer(serializers.ModelSerializer):
+    """
+    Serializer for GET /api/documents/{id}/summary (PRD Ch. 30.3).
+    Includes translation_available flag for multilingual fallback (Ch. 19).
+    """
+    translation_available = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentSummary
+        fields = [
+            'id',
+            'document_id',
+            'purpose_text',
+            'key_risks_text',
+            'key_terms_text',
+            'obligations_text',
+            'created_at',
+            'updated_at',
+            'translation_available',
+        ]
+        read_only_fields = fields
+
+    def get_translation_available(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return True
+        lang = request.query_params.get('lang', 'en').lower()
+        if lang == 'en':
+            return True
+        return False
+
+
+class ClauseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for GET /api/documents/{id}/clauses & clause detail (PRD Ch. 30.3 & Ch. 30.9).
+    Exposes embedded rule_findings JSON array per Ch. 30.9 decision.
+    Renders classification-failure state distinctly (status: "failed", severity: null).
+    Includes translation_available flag for multilingual fallback (Ch. 19).
+    """
+    translation_available = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Clause
+        fields = [
+            'id',
+            'document_id',
+            'position',
+            'original_text',
+            'simplified_text',
+            'severity',
+            'category',
+            'explanation',
+            'status',
+            'rule_findings',
+            'created_at',
+            'translation_available',
+        ]
+        read_only_fields = fields
+
+    def get_translation_available(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return True
+        lang = request.query_params.get('lang', 'en').lower()
+        if lang == 'en':
+            return True
+        return False
+

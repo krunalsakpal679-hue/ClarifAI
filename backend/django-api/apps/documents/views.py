@@ -2,20 +2,31 @@
 Views for Document upload, list, detail polling, and deletion endpoints (PRD Ch. 30.2).
 """
 from django.core.files.storage import default_storage
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.documents.models import Document
+from apps.documents.models import Clause, Document, DocumentStatus, DocumentSummary
 from apps.documents.serializers import (
+    ClauseSerializer,
     DocumentDetailSerializer,
+    DocumentSummarySerializer,
     DocumentUploadSerializer,
 )
 from core.pagination import StandardPageNumberPagination
 from core.permissions import IsOwner
-
-
 from tasks.document_tasks import process_document
+
+
+class DocumentNotReadyException(APIException):
+    """
+    HTTP 422 Unprocessable Entity returned when querying analysis/clauses of an incomplete document (PRD Ch. 30.8).
+    """
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    default_detail = 'Document analysis is still in progress.'
+    default_code = 'DOCUMENT_NOT_READY'
 
 
 class DocumentListCreateView(generics.ListCreateAPIView):
@@ -46,7 +57,6 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
-
 class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
     """
     GET    /api/documents/{id}/ - Detail & status polling endpoint (Owner-only, 404 for non-owners)
@@ -65,3 +75,82 @@ class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
                 pass
         # Cascade delete document record and related DB entities
         instance.delete()
+
+
+class DocumentSummaryView(generics.RetrieveAPIView):
+    """
+    GET /api/documents/{id}/summary - Retrieve document summary (Owner-only).
+    Returns 422 Unprocessable Entity if document is incomplete.
+    Returns 404 Not Found if non-owned or nonexistent.
+    """
+    permission_classes = [IsAuthenticated, IsOwner]
+    serializer_class = DocumentSummarySerializer
+
+    def get_object(self):
+        document_id = self.kwargs.get('pk')
+        document = get_object_or_404(Document, pk=document_id)
+
+        # Enforce IsOwner 404-not-403 policy
+        self.check_object_permissions(self.request, document)
+
+        if document.status != DocumentStatus.COMPLETE:
+            raise DocumentNotReadyException()
+
+        try:
+            return document.summary
+        except DocumentSummary.DoesNotExist:
+            raise DocumentNotReadyException("Summary not found for completed document.")
+
+
+class ClauseListView(generics.ListAPIView):
+    """
+    GET /api/documents/{id}/clauses - List document clauses (Owner-only).
+    Supports optional ?severity= filter (high, moderate, low, safe) and ?lang= parameter.
+    Returns 422 Unprocessable Entity if document is incomplete.
+    Returns 404 Not Found if non-owned or nonexistent.
+    """
+    permission_classes = [IsAuthenticated, IsOwner]
+    serializer_class = ClauseSerializer
+    pagination_class = StandardPageNumberPagination
+
+    def get_queryset(self):
+        document_id = self.kwargs.get('pk')
+        document = get_object_or_404(Document, pk=document_id)
+
+        # Enforce IsOwner 404-not-403 policy
+        self.check_object_permissions(self.request, document)
+
+        if document.status != DocumentStatus.COMPLETE:
+            raise DocumentNotReadyException()
+
+        queryset = Clause.objects.filter(document=document).order_by('position')
+
+        severity_filter = self.request.query_params.get('severity', '').lower()
+        if severity_filter in ('high', 'moderate', 'low', 'safe'):
+            queryset = queryset.filter(severity=severity_filter)
+
+        return queryset
+
+
+class ClauseDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/documents/{id}/clauses/{clause_id}/ - Single clause detail (Owner-only).
+    Returns 422 Unprocessable Entity if document is incomplete.
+    Returns 404 Not Found if document/clause is non-owned or nonexistent.
+    """
+    permission_classes = [IsAuthenticated, IsOwner]
+    serializer_class = ClauseSerializer
+
+    def get_object(self):
+        document_id = self.kwargs.get('pk')
+        clause_id = self.kwargs.get('clause_id')
+
+        document = get_object_or_404(Document, pk=document_id)
+        self.check_object_permissions(self.request, document)
+
+        if document.status != DocumentStatus.COMPLETE:
+            raise DocumentNotReadyException()
+
+        clause = get_object_or_404(Clause, pk=clause_id, document=document)
+        return clause
+

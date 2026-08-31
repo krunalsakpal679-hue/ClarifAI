@@ -36,6 +36,11 @@ INSTALLED_APPS = [
 
     # Internal applications
     'apps.users.apps.UsersConfig',
+    'apps.documents.apps.DocumentsConfig',
+    'apps.chat.apps.ChatConfig',
+    'apps.comparison.apps.ComparisonConfig',
+    'apps.reports.apps.ReportsConfig',
+    'apps.audit.apps.AuditConfig',
 ]
 
 # Custom User Model per PRD Ch. 29.1
@@ -158,5 +163,24 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 
+# Media files (Secure upload directory, not served directly via public static routes)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+MAX_UPLOAD_SIZE_MB = int(os.getenv('MAX_UPLOAD_SIZE_MB', 20))
+
+# Celery + Redis Task Queue Settings (PRD Ch. 18.3 & 28.3)
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+# Default Task Timeout: Hard limit = 600s (10 min), Soft limit = 540s (9 min)
+# Note: Flagged as tunable once real AI processing latency is measured in Phase 7-8.
+CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', 600))
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', 540))
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+

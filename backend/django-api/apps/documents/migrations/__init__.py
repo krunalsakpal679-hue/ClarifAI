@@ -1,0 +1,3 @@
+"""
+Documents migrations package.
+"""

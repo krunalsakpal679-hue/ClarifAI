@@ -33,6 +33,11 @@ def create_sample_pdf(pages=1, password=None):
     return output.getvalue()
 
 
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=False,
+    CELERY_RESULT_BACKEND=None,
+    CELERY_BROKER_URL='memory://'
+)
 class DocumentUploadTestCase(TestCase, IDORTestMixin):
 
     def setUp(self):

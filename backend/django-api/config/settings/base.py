@@ -36,6 +36,11 @@ INSTALLED_APPS = [
 
     # Internal applications
     'apps.users.apps.UsersConfig',
+    'apps.documents.apps.DocumentsConfig',
+    'apps.chat.apps.ChatConfig',
+    'apps.comparison.apps.ComparisonConfig',
+    'apps.reports.apps.ReportsConfig',
+    'apps.audit.apps.AuditConfig',
 ]
 
 # Custom User Model per PRD Ch. 29.1

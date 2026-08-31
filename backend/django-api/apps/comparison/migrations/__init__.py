@@ -1,0 +1,3 @@
+"""
+Comparison migrations package.
+"""

@@ -1,0 +1,9 @@
+"""
+App configuration for Comparison app.
+"""
+from django.apps import AppConfig
+
+
+class ComparisonConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.comparison'

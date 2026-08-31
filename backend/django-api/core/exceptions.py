@@ -81,12 +81,13 @@ def custom_exception_handler(exc, context):
     # Call DRF's default exception handler first to obtain standard Response
     response = exception_handler(exc, context)
 
-    # Resolve error code from exception type mapping
-    error_code = "INTERNAL_SERVER_ERROR"
+    # Resolve error code from exception type mapping or default_code attribute
+    error_code = str(getattr(exc, 'default_code', 'INTERNAL_SERVER_ERROR')).upper()
     for exc_class, code in EXCEPTION_CODE_MAP.items():
         if isinstance(exc, exc_class):
             error_code = code
             break
+
 
     if response is not None:
         message, details = _extract_message_and_details(exc, response.data)

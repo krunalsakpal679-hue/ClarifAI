@@ -1,6 +1,9 @@
 """
 Phase 7 AI Service Integration Adapter Unit & Security Tests:
 - Identical signature testing across all four functions (process_document, chat, compare, translate)
+- Mixed success and per-clause-failure examples (PRD Task 5)
+- No-answer chatbot case with legal framing disclaimer (PRD Task 5 & Ch. 56.38)
+- Simulated AI-service-unavailable case (PRD Task 5 & Ch. 56.19)
 - Schema and severity validation rejection (Ch. 49.3 & 56.9)
 - Model failure & rate-limit exception handling (Ch. 56.19-56.21)
 - Network retry policy (single retry on network drop only)
@@ -34,7 +37,7 @@ class AIClientAdapterTestCase(TestCase):
         res_proc = process_document("doc-123", "uploads/documents/doc-123.pdf")
         self.assertEqual(res_proc["document_id"], "doc-123")
         self.assertIn("summary", res_proc)
-        self.assertEqual(len(res_proc["clauses"]), 3)
+        self.assertEqual(len(res_proc["clauses"]), 4)
         self.assertIn(res_proc["clauses"][0]["severity"], ["high", "moderate", "low", "safe"])
         self.assertIn(res_proc["clauses"][0]["category"], [
             "Payment", "Termination", "Renewal", "Confidentiality",
@@ -56,6 +59,38 @@ class AIClientAdapterTestCase(TestCase):
         res_trans = translate("doc-123", "hi")
         self.assertEqual(res_trans["target_lang"], "hi")
         self.assertIn("translated_content", res_trans)
+
+    def test_mock_per_clause_failure_example(self):
+        """MockAIClient includes a per-clause-failure example alongside successful clauses (Task 5)."""
+        res = process_document("doc-123", "file.pdf")
+        clauses = res["clauses"]
+
+        # 3 successful clauses + 1 per-clause failure example
+        failed_clause = next((c for c in clauses if c.get("status") == "clause_extraction_failed"), None)
+        self.assertIsNotNone(failed_clause)
+        self.assertEqual(failed_clause["clause_id"], "c-004")
+        self.assertEqual(failed_clause["category"], "Dispute Resolution")
+        self.assertIn("OCR degradation", failed_clause["simplified_text"])
+
+    def test_mock_no_answer_chatbot_case(self):
+        """MockAIClient includes a no-answer chatbot case with legal disclaimer (Task 5 & Ch. 56.38)."""
+        # Test via simulation_mode='no_answer'
+        client = MockAIClient(simulation_mode='no_answer')
+        res = client.chat("doc-123", "What is the secret formula?")
+        self.assertEqual(res["source_clause_ids"], [])
+        self.assertIn("unable to find relevant information", res["answer"])
+        self.assertIn("NOT constitute legal advice", res["answer"])
+
+        # Test via unanswerable question message
+        res_unanswerable = chat("doc-123", "unanswerable question about missing topic")
+        self.assertEqual(res_unanswerable["source_clause_ids"], [])
+        self.assertIn("unable to find relevant information", res_unanswerable["answer"])
+
+    def test_mock_ai_service_unavailable_simulation(self):
+        """MockAIClient raises AIServiceUnavailableError under simulation_mode='unavailable' (Task 5)."""
+        client = MockAIClient(simulation_mode='unavailable')
+        with self.assertRaises(AIServiceUnavailableError):
+            client.process_document("doc-1", "file.pdf")
 
     def test_schema_and_severity_validation_rejection(self):
         """Malformed AI response (invalid severity enum) raises AIServiceValidationError."""

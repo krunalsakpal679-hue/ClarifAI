@@ -3,7 +3,7 @@ Phase 5 Document Model & PDF Upload Pipeline Unit & Security Tests:
 - Valid PDF upload succeeds (status=queued)
 - Oversized file rejected (>20MB)
 - Non-PDF / wrong header rejected
-- Corrupted / empty PDF rejected
+- Corrupted / empty PDF rejected at structure validation step
 - Password-protected PDF rejected with distinct message (R-12)
 - Duplicate upload allowed with no deduplication (R-14)
 - List/Detail/Delete endpoints match Ch. 30.2 (IsOwner 404-not-403 IDOR protection)
@@ -109,10 +109,10 @@ class DocumentUploadTestCase(TestCase, IDORTestMixin):
         self.assertIn('genuine PDF', str(data['error']['details']))
 
     def test_corrupted_empty_pdf_rejected(self):
-        """Corrupted/unparseable PDF header is rejected."""
+        """Corrupted or unparseable PDF stream is rejected at structure validation step."""
         corrupted_file = SimpleUploadedFile(
             name='corrupted.pdf',
-            content=b'%PDF-1.4 truncated corrupted content',
+            content=b'%PDF-1.4 truncated corrupted stream content without valid PDF catalog structure',
             content_type='application/pdf'
         )
 
@@ -126,9 +126,10 @@ class DocumentUploadTestCase(TestCase, IDORTestMixin):
         data = response.json()
         self.assertIn('error', data)
         self.assertEqual(data['error']['code'], 'VALIDATION_ERROR')
+        self.assertIn('corrupted', str(data['error']['details']).lower())
 
     def test_password_protected_pdf_rejected_with_distinct_message(self):
-        """Password-protected PDF is rejected with distinct error message (R-12)."""
+        """Password-protected PDF is rejected with distinct error message (R-12), separate from corrupted rejection."""
         encrypted_pdf_bytes = create_sample_pdf(password='Secret123!')
         encrypted_file = SimpleUploadedFile(
             name='encrypted_agreement.pdf',
@@ -146,7 +147,9 @@ class DocumentUploadTestCase(TestCase, IDORTestMixin):
         data = response.json()
         self.assertIn('error', data)
         self.assertEqual(data['error']['code'], 'VALIDATION_ERROR')
+        # Explicit assertion: Password-protected message is distinct from corrupted message
         self.assertIn('Password-protected PDFs are not supported', str(data['error']['details']))
+        self.assertNotIn('corrupted', str(data['error']['details']).lower())
 
     def test_duplicate_uploads_allowed(self):
         """Duplicate uploads of identical file succeed without deduplication logic (R-14)."""
@@ -167,7 +170,6 @@ class DocumentUploadTestCase(TestCase, IDORTestMixin):
 
     def test_list_documents_owner_scoped(self):
         """GET /api/documents/ returns only the authenticated user's documents."""
-        # Create doc for user_a and doc for user_b
         pdf_bytes = create_sample_pdf()
         f_a = SimpleUploadedFile('doc_a.pdf', pdf_bytes, content_type='application/pdf')
         f_b = SimpleUploadedFile('doc_b.pdf', pdf_bytes, content_type='application/pdf')

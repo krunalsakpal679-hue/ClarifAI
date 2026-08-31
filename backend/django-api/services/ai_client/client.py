@@ -89,11 +89,12 @@ class RealAIClient:
             logger.error("AI microservice returned HTTP 429 Rate Limit / Free-tier quota exhaustion.")
             raise AIServiceRateLimitError("AI microservice rate limit or free-tier quota exhausted (HTTP 429).")
         elif response.status_code in (500, 502, 503, 504):
-            logger.error(f"AI microservice server error (HTTP {response.status_code}): {response.text}")
+            logger.error(f"AI microservice server error (HTTP {response.status_code}).")
             raise AIServiceUnavailableError(f"AI microservice unavailable (HTTP {response.status_code}).")
         elif response.status_code >= 400:
-            logger.error(f"AI microservice client error (HTTP {response.status_code}): {response.text}")
+            logger.error(f"AI microservice client error (HTTP {response.status_code}).")
             raise AIServiceUnavailableError(f"AI microservice error (HTTP {response.status_code}).")
+
 
         try:
             return response.json()

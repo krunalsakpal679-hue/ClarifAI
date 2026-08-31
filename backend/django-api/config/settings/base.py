@@ -91,7 +91,7 @@ REST_FRAMEWORK = {
 }
 
 # CORS Configuration (Restricted strictly to approved origins per Ch. 26.7)
-RAW_CORS_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:8000')
+RAW_CORS_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in RAW_CORS_ORIGINS.split(',')

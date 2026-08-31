@@ -183,4 +183,11 @@ CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', 540))
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Internal AI Service Adapter Configuration (PRD Part B.3, Ch. 49.3, Ch. 56.19)
+AI_SERVICE_USE_MOCK = os.getenv('AI_SERVICE_USE_MOCK', 'True').lower() == 'true'
+AI_SERVICE_BASE_URL = os.getenv('AI_SERVICE_BASE_URL', 'http://localhost:8001')
+AI_SERVICE_SECRET = os.getenv('AI_SERVICE_SECRET', '')
+AI_SERVICE_TIMEOUT = int(os.getenv('AI_SERVICE_TIMEOUT', 30))
+
+
 

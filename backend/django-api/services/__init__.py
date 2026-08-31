@@ -1,3 +1,4 @@
 """
-External services and adapters package (including future AI adapter).
+Services package initialization.
+Contains internal integration adapters (e.g. AI microservice adapter).
 """

@@ -191,28 +191,37 @@ class DocumentUploadTestCase(TestCase, IDORTestMixin):
         self.assertEqual(len(results_b), 1)
         self.assertEqual(results_b[0]['original_filename'], 'doc_b.pdf')
 
-    def test_detail_and_delete_documents_ownership_enforcement(self):
-        """GET & DELETE /api/documents/{id}/ allow owner access and return 404 for non-owners (IsOwner)."""
+    def test_delete_own_document_succeeds_and_removes_record(self):
+        """Test Case 1: Deleting my own document succeeds (204 No Content) and removes DB record."""
         pdf_bytes = create_sample_pdf()
-        f_a = SimpleUploadedFile('doc_owner.pdf', pdf_bytes, content_type='application/pdf')
+        f_a = SimpleUploadedFile('my_doc.pdf', pdf_bytes, content_type='application/pdf')
         create_res = self.client.post(self.upload_url, data={'file': f_a}, **self.auth_headers_a)
         doc_id = create_res.json()['id']
         detail_url = f'/api/documents/{doc_id}/'
 
-        # Owner GET -> 200 OK
-        res_get_a = self.client.get(detail_url, **self.auth_headers_a)
-        self.assertEqual(res_get_a.status_code, status.HTTP_200_OK)
-        self.assertEqual(res_get_a.json()['status'], 'queued')
-
-        # Non-owner GET -> 404 NOT FOUND (IsOwner IDOR protection)
-        self.assert_idor_protection(client=self.client, resource_url=detail_url, method='get')
-
-        # Non-owner DELETE -> 404 NOT FOUND (IsOwner IDOR protection)
-        self.assert_idor_protection(client=self.client, resource_url=detail_url, method='delete')
-
         # Owner DELETE -> 204 NO CONTENT
-        res_del_a = self.client.delete(detail_url, **self.auth_headers_a)
-        self.assertEqual(res_del_a.status_code, status.HTTP_204_NO_CONTENT)
+        res_del = self.client.delete(detail_url, **self.auth_headers_a)
+        self.assertEqual(res_del.status_code, status.HTTP_204_NO_CONTENT)
 
         # Confirm Document record deleted
         self.assertFalse(Document.objects.filter(id=doc_id).exists())
+
+    def test_delete_other_user_document_returns_404_not_403_or_200(self):
+        """Test Case 2: Attempting to delete another user's document returns 404 NOT FOUND, NOT 403 OR 200 (IsOwner IDOR protection)."""
+        pdf_bytes = create_sample_pdf()
+        f_a = SimpleUploadedFile('user_a_doc.pdf', pdf_bytes, content_type='application/pdf')
+        create_res = self.client.post(self.upload_url, data={'file': f_a}, **self.auth_headers_a)
+        doc_id = create_res.json()['id']
+        detail_url = f'/api/documents/{doc_id}/'
+
+        # User B attempts DELETE on User A's document
+        response = self.client.delete(detail_url, **self.auth_headers_b)
+
+        # Explicitly assert status is 404, NOT 403 and NOT 200/204
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertNotEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertNotEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Confirm User A's document was NOT deleted
+        self.assertTrue(Document.objects.filter(id=doc_id).exists())

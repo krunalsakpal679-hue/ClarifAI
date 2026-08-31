@@ -1,7 +1,7 @@
 """
 URL routing for Documents endpoints (PRD Ch. 30.2).
 """
-from django.urls import path
+from django.urls import include, path
 from apps.documents.views import (
     ClauseDetailView,
     ClauseListView,
@@ -16,5 +16,7 @@ urlpatterns = [
     path('<uuid:pk>/summary/', DocumentSummaryView.as_view(), name='document_summary'),
     path('<uuid:pk>/clauses/', ClauseListView.as_view(), name='document_clause_list'),
     path('<uuid:pk>/clauses/<uuid:clause_id>/', ClauseDetailView.as_view(), name='document_clause_detail'),
+    path('<uuid:pk>/chat/', include('apps.chat.urls')),
 ]
+
 

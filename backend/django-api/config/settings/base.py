@@ -2,6 +2,7 @@
 Base Django settings for ClarifAI project.
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
@@ -30,8 +31,15 @@ INSTALLED_APPS = [
     # Third-party packages per PRD Ch. 28.1 & Task 7
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+
+    # Internal applications
+    'apps.users.apps.UsersConfig',
 ]
+
+# Custom User Model per PRD Ch. 29.1
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -77,7 +85,7 @@ DATABASES = {
     )
 }
 
-# Django REST Framework Settings (Standardized Error Handler & Pagination per Ch. 30.8)
+# Django REST Framework Settings (Standardized Error Handler, Throttling & Pagination per Ch. 26.7 & 30.8)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -88,6 +96,30 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardPageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/minute',
+        'user': '1000/minute',
+        'auth': '5/minute',
+    },
+}
+
+# SimpleJWT Authentication Configuration (PRD Ch. 26.1 Token Rotation & Blacklisting)
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', 15))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_TOKEN_DAYS', 7))),
+    'REFRESH_TOKEN_LIFETIME_DAYS': int(os.getenv('JWT_REFRESH_TOKEN_DAYS', 7)),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
 }
 
 # CORS Configuration (Restricted strictly to approved origins per Ch. 26.7)
@@ -98,6 +130,7 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip() and origin.strip() != '*'
 ]
 CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -106,6 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',

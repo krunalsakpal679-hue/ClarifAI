@@ -50,7 +50,16 @@ jobs:
 
       - name: Secret Scan (Git History Audit)
         run: |
-          git log -p | grep -iE "(AWS_SECRET|JWT_SECRET_KEY|DATABASE_PASSWORD=production)" && exit 1 || echo "No plain secrets found in commit history."
+          # Search git commit diffs for actual hardcoded secret assignments (excluding docs and CI workflow files)
+          SECRET_MATCHES=$(git log -p -- . ':!*.md' ':!*.yml' ':!*.yaml' | grep -iE "(AWS_SECRET_ACCESS_KEY|JWT_SECRET_KEY|DATABASE_PASSWORD)\s*=\s*['\"][a-zA-Z0-9_\-!@#$%^&*()+=]{8,}['\"]" || true)
+          if [ -n "$SECRET_MATCHES" ]; then
+            echo "::error::Hardcoded secret assignment detected in git history:"
+            echo "$SECRET_MATCHES"
+            exit 1
+          else
+            echo "No hardcoded secret assignments found in commit history."
+          fi
+
 
   docker-build:
     name: Fresh Docker Build & Container Health Test

@@ -9,6 +9,7 @@ from apps.documents.views import (
     DocumentListCreateView,
     DocumentSummaryView,
 )
+from apps.reports.views import DocumentReportCreateView
 
 urlpatterns = [
     path('', DocumentListCreateView.as_view(), name='document_list_create'),
@@ -17,6 +18,8 @@ urlpatterns = [
     path('<uuid:pk>/clauses/', ClauseListView.as_view(), name='document_clause_list'),
     path('<uuid:pk>/clauses/<uuid:clause_id>/', ClauseDetailView.as_view(), name='document_clause_detail'),
     path('<uuid:pk>/chat/', include('apps.chat.urls')),
+    path('<uuid:pk>/report/', DocumentReportCreateView.as_view(), name='document_report_create'),
 ]
+
 
 

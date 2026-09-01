@@ -154,3 +154,33 @@ class ClauseDetailView(generics.RetrieveAPIView):
         clause = get_object_or_404(Clause, pk=clause_id, document=document)
         return clause
 
+
+class DashboardSummaryView(generics.GenericAPIView):
+    """
+    GET /api/dashboard/summary - Retrieve aggregate document statistics for requesting user (PRD Ch. 30.7 & Ch. 20).
+    Scoped strictly to request.user documents only.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user_docs = Document.objects.filter(user=request.user)
+        total_documents = user_docs.count()
+        completed_count = user_docs.filter(status=DocumentStatus.COMPLETE).count()
+        failed_count = user_docs.filter(status=DocumentStatus.FAILED).count()
+        in_progress_count = total_documents - (completed_count + failed_count)
+
+        # Flagged risk count: completed documents with at least one non-Safe clause
+        flagged_risk_count = user_docs.filter(
+            status=DocumentStatus.COMPLETE,
+            clauses__severity__in=['high', 'moderate', 'low']
+        ).distinct().count()
+
+        return Response({
+            "total_documents": total_documents,
+            "in_progress_count": in_progress_count,
+            "flagged_risk_count": flagged_risk_count,
+            "completed_count": completed_count,
+            "failed_count": failed_count,
+        }, status=status.HTTP_200_OK)
+
+

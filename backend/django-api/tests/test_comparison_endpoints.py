@@ -96,17 +96,29 @@ class ComparisonEndpointsTestCase(APITestCase):
         self.assertGreater(len(res_detail.data['results']), 0)
 
     def test_double_ownership_check_non_owned_rejected(self):
-        """POST /api/comparisons fails with 404 if User A attempts to compare User A's doc with User B's doc."""
+        """
+        POST /api/comparisons fails with 404 if User A attempts to compare User A's valid doc with User B's real valid doc UUID.
+        Tests both document_a and document_b positionally against User B's real UUID.
+        """
         self.client.force_authenticate(user=self.user_a)
         url = reverse('comparison_list_create')
-        payload = {
+
+        # Case 1: document_a is User A's real doc, document_b is User B's real doc UUID
+        payload_1 = {
             "document_a_id": str(self.doc_a1.id),
-            "document_b_id": str(self.doc_b1.id)  # Owned by User B
+            "document_b_id": str(self.doc_b1.id)  # User B's real valid complete document
         }
+        res_1 = self.client.post(url, payload_1)
+        self.assertEqual(res_1.status_code, status.HTTP_404_NOT_FOUND)
 
-        response = self.client.post(url, payload)
+        # Case 2: document_a is User B's real doc UUID, document_b is User A's real doc
+        payload_2 = {
+            "document_a_id": str(self.doc_b1.id),  # User B's real valid complete document
+            "document_b_id": str(self.doc_a1.id)
+        }
+        res_2 = self.client.post(url, payload_2)
+        self.assertEqual(res_2.status_code, status.HTTP_404_NOT_FOUND)
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_same_document_comparison_rejected(self):
         """POST /api/comparisons fails with 400 Bad Request if comparing a document against itself."""

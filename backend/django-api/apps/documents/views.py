@@ -8,6 +8,11 @@ from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.audit.services import (
+    EVENT_DOCUMENT_DELETE,
+    EVENT_DOCUMENT_UPLOAD,
+    log_audit_event,
+)
 from apps.documents.models import Clause, Document, DocumentStatus, DocumentSummary
 from apps.documents.serializers import (
     ClauseSerializer,
@@ -18,6 +23,7 @@ from apps.documents.serializers import (
 from core.pagination import StandardPageNumberPagination
 from core.permissions import IsOwner
 from tasks.document_tasks import process_document
+
 
 
 class DocumentNotReadyException(APIException):
@@ -49,6 +55,14 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         document = serializer.save()
+
+        # Audit Log: document_upload (PRD Ch. 26.8)
+        log_audit_event(
+            EVENT_DOCUMENT_UPLOAD,
+            user=document.user,
+            request=request,
+            metadata={"document_id": str(document.id), "filename": document.original_filename}
+        )
 
         # Enqueue background processing task asynchronously (PRD Ch. 18.3 & 28.3)
         process_document.delay(str(document.id))
@@ -93,7 +107,15 @@ class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
             except Exception:
                 pass
 
-        # 3. Cascade delete document record and related DB entities
+        # 3. Audit Log: document_delete (PRD Ch. 26.8)
+        log_audit_event(
+            EVENT_DOCUMENT_DELETE,
+            user=instance.user,
+            request=self.request,
+            metadata={"document_id": doc_id}
+        )
+
+        # 4. Cascade delete document record and related DB entities
         instance.delete()
 
 

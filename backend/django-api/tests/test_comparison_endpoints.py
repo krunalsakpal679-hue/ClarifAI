@@ -153,6 +153,43 @@ class ComparisonEndpointsTestCase(APITestCase):
         comp.refresh_from_db()
         self.assertEqual(comp.status, ComparisonStatus.FAILED)
 
+    def test_mid_flight_deletion_retains_idor_protection_and_user_ownership(self):
+        """
+        Confirms mid-flight document deletion (SET_NULL on document FKs):
+        1. Does not orphan the comparison record (comparison.user remains User A).
+        2. Allows User A to retrieve their comparison (status='failed').
+        3. Preserves Phase 3 IDOR protection (User B querying User A's failed comparison returns 404).
+        """
+        comp = Comparison.objects.create(
+            user=self.user_a,
+            base_document=self.doc_a1,
+            target_document=self.doc_a2,
+            status=ComparisonStatus.PENDING
+        )
+
+        # Delete base document mid-flight
+        self.doc_a1.delete()
+
+        # Task handles deletion cleanly
+        process_comparison(str(comp.id))
+        comp.refresh_from_db()
+
+        self.assertEqual(comp.status, ComparisonStatus.FAILED)
+        self.assertEqual(comp.user, self.user_a)  # User ownership is NOT lost
+
+        # User A can retrieve their failed comparison
+        self.client.force_authenticate(user=self.user_a)
+        url = reverse('comparison_detail', kwargs={'pk': comp.id})
+        res_a = self.client.get(url)
+        self.assertEqual(res_a.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_a.data['status'], 'failed')
+
+        # User B querying User A's failed comparison returns 404 (IDOR check intact)
+        self.client.force_authenticate(user=self.user_b)
+        res_b = self.client.get(url)
+        self.assertEqual(res_b.status_code, status.HTTP_404_NOT_FOUND)
+
+
     def test_get_comparison_detail_non_owned_returns_404(self):
         """GET /api/comparisons/{id} returns 404 Not Found if requested by non-owner."""
         comp = Comparison.objects.create(

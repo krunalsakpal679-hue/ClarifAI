@@ -60,21 +60,42 @@ class DocumentListCreateView(generics.ListCreateAPIView):
 class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
     """
     GET    /api/documents/{id}/ - Detail & status polling endpoint (Owner-only, 404 for non-owners)
-    DELETE /api/documents/{id}/ - Delete document & cascade file cleanup (Owner-only, 404 for non-owners)
+    DELETE /api/documents/{id}/ - Delete document & full cascade cleanup (Owner-only, 404 for non-owners)
+    
+    Deletion Cascade (PRD Ch. 26.5.1 & Ch. 26.5.2):
+    - Triggers AI service Qdrant vector embedding cleanup via adapter.
+    - Removes stored PDF file from storage.
+    - Cascade deletes Document, Clause, DocumentSummary, ChatSession, ChatMessage, and Report records.
+    - Sets comparison FKs to NULL (SET_NULL) to preserve comparison history shell without orphans.
+    - Purges active application data; does not claim instantaneous erasure from backup systems.
     """
     permission_classes = [IsAuthenticated, IsOwner]
     queryset = Document.objects.all()
     serializer_class = DocumentDetailSerializer
 
     def perform_destroy(self, instance):
-        # Clean up file from storage if present
+        doc_id = str(instance.id)
+
+        # 1. Trigger AI service Qdrant vector embedding cleanup (PRD Ch. 26.5.1 & Part B.3)
+        try:
+            from services.ai_client import delete_document_embeddings
+            delete_document_embeddings(doc_id)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"Vector cleanup trigger for document {doc_id} failed or unavailable: {exc}"
+            )
+
+        # 2. Clean up physical file from storage if present
         if instance.file_reference and default_storage.exists(instance.file_reference):
             try:
                 default_storage.delete(instance.file_reference)
             except Exception:
                 pass
-        # Cascade delete document record and related DB entities
+
+        # 3. Cascade delete document record and related DB entities
         instance.delete()
+
 
 
 class DocumentSummaryView(generics.RetrieveAPIView):

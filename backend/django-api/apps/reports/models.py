@@ -11,10 +11,17 @@ class ReportLanguage(models.TextChoices):
     HINDI = 'hi', 'Hindi'
 
 
+class ReportStatus(models.TextChoices):
+    PENDING = 'pending', 'Pending'
+    PROCESSING = 'processing', 'Processing'
+    COMPLETE = 'complete', 'Complete'
+    FAILED = 'failed', 'Failed'
+
+
 class Report(models.Model):
     """
     Report model per PRD Ch. 29.7.
-    Note: Validation enforcing exactly one of (document, comparison) is handled at the serializer level per Task 7.
+    Enforces validation for exactly one of (document, comparison) at serializer level.
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
@@ -44,7 +51,14 @@ class Report(models.Model):
         choices=ReportLanguage.choices,
         default=ReportLanguage.ENGLISH,
     )
+    status = models.CharField(
+        max_length=20,
+        choices=ReportStatus.choices,
+        default=ReportStatus.PENDING,
+        db_index=True,
+    )
     file_reference = models.CharField(max_length=512, null=True, blank=True)
+    failure_reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -52,4 +66,4 @@ class Report(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Report {self.id} - Lang {self.language} (User {self.user_id})"
+        return f"Report {self.id} - Status {self.status} (User {self.user_id})"

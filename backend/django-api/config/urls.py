@@ -20,4 +20,8 @@ urlpatterns = [
     path('api/health/', health_check, name='health_check'),
     path('api/auth/', include('apps.users.urls')),
     path('api/documents/', include('apps.documents.urls')),
+    path('api/comparisons/', include('apps.comparison.urls')),
+    path('api/reports/', include('apps.reports.urls')),
 ]
+
+

@@ -32,16 +32,21 @@ class Comparison(models.Model):
     )
     base_document = models.ForeignKey(
         'documents.Document',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='base_comparisons',
         db_index=True,
     )
     target_document = models.ForeignKey(
         'documents.Document',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='target_comparisons',
         db_index=True,
     )
+
     status = models.CharField(
         max_length=20,
         choices=ComparisonStatus.choices,

@@ -155,6 +155,14 @@ def process_document(document_id):
         logger.error(f"Unhandled failure during document {document_id} processing: {exc}")
         try:
             document.transition_to(DocumentStatus.FAILED, failure_reason=str(exc))
+            # Audit Log: analysis_failure (PRD Ch. 26.8)
+            from apps.audit.services import EVENT_ANALYSIS_FAILURE, log_audit_event
+            log_audit_event(
+                EVENT_ANALYSIS_FAILURE,
+                user=document.user,
+                metadata={"document_id": str(document.id), "failure_reason": str(exc)}
+            )
         except Exception as transition_exc:
             logger.critical(f"Failed to transition document {document_id} to failed: {transition_exc}")
         raise
+

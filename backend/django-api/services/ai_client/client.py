@@ -155,3 +155,11 @@ class RealAIClient:
         # Engineering Implementation Detail (Classification E)
         raw_response = self._send_request("POST", "/api/v1/translate", json_data=payload)
         return validate_translate_response(raw_response)
+
+    def delete_document_embeddings(self, document_id: str) -> dict:
+        """
+        Invokes Qdrant vector embedding cleanup on internal FastAPI AI microservice for deleted document (PRD Ch. 26.5.1 & Part B.3).
+        Classification E: Internal route path DELETE /api/v1/documents/{document_id}/embeddings pending confirmation with AI Developer.
+        """
+        return self._send_request("DELETE", f"/api/v1/documents/{document_id}/embeddings")
+

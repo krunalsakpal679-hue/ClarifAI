@@ -8,6 +8,11 @@ from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.audit.services import (
+    EVENT_DOCUMENT_DELETE,
+    EVENT_DOCUMENT_UPLOAD,
+    log_audit_event,
+)
 from apps.documents.models import Clause, Document, DocumentStatus, DocumentSummary
 from apps.documents.serializers import (
     ClauseSerializer,
@@ -18,6 +23,7 @@ from apps.documents.serializers import (
 from core.pagination import StandardPageNumberPagination
 from core.permissions import IsOwner
 from tasks.document_tasks import process_document
+
 
 
 class DocumentNotReadyException(APIException):
@@ -50,6 +56,14 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         document = serializer.save()
 
+        # Audit Log: document_upload (PRD Ch. 26.8)
+        log_audit_event(
+            EVENT_DOCUMENT_UPLOAD,
+            user=document.user,
+            request=request,
+            metadata={"document_id": str(document.id), "filename": document.original_filename}
+        )
+
         # Enqueue background processing task asynchronously (PRD Ch. 18.3 & 28.3)
         process_document.delay(str(document.id))
 
@@ -60,21 +74,50 @@ class DocumentListCreateView(generics.ListCreateAPIView):
 class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
     """
     GET    /api/documents/{id}/ - Detail & status polling endpoint (Owner-only, 404 for non-owners)
-    DELETE /api/documents/{id}/ - Delete document & cascade file cleanup (Owner-only, 404 for non-owners)
+    DELETE /api/documents/{id}/ - Delete document & full cascade cleanup (Owner-only, 404 for non-owners)
+    
+    Deletion Cascade (PRD Ch. 26.5.1 & Ch. 26.5.2):
+    - Triggers AI service Qdrant vector embedding cleanup via adapter.
+    - Removes stored PDF file from storage.
+    - Cascade deletes Document, Clause, DocumentSummary, ChatSession, ChatMessage, and Report records.
+    - Sets comparison FKs to NULL (SET_NULL) to preserve comparison history shell without orphans.
+    - Purges active application data; does not claim instantaneous erasure from backup systems.
     """
     permission_classes = [IsAuthenticated, IsOwner]
     queryset = Document.objects.all()
     serializer_class = DocumentDetailSerializer
 
     def perform_destroy(self, instance):
-        # Clean up file from storage if present
+        doc_id = str(instance.id)
+
+        # 1. Trigger AI service Qdrant vector embedding cleanup (PRD Ch. 26.5.1 & Part B.3)
+        try:
+            from services.ai_client import delete_document_embeddings
+            delete_document_embeddings(doc_id)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"Vector cleanup trigger for document {doc_id} failed or unavailable: {exc}"
+            )
+
+        # 2. Clean up physical file from storage if present
         if instance.file_reference and default_storage.exists(instance.file_reference):
             try:
                 default_storage.delete(instance.file_reference)
             except Exception:
                 pass
-        # Cascade delete document record and related DB entities
+
+        # 3. Audit Log: document_delete (PRD Ch. 26.8)
+        log_audit_event(
+            EVENT_DOCUMENT_DELETE,
+            user=instance.user,
+            request=self.request,
+            metadata={"document_id": doc_id}
+        )
+
+        # 4. Cascade delete document record and related DB entities
         instance.delete()
+
 
 
 class DocumentSummaryView(generics.RetrieveAPIView):
@@ -153,4 +196,34 @@ class ClauseDetailView(generics.RetrieveAPIView):
 
         clause = get_object_or_404(Clause, pk=clause_id, document=document)
         return clause
+
+
+class DashboardSummaryView(generics.GenericAPIView):
+    """
+    GET /api/dashboard/summary - Retrieve aggregate document statistics for requesting user (PRD Ch. 30.7 & Ch. 20).
+    Scoped strictly to request.user documents only.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user_docs = Document.objects.filter(user=request.user)
+        total_documents = user_docs.count()
+        completed_count = user_docs.filter(status=DocumentStatus.COMPLETE).count()
+        failed_count = user_docs.filter(status=DocumentStatus.FAILED).count()
+        in_progress_count = total_documents - (completed_count + failed_count)
+
+        # Flagged risk count: completed documents with at least one non-Safe clause
+        flagged_risk_count = user_docs.filter(
+            status=DocumentStatus.COMPLETE,
+            clauses__severity__in=['high', 'moderate', 'low']
+        ).distinct().count()
+
+        return Response({
+            "total_documents": total_documents,
+            "in_progress_count": in_progress_count,
+            "flagged_risk_count": flagged_risk_count,
+            "completed_count": completed_count,
+            "failed_count": failed_count,
+        }, status=status.HTTP_200_OK)
+
 

@@ -67,7 +67,7 @@ def generate_document_pdf(report, document, language='en'):
     elements = []
     elements.append(Paragraph("ClarifAI Document Analysis Report", title_style))
     elements.append(Paragraph(f"<b>Document:</b> {document.original_filename}", body_style))
-    elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {language.upper()}", body_style))
+    elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {(language or 'EN').upper()}", body_style))
     elements.append(Spacer(1, 12))
 
     # Summary Section
@@ -84,7 +84,6 @@ def generate_document_pdf(report, document, language='en'):
             elements.append(Paragraph(f"<b>Key Risks:</b> {summary.key_risks_text}", body_style))
         elements.append(Spacer(1, 12))
 
-
     # Risk-Classified Clauses
     clauses = document.clauses.all().order_by('position')
     if clauses.exists():
@@ -93,10 +92,11 @@ def generate_document_pdf(report, document, language='en'):
         for clause in clauses:
             table_data.append([
                 str(clause.position),
-                clause.severity.upper(),
+                (clause.severity or "UNKNOWN").upper(),
                 clause.category or "General",
                 Paragraph(clause.simplified_text or clause.original_text[:150], body_style)
             ])
+
 
         t = Table(table_data, colWidths=[36, 64, 90, 350])
         t.setStyle(TableStyle([

@@ -2,4 +2,8 @@ export * from './DocumentStatusBadge';
 export * from './RiskLevelIndicator';
 export * from './DocumentHistoryCard';
 export * from './UploadDropzone';
-
+export * from './RiskBadge';
+export * from './RiskCategoryTag';
+export * from './RiskOverviewChart';
+export * from './SummaryPanel';
+export * from './ClauseCard';

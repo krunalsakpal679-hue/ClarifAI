@@ -5,8 +5,10 @@ import { apiClient } from './client';
 import type {
   DocumentItem,
   DocumentListParams,
+  DocumentSummary,
   DocumentUploadResponse,
   IDocumentService,
+  PaginatedClauseResponse,
   PaginatedDocumentListResponse,
 } from '../../types';
 
@@ -46,6 +48,28 @@ export const realDocumentService: IDocumentService = {
   getById: async (id: string): Promise<DocumentItem> => {
     // Section 8.2 Combined document detail & status polling endpoint
     const response = await apiClient.get<DocumentItem>(`/api/documents/${id}/`);
+    return response.data;
+  },
+  getSummary: async (id: string, lang = 'en'): Promise<DocumentSummary> => {
+    // Section 8.3 Document Summary endpoint (PRD Ch. 16 & Ch. 30.3)
+    const response = await apiClient.get<DocumentSummary>(`/api/documents/${id}/summary/`, {
+      params: { lang },
+    });
+    return response.data;
+  },
+  getClauses: async (
+    id: string,
+    lang = 'en',
+    severity?: string
+  ): Promise<PaginatedClauseResponse> => {
+    // Section 8.3 Document Clauses endpoint with optional severity filter (PRD Ch. 16 & Ch. 30.3)
+    const params: Record<string, string> = { lang };
+    if (severity) {
+      params.severity = severity.toLowerCase();
+    }
+    const response = await apiClient.get<PaginatedClauseResponse>(`/api/documents/${id}/clauses/`, {
+      params,
+    });
     return response.data;
   },
 };

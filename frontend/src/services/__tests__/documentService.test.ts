@@ -142,6 +142,53 @@ describe('DocumentService (PRD Section 8.2 & Ch. 20, 29.2, 30.2)', () => {
       await expect(documentService.getById('non-existent-id')).rejects.toThrow(/404/);
     });
   });
+
+  describe('getSummary (Section 8.3 Document Summary Endpoint)', () => {
+    it('retrieves four-field executive summary by ID', async () => {
+      const summary = await documentService.getSummary('doc-msa-001');
+
+      expect(summary).toBeDefined();
+      expect(summary.document_id).toBe('doc-msa-001');
+      expect(summary.purpose_text).toBeTruthy();
+      expect(summary.key_risks_text).toBeTruthy();
+      expect(summary.key_terms_text).toBeTruthy();
+      expect(summary.obligations_text).toBeTruthy();
+      expect(summary.translation_available).toBe(true);
+    });
+
+    it('retrieves translated Hindi summary when lang=hi', async () => {
+      const summary = await documentService.getSummary('doc-msa-001', 'hi');
+
+      expect(summary).toBeDefined();
+      expect(summary.purpose_text).toContain('मास्टर सेवा समझौता');
+    });
+  });
+
+  describe('getClauses (Section 8.3 Document Clauses Endpoint)', () => {
+    it('retrieves all clauses across four severities and eight categories', async () => {
+      const response = await documentService.getClauses('doc-msa-001');
+
+      expect(response).toBeDefined();
+      expect(response.results.length).toBeGreaterThanOrEqual(8);
+
+      const severities = new Set(response.results.map((c) => c.severity));
+      expect(severities.has('High')).toBe(true);
+      expect(severities.has('Moderate')).toBe(true);
+      expect(severities.has('Low')).toBe(true);
+      expect(severities.has('Safe')).toBe(true);
+
+      const categories = new Set<string>(
+        response.results.map((c) => c.category).filter(Boolean) as string[]
+      );
+      expect(categories.has('Renewal')).toBe(true);
+      expect(categories.has('Auto-renewal')).toBe(false);
+    });
+
+    it('filters clauses by severity', async () => {
+      const response = await documentService.getClauses('doc-msa-001', 'en', 'high');
+      expect(response.results.every((c) => c.severity === 'High')).toBe(true);
+    });
+  });
 });
 
 

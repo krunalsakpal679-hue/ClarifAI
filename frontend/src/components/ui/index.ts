@@ -9,4 +9,5 @@ export * from './Toast';
 export * from './PasswordStrengthMeter';
 export * from './Modal';
 export * from './ProgressStepper';
+export * from './Skeleton';
 

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/authStore';
+import { authService } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { UILanguageSwitch } from '../components/ui/UILanguageSwitch';
+import { ToastContainer, toast } from '../components/ui/Toast';
 
 export const AppShell: React.FC = () => {
   const { t } = useTranslation();
@@ -12,14 +14,24 @@ export const AppShell: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Close mobile drawer on route change
+  // Close mobile drawer on route change & clear logout transition flag
   useEffect(() => {
     setMobileMenuOpen(false);
+    if (useAuthStore.getState().isLoggingOut) {
+      useAuthStore.getState().setIsLoggingOut(false);
+    }
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      logout();
+      navigate('/', { replace: true });
+      toast.info('You have been logged out.');
+    }
   };
 
   const navLinks = isAuthenticated
@@ -261,6 +273,9 @@ export const AppShell: React.FC = () => {
           </p>
         </div>
       </footer>
+
+      {/* Global Notifications */}
+      <ToastContainer />
     </div>
   );
 };

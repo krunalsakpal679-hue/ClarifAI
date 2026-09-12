@@ -35,3 +35,5 @@ export interface DocumentMetadata {
   overallRiskSeverity?: RiskSeverity;
   clauseCount?: number;
 }
+
+export * from './auth';

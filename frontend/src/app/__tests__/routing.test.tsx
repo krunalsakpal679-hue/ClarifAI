@@ -29,14 +29,14 @@ describe('ClarifAI Typed Routing & App Shell (PRD Section 5, Ch. 9.1, 9.6, 22, 2
 
   it('redirects unauthenticated user from protected route "/dashboard" to "/login"', () => {
     renderRoute('/dashboard');
-    expect(screen.getByText(/Sign In/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Sign In/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Email Address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
   });
 
   it('redirects unauthenticated user from protected route "/history" to "/login"', () => {
     renderRoute('/history');
-    expect(screen.getByText(/Sign In/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Sign In/i })).toBeInTheDocument();
   });
 
   const mockUser = {

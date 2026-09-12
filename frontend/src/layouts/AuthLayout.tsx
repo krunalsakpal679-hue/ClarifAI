@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UILanguageSwitch } from '../components/ui/UILanguageSwitch';
+import { ToastContainer } from '../components/ui/Toast';
 
 export const AuthLayout: React.FC = () => {
   const { t } = useTranslation();
@@ -118,6 +119,9 @@ export const AuthLayout: React.FC = () => {
           <p>&copy; {new Date().getFullYear()} ClarifAI. All rights reserved.</p>
         </div>
       </div>
+
+      {/* Global Notifications */}
+      <ToastContainer />
     </div>
   );
 };

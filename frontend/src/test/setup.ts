@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import '@testing-library/jest-dom';
 
 // Fix Node 20+ / 25 AbortSignal / Request mismatch in jsdom with React Router v7
@@ -10,7 +11,8 @@ if (typeof OriginalRequest !== 'undefined') {
         return new OriginalRequest(input, init);
       } catch (err: unknown) {
         if (err instanceof TypeError && String(err).includes('AbortSignal')) {
-          const { signal: _, ...rest } = init;
+          const { signal: _signal, ...rest } = init;
+          void _signal;
           return new OriginalRequest(input, rest);
         }
         throw err;

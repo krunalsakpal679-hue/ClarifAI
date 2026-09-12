@@ -7,8 +7,12 @@ import { useAuthStore } from '../store/authStore';
  * Unauthenticated users are redirected to /login with original location stored in state.
  */
 export const ProtectedLayout: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated, isLoggingOut } = useAuthStore();
   const location = useLocation();
+
+  if (isLoggingOut) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;

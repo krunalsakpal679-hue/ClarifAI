@@ -11,4 +11,5 @@ export const useUiStore = create<UiState>((set) => ({
   setAnalysisLanguage: (analysisLanguage) => set({ analysisLanguage }),
 }));
 
+export const useUIStore = useUiStore;
 export default useUiStore;

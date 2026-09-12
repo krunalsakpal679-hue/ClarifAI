@@ -3,6 +3,7 @@
  */
 import { apiClient } from './client';
 import type {
+  ClauseItem,
   DocumentItem,
   DocumentListParams,
   DocumentSummary,
@@ -70,6 +71,21 @@ export const realDocumentService: IDocumentService = {
     const response = await apiClient.get<PaginatedClauseResponse>(`/api/documents/${id}/clauses/`, {
       params,
     });
+    return response.data;
+  },
+
+  getClauseDetail: async (
+    documentId: string,
+    clauseId: string,
+    lang = 'en'
+  ): Promise<ClauseItem> => {
+    // Section 8.3 Single Clause Detail endpoint (PRD Ch. 12 & Ch. 22.8)
+    const response = await apiClient.get<ClauseItem>(
+      `/api/documents/${documentId}/clauses/${clauseId}/`,
+      {
+        params: { lang },
+      }
+    );
     return response.data;
   },
 };

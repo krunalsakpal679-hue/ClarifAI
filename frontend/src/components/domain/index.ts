@@ -7,3 +7,4 @@ export * from './RiskCategoryTag';
 export * from './RiskOverviewChart';
 export * from './SummaryPanel';
 export * from './ClauseCard';
+export * from './ClauseNavControls';

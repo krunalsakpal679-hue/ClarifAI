@@ -5,10 +5,11 @@ export type CardVariant = 'default' | 'elevated' | 'interactive';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
+  elevation?: 'none' | 'sm' | 'md' | 'lg';
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ variant = 'default', className, children, ...props }, ref) => {
+  ({ variant = 'default', elevation, className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -20,6 +21,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
             'border-neutral-border/80 shadow-elevation-2',
           variant === 'interactive' &&
             'border-neutral-border shadow-elevation-1 hover:shadow-elevation-2 hover:border-neutral-text-secondary/50 cursor-pointer',
+          elevation === 'none' && 'shadow-none',
+          elevation === 'sm' && 'shadow-elevation-1',
+          elevation === 'md' && 'shadow-elevation-2',
+          elevation === 'lg' && 'shadow-elevation-3',
           className
         )}
         {...props}

@@ -14,7 +14,7 @@ export type RiskSeverityVariant = 'HIGH' | 'MODERATE' | 'LOW' | 'SAFE';
 export type ProcessingStatusVariant = 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'outline' | 'neutral';
+  variant?: 'default' | 'outline' | 'neutral' | 'info' | 'success' | 'warning' | 'danger';
   severity?: RiskSeverityVariant;
   status?: ProcessingStatusVariant;
   size?: 'sm' | 'md';
@@ -137,6 +137,14 @@ export const Badge: React.FC<BadgeProps> = ({
           'bg-white text-primary border border-neutral-border',
         variant === 'neutral' &&
           'bg-neutral-subtle text-neutral-text-secondary border border-neutral-border',
+        variant === 'info' &&
+          'bg-blue-50 text-blue-800 border border-blue-200',
+        variant === 'success' &&
+          'bg-risk-safe-bg text-risk-safe border-risk-safe-border',
+        variant === 'warning' &&
+          'bg-risk-moderate-bg text-risk-moderate border-risk-moderate-border',
+        variant === 'danger' &&
+          'bg-risk-high-bg text-risk-high border-risk-high-border',
         className
       )}
       {...props}

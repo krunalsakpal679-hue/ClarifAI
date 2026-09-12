@@ -1,19 +1,29 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '../../store/authStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+/**
+ * Shared Axios HTTP Client for ClarifAI Frontend (PRD Section 9.6 & Ch. 26.1)
+ *
+ * Configured with:
+ * - `withCredentials: true` to ensure the httpOnly refresh cookie is automatically
+ *   included on requests to authentication refresh and API endpoints.
+ * - In-memory access token retrieval via `useAuthStore.getState().accessToken`.
+ */
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 30000,
 });
 
-// Attach Authorization header if access token exists
+// Attach in-memory access token if present
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('clarifai_access_token');
+    const token = useAuthStore.getState().accessToken;
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,7 +36,6 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Standard response error structure per PRD Section 30.8
     const message =
       error.response?.data?.message ||
       error.response?.data?.detail ||

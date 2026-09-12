@@ -16,7 +16,13 @@ ClarifAI/
 │   │   ├── Dockerfile          # Microservice container definition
 │   │   └── README.md           # FastAPI AI Service Living Documentation & Architecture
 │   └── django-api/             # Core Backend API Service (Django REST Framework)
+├── frontend/                   # Frontend SPA (React 18 + Vite + TypeScript + Tailwind + Zustand + Axios)
+│   ├── src/                    # UI Components, state, and test suites
+│   ├── Dockerfile              # Multi-stage production container definition
+│   ├── nginx.conf              # SPA static web server configuration
+│   └── package.json            # Dependencies & scripts
 ├── docs/                       # Project Documentation & Audit Reports
+│   ├── frontend-docker-setup.md
 │   ├── ai-environment-report.md
 │   ├── ai-model-inventory.md
 │   ├── ai-feasibility-report.md
@@ -51,6 +57,7 @@ The AI Pipeline microservice is fully implemented, verified with **182 passing u
 
 ## Documentation Quick Links
 
+- ⚛️ [Frontend Docker Setup & Operations](./docs/frontend-docker-setup.md)
 - 📖 [FastAPI AI Microservice Living README](./backend/fastapi-ai/README.md)
 - 📊 [AI Output Schemas Specification](./docs/ai-output-schemas.md)
 - 🛡️ [AI Pipeline Failure-Mode Matrix](./docs/ai-failure-matrix.md)

@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
+
+configure({ asyncUtilTimeout: 5000 });
 
 // Fix Node 20+ / 25 AbortSignal / Request mismatch in jsdom with React Router v7
 const OriginalRequest = globalThis.Request;

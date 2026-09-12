@@ -37,3 +37,5 @@ export interface DocumentMetadata {
 }
 
 export * from './auth';
+export * from './dashboard';
+export * from './documents';

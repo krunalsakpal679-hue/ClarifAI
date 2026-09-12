@@ -3,6 +3,14 @@ import { apiAuthService } from './auth';
 import { mockAuthService } from '../mocks/auth';
 import { setTokenRefreshHandler } from './client';
 
+import type { IDashboardService } from '../../types/dashboard';
+import { realDashboardService } from './dashboard';
+import { mockDashboardService } from '../mocks/dashboard';
+
+import type { IDocumentService } from '../../types/documents';
+import { realDocumentService } from './documents';
+import { mockDocumentService } from '../mocks/documents';
+
 /**
  * Service Factory & Mock/Real Switch (PRD Section 11)
  *
@@ -20,5 +28,16 @@ if (USE_MOCKS) {
   });
 }
 
+export const dashboardService: IDashboardService = USE_MOCKS
+  ? mockDashboardService
+  : realDashboardService;
+
+export const documentService: IDocumentService = USE_MOCKS
+  ? mockDocumentService
+  : realDocumentService;
+
 export * from './client';
 export * from './auth';
+export * from './dashboard';
+export * from './documents';
+

@@ -5,11 +5,13 @@
 import type {
   DocumentItem,
   DocumentListParams,
+  DocumentUploadResponse,
   IDocumentService,
   PaginatedDocumentListResponse,
 } from '../../types';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 
 export const INITIAL_MOCK_DOCUMENTS: DocumentItem[] = [
   {
@@ -109,6 +111,72 @@ export const mockDocumentService: IDocumentService = {
       throw new Error('Document not found or access denied (404)');
     }
     mockDocumentsDb.splice(index, 1);
+  },
+
+  upload: async (
+    file: File,
+    onProgress?: (progressPercentage: number) => void,
+    signal?: AbortSignal
+  ): Promise<DocumentUploadResponse> => {
+    if (signal?.aborted) {
+      throw new DOMException('Upload canceled by user', 'AbortError');
+    }
+
+    const lowerName = file.name.toLowerCase();
+
+    // 1. Password-protected PDF check (Distinct message per PRD Ch. 14, Ch. 58 R-12)
+    if (lowerName.includes('password') || lowerName.includes('encrypted')) {
+      await delay(100);
+      throw new Error('Password-protected PDFs are not supported. Please upload an unencrypted document.');
+    }
+
+    // 2. Corrupted PDF check
+    if (lowerName.includes('corrupted')) {
+      await delay(100);
+      throw new Error('PDF file is corrupted or unparseable.');
+    }
+
+    // 3. Empty PDF check
+    if (file.size === 0 || lowerName.includes('empty')) {
+      await delay(100);
+      throw new Error('PDF file is corrupted or empty.');
+    }
+
+    // Step-by-step progress simulation (e.g. 25% -> 50% -> 75% -> 100%)
+    const steps = [25, 50, 75, 100];
+    for (const step of steps) {
+      if (signal?.aborted) {
+        throw new DOMException('Upload canceled by user', 'AbortError');
+      }
+      await delay(80);
+      if (signal?.aborted) {
+        throw new DOMException('Upload canceled by user', 'AbortError');
+      }
+      onProgress?.(step);
+    }
+
+    const newDocId = `doc-upload-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+    const newDoc: DocumentItem = {
+      id: newDocId,
+      original_filename: file.name,
+      file_reference: `uploads/documents/${newDocId}_${file.name}`,
+      document_type: 'Legal Document',
+      status: 'queued',
+      failure_reason: null,
+      overall_risk: null,
+      uploaded_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    mockDocumentsDb.unshift(newDoc);
+
+    return {
+      id: newDoc.id,
+      original_filename: newDoc.original_filename,
+      file_reference: newDoc.file_reference,
+      status: newDoc.status,
+      uploaded_at: newDoc.uploaded_at,
+    };
   },
 };
 

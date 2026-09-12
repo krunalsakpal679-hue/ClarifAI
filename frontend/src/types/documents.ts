@@ -40,8 +40,22 @@ export interface DocumentListParams {
   page_size?: number;
 }
 
+export interface DocumentUploadResponse {
+  id: string;
+  original_filename: string;
+  file_reference: string;
+  status: DocumentStatusType;
+  uploaded_at: string;
+}
+
 export interface IDocumentService {
   list: (params?: DocumentListParams) => Promise<PaginatedDocumentListResponse>;
   delete: (id: string) => Promise<void>;
+  upload: (
+    file: File,
+    onProgress?: (progressPercentage: number) => void,
+    signal?: AbortSignal
+  ) => Promise<DocumentUploadResponse>;
 }
+
 

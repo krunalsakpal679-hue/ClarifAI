@@ -4,6 +4,7 @@
 import { apiClient } from './client';
 import type {
   DocumentListParams,
+  DocumentUploadResponse,
   IDocumentService,
   PaginatedDocumentListResponse,
 } from '../../types';
@@ -18,5 +19,29 @@ export const realDocumentService: IDocumentService = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/api/documents/${id}/`);
   },
+  upload: async (
+    file: File,
+    onProgress?: (progressPercentage: number) => void,
+    signal?: AbortSignal
+  ): Promise<DocumentUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post<DocumentUploadResponse>('/api/documents/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      signal,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(Math.min(100, Math.max(0, percent)));
+        }
+      },
+    });
+
+    return response.data;
+  },
 };
+
 

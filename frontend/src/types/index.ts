@@ -41,5 +41,6 @@ export * from './dashboard';
 export * from './documents';
 export * from './clause';
 export * from './chat';
+export * from './comparison';
 export * from '../constants/riskCategories';
 export * from '../constants/severityLevels';

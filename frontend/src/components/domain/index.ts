@@ -13,3 +13,6 @@ export * from './SuggestedQuestionChips';
 export * from './ChatMessageBubble';
 export * from './ChatInput';
 export * from './ChatThread';
+export * from './ComparisonConfidenceIndicator';
+export * from './ComparisonClausePair';
+export * from './ComparisonResultGroup';

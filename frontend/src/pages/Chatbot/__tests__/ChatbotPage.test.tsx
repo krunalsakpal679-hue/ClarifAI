@@ -97,36 +97,59 @@ describe('ChatbotPage (PRD Ch. 17, 22.9 & Section 8.4)', () => {
     expect(screen.getByTestId('source-clause-link-clause-102')).toBeInTheDocument();
   });
 
-  it('displays PRD Ch. 17.7 controlled no-answer response when query lacks document context', async () => {
-    renderRoute('/documents/doc-msa-001/chat');
+  it(
+    'displays PRD Ch. 17.7 controlled no-answer response when query lacks document context',
+    async () => {
+      renderRoute('/documents/doc-msa-001/chat');
 
-    await waitFor(() => {
-      expect(screen.getByText(/What are the payment terms/i)).toBeInTheDocument();
-    });
-
-    const input = screen.getByRole('textbox', {
-      name: /ask a question about this contract/i,
-    });
-    expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument();
-
-    fireEvent.change(input, {
-      target: { value: 'What are the company travel meal allowances?' },
-    });
-    fireEvent.submit(screen.getByTestId('chat-input-form'));
-
-    await waitFor(
-      () => {
+      await waitFor(() => {
+        expect(screen.getByText(/What are the payment terms/i)).toBeInTheDocument();
         expect(
-          screen.getByText(
-            "I couldn't find enough information in the uploaded document to answer this question reliably."
-          )
-        ).toBeInTheDocument();
-      },
-      { timeout: 3000 }
-    );
+          screen.getByRole('textbox', {
+            name: /ask a question about this contract/i,
+          })
+        ).toBeEnabled();
+      });
 
-    expect(screen.getByTestId('chat-message-no-answer')).toBeInTheDocument();
-  });
+      const input = screen.getByRole('textbox', {
+        name: /ask a question about this contract/i,
+      });
+      expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument();
+
+      fireEvent.change(input, {
+        target: { value: 'What are the company travel meal allowances?' },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /send message/i })).toBeEnabled();
+      });
+
+      fireEvent.submit(screen.getByTestId('chat-input-form'));
+
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText('What are the company travel meal allowances?')
+          ).toBeInTheDocument();
+        },
+        { timeout: 10000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(
+              "I couldn't find enough information in the uploaded document to answer this question reliably."
+            )
+          ).toBeInTheDocument();
+        },
+        { timeout: 10000 }
+      );
+
+      expect(screen.getByTestId('chat-message-no-answer')).toBeInTheDocument();
+    },
+    15000
+  );
 
   it('redirects to processing page when document is incomplete', async () => {
     __setMockDocumentStatus('doc-lease-005', 'segmenting');

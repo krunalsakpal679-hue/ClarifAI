@@ -30,11 +30,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = text.trim();
-    if (!trimmed || disabled) return;
+    const query = (inputRef.current?.value || text).trim();
+    if (!query || disabled) return;
 
-    onSend(trimmed);
+    onSend(query);
     setText('');
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -78,7 +81,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         disabled={disabled || !text.trim()}
         aria-label="Send message"
         className="shrink-0 gap-1.5 px-4"
-        onClick={handleSubmit}
       >
         <span className="hidden sm:inline text-xs font-semibold">Send</span>
         <SendHorizontal className="w-4 h-4" aria-hidden="true" />

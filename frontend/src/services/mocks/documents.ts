@@ -101,6 +101,15 @@ export const mockDocumentService: IDocumentService = {
       results: paginatedResults,
     };
   },
+
+  delete: async (id: string): Promise<void> => {
+    await delay(150);
+    const index = mockDocumentsDb.findIndex((doc) => doc.id === id);
+    if (index === -1) {
+      throw new Error('Document not found or access denied (404)');
+    }
+    mockDocumentsDb.splice(index, 1);
+  },
 };
 
 /**

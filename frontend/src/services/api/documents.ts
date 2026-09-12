@@ -15,4 +15,8 @@ export const realDocumentService: IDocumentService = {
     });
     return response.data;
   },
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api/documents/${id}/`);
+  },
 };
+

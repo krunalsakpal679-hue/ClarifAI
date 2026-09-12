@@ -42,4 +42,6 @@ export interface DocumentListParams {
 
 export interface IDocumentService {
   list: (params?: DocumentListParams) => Promise<PaginatedDocumentListResponse>;
+  delete: (id: string) => Promise<void>;
 }
+

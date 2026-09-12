@@ -48,4 +48,23 @@ describe('DocumentService (PRD Section 8.2 & Ch. 20, 29.2, 30.2)', () => {
     expect(res.next).toBeNull();
     expect(res.previous).toBeNull();
   });
+
+  it('deletes document successfully matching Section 8.2 contract', async () => {
+    const initialList = await documentService.list();
+    const docToDelete = initialList.results[0];
+    expect(docToDelete).toBeDefined();
+
+    await documentService.delete(docToDelete.id);
+
+    const updatedList = await documentService.list();
+    expect(updatedList.count).toBe(initialList.count - 1);
+    expect(updatedList.results.find((d) => d.id === docToDelete.id)).toBeUndefined();
+  });
+
+  it('throws error when attempting to delete non-existent document (404)', async () => {
+    await expect(documentService.delete('non-existent-doc-id')).rejects.toThrow(
+      /Document not found or access denied/i
+    );
+  });
 });
+

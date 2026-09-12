@@ -9,6 +9,7 @@ export interface DocumentState {
   error: string | null;
 
   fetchDocuments: (params?: DocumentListParams) => Promise<void>;
+  deleteDocument: (id: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -36,6 +37,14 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         error: errorMessage,
       });
     }
+  },
+
+  deleteDocument: async (id: string) => {
+    await documentService.delete(id);
+    set((state) => ({
+      documents: state.documents.filter((doc) => doc.id !== id),
+      totalCount: Math.max(0, state.totalCount - 1),
+    }));
   },
 
   reset: () => {

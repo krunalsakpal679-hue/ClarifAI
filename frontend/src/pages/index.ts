@@ -6,7 +6,7 @@ export * from './History';
 export * from './Upload';
 export * from './Processing';
 export * from './Analysis';
-export * from './Analysis/ClauseDetailPage';
+export * from './ClauseDetail';
 export * from './Chatbot';
 export * from './Comparison';
 export * from './Comparison/ComparisonResultsPage';

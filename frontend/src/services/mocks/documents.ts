@@ -336,6 +336,44 @@ export const mockDocumentService: IDocumentService = {
       results: clauses,
     };
   },
+
+  getClauseDetail: async (
+    documentId: string,
+    clauseId: string,
+    lang = 'en'
+  ): Promise<ClauseItem> => {
+    await delay(80);
+
+    const doc = mockDocumentsDb.find((d) => d.id === documentId);
+    if (!doc && !documentId.startsWith('doc-')) {
+      throw new Error(`Document not found with ID ${documentId} (404)`);
+    }
+
+    if (doc && doc.status !== 'complete') {
+      throw new Error(`Document analysis not complete (422)`);
+    }
+
+    const clausesKey = documentId === 'doc-safe-001' ? 'doc-safe-001' : 'doc-msa-001';
+    const clauses = MOCK_CLAUSES_BY_DOC[clausesKey] || MOCK_CLAUSES_BY_DOC['doc-msa-001'];
+    const clause = clauses.find((c) => c.id === clauseId);
+
+    if (!clause) {
+      throw new Error(`Clause not found with ID ${clauseId} (404)`);
+    }
+
+    const localizedClause: ClauseItem = {
+      ...clause,
+      document_id: documentId,
+    };
+
+    if (lang === 'hi') {
+      localizedClause.simplified_text = HINDI_SIMPLIFICATIONS[clause.id] || clause.simplified_text;
+      localizedClause.explanation = HINDI_EXPLANATIONS[clause.id] || clause.explanation;
+      localizedClause.translation_available = Boolean(HINDI_SIMPLIFICATIONS[clause.id]);
+    }
+
+    return localizedClause;
+  },
 };
 
 /**

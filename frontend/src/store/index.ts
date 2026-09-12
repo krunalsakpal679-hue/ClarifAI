@@ -21,3 +21,6 @@ export const useAppStore = create<AppState>((set) => ({
 export * from './authStore';
 export * from './documentStore';
 export * from './uiStore';
+export * from './clauseNavStore';
+export * from './chatStore';
+export * from './comparisonStore';

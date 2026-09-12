@@ -189,6 +189,43 @@ describe('DocumentService (PRD Section 8.2 & Ch. 20, 29.2, 30.2)', () => {
       expect(response.results.every((c) => c.severity === 'High')).toBe(true);
     });
   });
+
+  describe('getClauseDetail (Section 8.3 Single Clause Detail Endpoint)', () => {
+    it('retrieves single clause detail matching Section 8.3 shape', async () => {
+      const clause = await documentService.getClauseDetail('doc-msa-001', 'clause-101');
+
+      expect(clause).toBeDefined();
+      expect(clause.id).toBe('clause-101');
+      expect(clause.document_id).toBe('doc-msa-001');
+      expect(clause.position).toBe(1);
+      expect(clause.severity).toBe('High');
+      expect(clause.category).toBe('Liability');
+      expect(clause.original_text).toContain('Customer shall defend, indemnify');
+      expect(clause.simplified_text).toContain('maximum dollar limit');
+      expect(clause.explanation).toContain('Uncapped unilateral indemnification');
+      expect(clause.rule_findings.length).toBeGreaterThan(0);
+    });
+
+    it('returns Hindi translation when lang=hi is requested', async () => {
+      const clause = await documentService.getClauseDetail('doc-msa-001', 'clause-101', 'hi');
+
+      expect(clause).toBeDefined();
+      expect(clause.simplified_text).toContain('मुकदमा होता है');
+      expect(clause.translation_available).toBe(true);
+    });
+
+    it('throws 404 when clause is not found', async () => {
+      await expect(
+        documentService.getClauseDetail('doc-msa-001', 'non-existent-clause')
+      ).rejects.toThrow(/404/);
+    });
+
+    it('throws 404 when document is not found', async () => {
+      await expect(
+        documentService.getClauseDetail('non-existent-doc', 'clause-101')
+      ).rejects.toThrow(/404/);
+    });
+  });
 });
 
 

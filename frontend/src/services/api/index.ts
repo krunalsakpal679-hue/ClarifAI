@@ -11,6 +11,14 @@ import type { IDocumentService } from '../../types/documents';
 import { realDocumentService } from './documents';
 import { mockDocumentService } from '../mocks/documents';
 
+import type { IChatService } from '../../types/chat';
+import { realChatService } from './chat';
+import { mockChatService } from '../mocks/chat';
+
+import type { IComparisonService } from '../../types/comparison';
+import { realComparisonService } from './comparison';
+import { mockComparisonService } from '../mocks/comparison';
+
 /**
  * Service Factory & Mock/Real Switch (PRD Section 11)
  *
@@ -36,8 +44,18 @@ export const documentService: IDocumentService = USE_MOCKS
   ? mockDocumentService
   : realDocumentService;
 
+export const chatService: IChatService = USE_MOCKS
+  ? mockChatService
+  : realChatService;
+
+export const comparisonService: IComparisonService = USE_MOCKS
+  ? mockComparisonService
+  : realComparisonService;
+
 export * from './client';
 export * from './auth';
 export * from './dashboard';
 export * from './documents';
+export * from './chat';
+export * from './comparison';
 

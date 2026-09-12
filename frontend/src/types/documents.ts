@@ -48,7 +48,7 @@ export interface DocumentUploadResponse {
   uploaded_at: string;
 }
 
-import type { DocumentSummary, PaginatedClauseResponse } from './clause';
+import type { ClauseItem, DocumentSummary, PaginatedClauseResponse } from './clause';
 
 export interface IDocumentService {
   list: (params?: DocumentListParams) => Promise<PaginatedDocumentListResponse>;
@@ -61,6 +61,7 @@ export interface IDocumentService {
   getById: (id: string) => Promise<DocumentItem>;
   getSummary: (id: string, lang?: string) => Promise<DocumentSummary>;
   getClauses: (id: string, lang?: string, severity?: string) => Promise<PaginatedClauseResponse>;
+  getClauseDetail: (documentId: string, clauseId: string, lang?: string) => Promise<ClauseItem>;
 }
 
 

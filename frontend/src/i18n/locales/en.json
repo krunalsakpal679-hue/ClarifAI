@@ -1,0 +1,40 @@
+{
+  "common": {
+    "appName": "ClarifAI",
+    "tagline": "AI-Powered Legal Document Simplification & Risk Analysis",
+    "language": "Language",
+    "english": "English",
+    "hindi": "हिन्दी",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "actions": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "save": "Save",
+      "upload": "Upload Document",
+      "compare": "Compare Documents"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "documents": "Documents",
+    "compare": "Compare",
+    "settings": "Settings",
+    "logout": "Log Out"
+  },
+  "designSystem": {
+    "title": "Design System Foundation",
+    "phase": "Phase 01 Complete",
+    "primitives": "UI Primitives",
+    "tokens": "Design Tokens",
+    "colorPalette": "Approved Color Palette"
+  },
+  "risk": {
+    "high": "High Risk",
+    "moderate": "Moderate Risk",
+    "low": "Low Risk",
+    "safe": "Safe"
+  }
+}

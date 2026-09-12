@@ -5,6 +5,7 @@
 import type {
   DocumentItem,
   DocumentListParams,
+  DocumentStatusType,
   DocumentUploadResponse,
   IDocumentService,
   PaginatedDocumentListResponse,
@@ -80,9 +81,21 @@ export const INITIAL_MOCK_DOCUMENTS: DocumentItem[] = [
     uploaded_at: '2026-09-08T11:00:00.000Z',
     updated_at: '2026-09-08T11:01:00.000Z',
   },
+  {
+    id: 'doc-sample-123',
+    original_filename: 'Sample_Services_Agreement_123.pdf',
+    file_reference: 'uploads/documents/doc-sample-123_Sample.pdf',
+    document_type: 'Master Services Agreement',
+    status: 'extracting',
+    failure_reason: null,
+    overall_risk: null,
+    uploaded_at: '2026-09-12T14:30:00.000Z',
+    updated_at: '2026-09-12T14:35:00.000Z',
+  },
 ];
 
-let mockDocumentsDb: DocumentItem[] = [...INITIAL_MOCK_DOCUMENTS];
+let mockDocumentsDb: DocumentItem[] = INITIAL_MOCK_DOCUMENTS.map((d) => ({ ...d }));
+let autoProgressEnabled = false;
 
 export const mockDocumentService: IDocumentService = {
   list: async (params?: DocumentListParams): Promise<PaginatedDocumentListResponse> => {
@@ -178,6 +191,51 @@ export const mockDocumentService: IDocumentService = {
       uploaded_at: newDoc.uploaded_at,
     };
   },
+
+  getById: async (id: string): Promise<DocumentItem> => {
+    await delay(50);
+    const doc = mockDocumentsDb.find((d) => d.id === id);
+    if (!doc) {
+      if (id.startsWith('doc-')) {
+        const fallbackDoc: DocumentItem = {
+          id,
+          original_filename: `Document_${id}.pdf`,
+          file_reference: `uploads/documents/${id}.pdf`,
+          document_type: 'Legal Document',
+          status: 'extracting',
+          failure_reason: null,
+          overall_risk: null,
+          uploaded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        mockDocumentsDb.push(fallbackDoc);
+        return { ...fallbackDoc };
+      }
+      throw new Error(`Document not found with ID ${id} (404)`);
+    }
+
+    // Auto progression simulation for in-progress documents
+    if (autoProgressEnabled && doc.status !== 'complete' && doc.status !== 'failed') {
+      const stageSequence: DocumentStatusType[] = [
+        'queued',
+        'extracting',
+        'ocr',
+        'segmenting',
+        'classifying',
+        'simplifying',
+        'summarizing',
+        'indexing',
+        'complete',
+      ];
+      const currentIndex = stageSequence.indexOf(doc.status);
+      if (currentIndex !== -1 && currentIndex < stageSequence.length - 1) {
+        doc.status = stageSequence[currentIndex + 1];
+        doc.updated_at = new Date().toISOString();
+      }
+    }
+
+    return { ...doc };
+  },
 };
 
 /**
@@ -187,6 +245,25 @@ export const __setMockDocuments = (docs: DocumentItem[]): void => {
   mockDocumentsDb = [...docs];
 };
 
-export const __resetMockDocuments = (): void => {
-  mockDocumentsDb = [...INITIAL_MOCK_DOCUMENTS];
+export const __setMockDocumentProgression = (enabled: boolean): void => {
+  autoProgressEnabled = enabled;
 };
+
+export const __setMockDocumentStatus = (
+  id: string,
+  status: DocumentStatusType,
+  failureReason: string | null = null
+): void => {
+  const doc = mockDocumentsDb.find((d) => d.id === id);
+  if (doc) {
+    doc.status = status;
+    doc.failure_reason = failureReason;
+    doc.updated_at = new Date().toISOString();
+  }
+};
+
+export const __resetMockDocuments = (): void => {
+  mockDocumentsDb = INITIAL_MOCK_DOCUMENTS.map((doc) => ({ ...doc }));
+  autoProgressEnabled = false;
+};
+

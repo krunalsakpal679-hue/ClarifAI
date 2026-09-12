@@ -3,6 +3,7 @@
  */
 import { apiClient } from './client';
 import type {
+  DocumentItem,
   DocumentListParams,
   DocumentUploadResponse,
   IDocumentService,
@@ -42,6 +43,12 @@ export const realDocumentService: IDocumentService = {
 
     return response.data;
   },
+  getById: async (id: string): Promise<DocumentItem> => {
+    // Section 8.2 Combined document detail & status polling endpoint
+    const response = await apiClient.get<DocumentItem>(`/api/documents/${id}/`);
+    return response.data;
+  },
 };
+
 
 

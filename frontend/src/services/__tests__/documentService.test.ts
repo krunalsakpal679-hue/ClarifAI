@@ -126,6 +126,23 @@ describe('DocumentService (PRD Section 8.2 & Ch. 20, 29.2, 30.2)', () => {
       );
     });
   });
+
+  describe('getById (Section 8.2 Combined Document Detail / Status Endpoint)', () => {
+    it('retrieves combined document metadata and status by ID', async () => {
+      const doc = await documentService.getById('doc-msa-001');
+
+      expect(doc).toBeDefined();
+      expect(doc.id).toBe('doc-msa-001');
+      expect(doc.original_filename).toBe('Master_Services_Agreement_Enterprise_2026.pdf');
+      expect(doc.status).toBe('complete');
+      expect(doc.overall_risk).toBe('high');
+    });
+
+    it('throws 404 when document is not found', async () => {
+      await expect(documentService.getById('non-existent-id')).rejects.toThrow(/404/);
+    });
+  });
 });
+
 
 

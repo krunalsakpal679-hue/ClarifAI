@@ -56,6 +56,7 @@ export interface IDocumentService {
     onProgress?: (progressPercentage: number) => void,
     signal?: AbortSignal
   ) => Promise<DocumentUploadResponse>;
+  getById: (id: string) => Promise<DocumentItem>;
 }
 
 

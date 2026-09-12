@@ -1,129 +1,188 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Shield, RotateCcw, AlertTriangle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { ChatThread } from '../../components/domain/ChatThread';
+import { ChatInput } from '../../components/domain/ChatInput';
+import { useChatStore } from '../../store/chatStore';
+import { useDocumentStore } from '../../store/documentStore';
+import { documentService } from '../../services/api';
 
 export const ChatbotPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      text: "Hello! I am your ClarifAI Legal Assistant. I can answer questions about this contract with strict grounding in the document's actual clauses. What would you like to know?",
-      citations: [] as string[],
-    },
-    {
-      role: 'user',
-      text: 'Does this contract allow automatic renewal without prior notice?',
-      citations: [] as string[],
-    },
-    {
-      role: 'assistant',
-      text: 'Yes. Per Section 4.2, the agreement automatically renews for successive 12-month periods unless either party provides written notice of non-renewal at least 60 days prior to the expiration of the current term.',
-      citations: ['Section 4.2: Renewal Term'],
-    },
-  ]);
-  const [inputVal, setInputVal] = useState('');
+  const navigate = useNavigate();
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputVal.trim()) return;
+  const { activeDocument } = useDocumentStore();
+  const {
+    messagesByDoc,
+    isLoadingByDoc,
+    isSendingByDoc,
+    errorByDoc,
+    initSession,
+    sendMessage,
+    clearChat,
+  } = useChatStore();
 
-    const userMessage = inputVal;
-    setInputVal('');
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', text: userMessage, citations: [] },
-      {
-        role: 'assistant',
-        text: 'Full streaming RAG interaction with citations will be connected in Phase 05. For now, this confirms your route and chat context are functioning correctly.',
-        citations: ['Phase 05 AI Service Integration'],
-      },
-    ]);
+  const [documentTitle, setDocumentTitle] = useState<string>('Document');
+  const [initError, setInitError] = useState<string | null>(null);
+
+  const documentId = id || '';
+  const messages = (documentId && messagesByDoc[documentId]) || [];
+  const isLoading = Boolean(documentId && isLoadingByDoc[documentId]);
+  const isSending = Boolean(documentId && isSendingByDoc[documentId]);
+  const sessionError = documentId ? errorByDoc[documentId] : null;
+
+  // Initialize session and verify document status
+  const initializeChat = useCallback(async () => {
+    if (!documentId) return;
+
+    try {
+      // 1. Verify document completion
+      let doc = activeDocument;
+      if (!doc || doc.id !== documentId) {
+        doc = await documentService.getById(documentId);
+      }
+
+      if (doc.status !== 'complete') {
+        navigate(`/documents/${documentId}/processing`, { replace: true });
+        return;
+      }
+
+      setDocumentTitle(doc.original_filename || `Document ${documentId}`);
+
+      // 2. Initialize chat session & history
+      await initSession(documentId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to connect to chat';
+      setInitError(msg);
+    }
+  }, [documentId, activeDocument, initSession, navigate]);
+
+  useEffect(() => {
+    initializeChat();
+  }, [initializeChat]);
+
+  const handleSendMessage = (messageText: string) => {
+    if (!documentId) return;
+    sendMessage(documentId, messageText);
+  };
+
+  const handleClearChat = () => {
+    if (!documentId) return;
+    clearChat(documentId);
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-secondary-200">
-        <div>
+    <div className="max-w-4xl mx-auto space-y-5 pb-10" data-testid="chatbot-page">
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-secondary-500">
+        <Link to="/dashboard" className="hover:text-primary-700 hover:underline">
+          Dashboard
+        </Link>
+        <span className="text-secondary-400">/</span>
+        <Link to={`/documents/${documentId}`} className="hover:text-primary-700 hover:underline">
+          Document Analysis
+        </Link>
+        <span className="text-secondary-400">/</span>
+        <span className="text-secondary-900 font-semibold" aria-current="page">
+          Document Assistant
+        </span>
+      </nav>
+
+      {/* Page Header with Persistent Title for Routing Contract */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-secondary-200">
+        <div className="space-y-1">
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="info" size="sm">Grounded Q&amp;A</Badge>
-            <span className="text-xs text-secondary-500 font-mono">Doc: {id}</span>
+            <span className="text-xs text-secondary-500 font-mono">Doc: {documentId}</span>
           </div>
-          <h1 className="text-2xl font-serif font-bold text-primary-950">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
             Document Assistant
           </h1>
+          <p className="text-xs sm:text-sm text-secondary-600 truncate max-w-xl">
+            {documentTitle}
+          </p>
         </div>
-        <Link to={`/documents/${id}`}>
-          <Button variant="outline" size="sm">
-            &larr; Document Analysis
-          </Button>
-        </Link>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {messages.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearChat}
+              className="gap-1.5 text-xs text-secondary-600 hover:text-red-700"
+              aria-label="Clear chat history"
+            >
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Clear Thread</span>
+            </Button>
+          )}
+
+          <Link to={`/documents/${documentId}`}>
+            <Button variant="secondary" size="sm" className="gap-1.5 text-xs font-medium">
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+              <span>Back to Analysis</span>
+            </Button>
+          </Link>
+        </div>
+      </header>
+
+      {/* Persistent Legal Grounding Disclaimer Banner */}
+      <div
+        role="region"
+        aria-label="Contract Grounding Notice"
+        className="p-3 bg-secondary-50 border border-secondary-200 rounded-lg flex items-center gap-2.5 text-xs text-secondary-700"
+      >
+        <Shield className="w-4 h-4 text-primary-600 shrink-0" aria-hidden="true" />
+        <span className="leading-relaxed">
+          <strong className="font-semibold text-secondary-900">Document Grounding:</strong> Answers are strictly constrained to clauses in this uploaded contract. ClarifAI will explicitly refuse to answer if sufficient contractual context is not found.
+        </span>
       </div>
 
-      {/* Chat Area */}
-      <Card elevation="md" className="flex flex-col h-[560px]">
-        <CardHeader className="py-3 px-6 border-b border-secondary-200 bg-secondary-50/50">
-          <CardTitle className="text-sm font-semibold text-secondary-800">
-            Contract-Grounded Conversation
+      {/* Main Chat Container */}
+      <Card elevation="md" className="flex flex-col h-[620px] overflow-hidden border-secondary-300">
+        {/* Persistent Subtitle CardHeader for Routing Contract */}
+        <CardHeader className="py-3 px-5 sm:px-6 border-b border-secondary-200 bg-secondary-50/60">
+          <CardTitle className="text-sm font-semibold text-secondary-800 flex items-center justify-between">
+            <span>Contract-Grounded Conversation</span>
+            <span className="text-[11px] font-normal text-secondary-500 font-mono">
+              Session Active
+            </span>
           </CardTitle>
-          <CardDescription className="text-xs">
-            Responses are strictly constrained to clauses present in the uploaded document.
+          <CardDescription className="text-xs text-secondary-500">
+            Responses cite exact source clauses with direct inspection links.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.map((m, idx) => (
-            <div
-              key={idx}
-              className={`flex flex-col ${
-                m.role === 'user' ? 'items-end' : 'items-start'
-              }`}
-            >
-              <div
-                className={`max-w-[85%] rounded-xl p-3.5 text-sm ${
-                  m.role === 'user'
-                    ? 'bg-primary-900 text-white'
-                    : 'bg-secondary-100 text-secondary-900 border border-secondary-200'
-                }`}
-              >
-                <p className="leading-relaxed">{m.text}</p>
-              </div>
-
-              {m.citations.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-1.5 ml-1">
-                  {m.citations.map((cite) => (
-                    <span
-                      key={cite}
-                      className="text-[10px] font-mono bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full"
-                    >
-                      📎 {cite}
-                    </span>
-                  ))}
-                </div>
-              )}
+        {/* Error Notification if initialization or session failed */}
+        {(initError || sessionError) && (
+          <div className="p-4 bg-red-50 border-b border-red-200 text-xs text-red-800 flex items-center justify-between" role="alert">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{initError || sessionError}</span>
             </div>
-          ))}
-        </CardContent>
-
-        <form onSubmit={handleSend} className="p-4 border-t border-secondary-200 bg-white">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <Input
-                id="chat-input"
-                type="text"
-                placeholder="Ask any question about this contract's clauses..."
-                value={inputVal}
-                onChange={(e) => setInputVal(e.target.value)}
-              />
-            </div>
-            <Button type="submit" variant="primary">
-              Send
+            <Button variant="outline" size="sm" onClick={initializeChat}>
+              Retry
             </Button>
           </div>
-        </form>
+        )}
+
+        {/* Scrollable Conversation Thread */}
+        <ChatThread
+          documentId={documentId}
+          messages={messages}
+          isSending={isSending}
+          onSelectQuestion={handleSendMessage}
+        />
+
+        {/* Pinned Query Input */}
+        <ChatInput
+          onSend={handleSendMessage}
+          disabled={isSending || isLoading}
+          placeholder="Ask a question about this contract's clauses..."
+        />
       </Card>
     </div>
   );

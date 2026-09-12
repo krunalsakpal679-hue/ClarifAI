@@ -8,3 +8,8 @@ export * from './RiskOverviewChart';
 export * from './SummaryPanel';
 export * from './ClauseCard';
 export * from './ClauseNavControls';
+export * from './SourceClauseLink';
+export * from './SuggestedQuestionChips';
+export * from './ChatMessageBubble';
+export * from './ChatInput';
+export * from './ChatThread';

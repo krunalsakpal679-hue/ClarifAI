@@ -22,3 +22,4 @@ export * from './authStore';
 export * from './documentStore';
 export * from './uiStore';
 export * from './clauseNavStore';
+export * from './chatStore';

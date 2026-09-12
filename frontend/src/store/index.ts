@@ -17,3 +17,7 @@ export const useAppStore = create<AppState>((set) => ({
   isSidebarOpen: false,
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
 }));
+
+export * from './authStore';
+export * from './documentStore';
+export * from './uiStore';

@@ -48,4 +48,148 @@ describe('DocumentService (PRD Section 8.2 & Ch. 20, 29.2, 30.2)', () => {
     expect(res.next).toBeNull();
     expect(res.previous).toBeNull();
   });
+
+  it('deletes document successfully matching Section 8.2 contract', async () => {
+    const initialList = await documentService.list();
+    const docToDelete = initialList.results[0];
+    expect(docToDelete).toBeDefined();
+
+    await documentService.delete(docToDelete.id);
+
+    const updatedList = await documentService.list();
+    expect(updatedList.count).toBe(initialList.count - 1);
+    expect(updatedList.results.find((d) => d.id === docToDelete.id)).toBeUndefined();
+  });
+
+  it('throws error when attempting to delete non-existent document (404)', async () => {
+    await expect(documentService.delete('non-existent-doc-id')).rejects.toThrow(
+      /Document not found or access denied/i
+    );
+  });
+
+  describe('upload (Section 8.2 & PRD Ch. 14, 22.5, 58)', () => {
+    it('uploads valid PDF document and returns DocumentUploadResponse', async () => {
+      const file = new File(['%PDF-1.4 sample content'], 'Vendor_Agreement_2026.pdf', {
+        type: 'application/pdf',
+      });
+
+      const progressValues: number[] = [];
+      const response = await documentService.upload(file, (p) => {
+        progressValues.push(p);
+      });
+
+      expect(response).toBeDefined();
+      expect(response.id).toBeDefined();
+      expect(response.original_filename).toBe('Vendor_Agreement_2026.pdf');
+      expect(response.status).toBe('queued');
+      expect(response.uploaded_at).toBeDefined();
+
+      // Progress reached 100%
+      expect(progressValues.length).toBeGreaterThanOrEqual(1);
+      expect(progressValues[progressValues.length - 1]).toBe(100);
+
+      // Verify newly uploaded document appears in list()
+      const listRes = await documentService.list();
+      expect(listRes.results.some((doc) => doc.id === response.id)).toBe(true);
+    });
+
+    it('cancels active upload when AbortSignal is aborted', async () => {
+      const file = new File(['%PDF-1.4 content'], 'Sample_Contract.pdf', {
+        type: 'application/pdf',
+      });
+      const controller = new AbortController();
+
+      const uploadPromise = documentService.upload(file, undefined, controller.signal);
+      // Abort immediately
+      controller.abort();
+
+      await expect(uploadPromise).rejects.toThrow(/canceled/i);
+    });
+
+    it('rejects password-protected PDF with distinct specific error message (PRD Ch. 58 R-12)', async () => {
+      const passwordFile = new File(['%PDF-1.4 encrypted content'], 'Confidential_Password_Protected.pdf', {
+        type: 'application/pdf',
+      });
+
+      await expect(documentService.upload(passwordFile)).rejects.toThrow(
+        'Password-protected PDFs are not supported. Please upload an unencrypted document.'
+      );
+    });
+
+    it('rejects corrupted PDF with specific corrupted message', async () => {
+      const corruptedFile = new File(['bad content'], 'corrupted_file.pdf', {
+        type: 'application/pdf',
+      });
+
+      await expect(documentService.upload(corruptedFile)).rejects.toThrow(
+        'PDF file is corrupted or unparseable.'
+      );
+    });
+  });
+
+  describe('getById (Section 8.2 Combined Document Detail / Status Endpoint)', () => {
+    it('retrieves combined document metadata and status by ID', async () => {
+      const doc = await documentService.getById('doc-msa-001');
+
+      expect(doc).toBeDefined();
+      expect(doc.id).toBe('doc-msa-001');
+      expect(doc.original_filename).toBe('Master_Services_Agreement_Enterprise_2026.pdf');
+      expect(doc.status).toBe('complete');
+      expect(doc.overall_risk).toBe('high');
+    });
+
+    it('throws 404 when document is not found', async () => {
+      await expect(documentService.getById('non-existent-id')).rejects.toThrow(/404/);
+    });
+  });
+
+  describe('getSummary (Section 8.3 Document Summary Endpoint)', () => {
+    it('retrieves four-field executive summary by ID', async () => {
+      const summary = await documentService.getSummary('doc-msa-001');
+
+      expect(summary).toBeDefined();
+      expect(summary.document_id).toBe('doc-msa-001');
+      expect(summary.purpose_text).toBeTruthy();
+      expect(summary.key_risks_text).toBeTruthy();
+      expect(summary.key_terms_text).toBeTruthy();
+      expect(summary.obligations_text).toBeTruthy();
+      expect(summary.translation_available).toBe(true);
+    });
+
+    it('retrieves translated Hindi summary when lang=hi', async () => {
+      const summary = await documentService.getSummary('doc-msa-001', 'hi');
+
+      expect(summary).toBeDefined();
+      expect(summary.purpose_text).toContain('मास्टर सेवा समझौता');
+    });
+  });
+
+  describe('getClauses (Section 8.3 Document Clauses Endpoint)', () => {
+    it('retrieves all clauses across four severities and eight categories', async () => {
+      const response = await documentService.getClauses('doc-msa-001');
+
+      expect(response).toBeDefined();
+      expect(response.results.length).toBeGreaterThanOrEqual(8);
+
+      const severities = new Set(response.results.map((c) => c.severity));
+      expect(severities.has('High')).toBe(true);
+      expect(severities.has('Moderate')).toBe(true);
+      expect(severities.has('Low')).toBe(true);
+      expect(severities.has('Safe')).toBe(true);
+
+      const categories = new Set<string>(
+        response.results.map((c) => c.category).filter(Boolean) as string[]
+      );
+      expect(categories.has('Renewal')).toBe(true);
+      expect(categories.has('Auto-renewal')).toBe(false);
+    });
+
+    it('filters clauses by severity', async () => {
+      const response = await documentService.getClauses('doc-msa-001', 'en', 'high');
+      expect(response.results.every((c) => c.severity === 'High')).toBe(true);
+    });
+  });
 });
+
+
+

@@ -40,6 +40,27 @@ export interface DocumentListParams {
   page_size?: number;
 }
 
+export interface DocumentUploadResponse {
+  id: string;
+  original_filename: string;
+  file_reference: string;
+  status: DocumentStatusType;
+  uploaded_at: string;
+}
+
+import type { DocumentSummary, PaginatedClauseResponse } from './clause';
+
 export interface IDocumentService {
   list: (params?: DocumentListParams) => Promise<PaginatedDocumentListResponse>;
+  delete: (id: string) => Promise<void>;
+  upload: (
+    file: File,
+    onProgress?: (progressPercentage: number) => void,
+    signal?: AbortSignal
+  ) => Promise<DocumentUploadResponse>;
+  getById: (id: string) => Promise<DocumentItem>;
+  getSummary: (id: string, lang?: string) => Promise<DocumentSummary>;
+  getClauses: (id: string, lang?: string, severity?: string) => Promise<PaginatedClauseResponse>;
 }
+
+

@@ -214,3 +214,15 @@ class MockAIClient:
             }
 
         return validate_translate_response(raw_response)
+
+    def delete_document_embeddings(self, document_id: str) -> dict:
+        """
+        Triggers vector embedding cleanup in Qdrant for deleted document (PRD Ch. 26.5.1 & Part B.3).
+        """
+        self._check_simulation()
+        return {
+            "status": "success",
+            "document_id": str(document_id),
+            "embeddings_purged": True
+        }
+

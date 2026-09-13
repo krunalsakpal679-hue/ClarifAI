@@ -15,6 +15,8 @@ def health_check(request):
     })
 
 
+from apps.documents.views import DashboardSummaryView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/health/', health_check, name='health_check'),
@@ -22,6 +24,8 @@ urlpatterns = [
     path('api/documents/', include('apps.documents.urls')),
     path('api/comparisons/', include('apps.comparison.urls')),
     path('api/reports/', include('apps.reports.urls')),
+    path('api/dashboard/summary', DashboardSummaryView.as_view(), name='dashboard_summary'),
 ]
+
 
 

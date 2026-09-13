@@ -1,0 +1,1 @@
+export { ComparisonResultsPage } from './Results';

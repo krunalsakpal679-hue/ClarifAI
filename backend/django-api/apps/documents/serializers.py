@@ -42,8 +42,11 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
 
 class DocumentDetailSerializer(serializers.ModelSerializer):
     """
-    Serializer for GET /api/documents/{id}/ polling status and detail.
+    Serializer for GET /api/documents/{id}/ polling status and detail, and list view.
+    Includes lightweight overall_risk computed field for frontend risk indicators (Ch. 20).
     """
+    overall_risk = serializers.SerializerMethodField()
+
     class Meta:
         model = Document
         fields = [
@@ -53,10 +56,30 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             'document_type',
             'status',
             'failure_reason',
+            'overall_risk',
             'uploaded_at',
             'updated_at',
         ]
         read_only_fields = fields
+
+    def get_overall_risk(self, obj):
+        """
+        Derives document overall risk level from persisted clause severities (Phase 8).
+        Returns 'high', 'moderate', 'low', 'safe', or None if incomplete.
+        """
+        if obj.status != DocumentStatus.COMPLETE:
+            return None
+        severities = set(obj.clauses.values_list('severity', flat=True))
+        if 'high' in severities:
+            return 'high'
+        if 'moderate' in severities:
+            return 'moderate'
+        if 'low' in severities:
+            return 'low'
+        if 'safe' in severities:
+            return 'safe'
+        return 'safe'
+
 
 
 class DocumentSummarySerializer(serializers.ModelSerializer):

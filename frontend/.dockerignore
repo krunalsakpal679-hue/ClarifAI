@@ -1,0 +1,31 @@
+# ==============================================================================
+# ClarifAI Frontend .dockerignore (/frontend/.dockerignore)
+# Exclude build artifacts, local dependencies, and secrets from Docker context
+# ==============================================================================
+
+node_modules
+dist
+dist-ssr
+coverage
+
+# Environment and secrets (Never bake into Docker context)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor and OS metadata
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+Thumbs.db

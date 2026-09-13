@@ -55,12 +55,19 @@ def translate(document_id: str, target_lang: str, fields: list = None) -> dict:
     return client.translate(document_id, target_lang, fields=fields)
 
 
+def delete_document_embeddings(document_id: str) -> dict:
+    """Wrapper function delegating to active AI Client for Qdrant vector cleanup."""
+    client = get_ai_client()
+    return client.delete_document_embeddings(document_id)
+
+
 __all__ = [
     'get_ai_client',
     'process_document',
     'chat',
     'compare',
     'translate',
+    'delete_document_embeddings',
     'MockAIClient',
     'RealAIClient',
     'AIServiceError',
@@ -70,3 +77,4 @@ __all__ = [
     'AIServiceUnavailableError',
     'AIServiceValidationError',
 ]
+

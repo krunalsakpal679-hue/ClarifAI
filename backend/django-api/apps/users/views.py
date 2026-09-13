@@ -12,6 +12,12 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
+from apps.audit.services import (
+    EVENT_LOGIN_FAILURE,
+    EVENT_LOGIN_SUCCESS,
+    EVENT_SIGNUP,
+    log_audit_event,
+)
 from apps.users.serializers import (
     UserLoginSerializer,
     UserReadSerializer,
@@ -58,6 +64,9 @@ class SignUpView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
+        # Audit Log: signup (PRD Ch. 26.8)
+        log_audit_event(EVENT_SIGNUP, user=user, request=request)
+
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
 
@@ -91,7 +100,13 @@ class LoginView(APIView):
 
         user = authenticate(request, username=email, password=password)
         if user is None or not user.is_active:
+            # Audit Log: login_failure (user=None if email does not belong to a real account, Ch. 26.8)
+            real_user = User.objects.filter(email=email).first()
+            log_audit_event(EVENT_LOGIN_FAILURE, user=real_user, request=request)
             raise AuthenticationFailed("Invalid email or password.")
+
+        # Audit Log: login_success (PRD Ch. 26.8)
+        log_audit_event(EVENT_LOGIN_SUCCESS, user=user, request=request)
 
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
@@ -105,6 +120,7 @@ class LoginView(APIView):
         )
         set_refresh_cookie(response, str(refresh))
         return response
+
 
 
 class RefreshTokenView(APIView):

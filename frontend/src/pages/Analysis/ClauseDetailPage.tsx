@@ -1,0 +1,1 @@
+export { ClauseDetailPage } from '../ClauseDetail';

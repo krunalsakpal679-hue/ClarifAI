@@ -1,0 +1,251 @@
+{
+  "common": {
+    "appName": "ClarifAI",
+    "tagline": "AI-Powered Legal Document Simplification & Risk Analysis",
+    "language": "Language",
+    "english": "English",
+    "hindi": "हिन्दी",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "back": "Back",
+    "translationNotice": "Translation temporarily unavailable. Showing in English.",
+    "actions": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "save": "Save",
+      "upload": "Upload Document",
+      "compare": "Compare Documents",
+      "retry": "Retry"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "history": "History",
+    "upload": "Upload",
+    "documents": "Documents",
+    "compare": "Compare",
+    "settings": "Settings",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out"
+  },
+  "disclaimer": {
+    "notice": "ClarifAI is an AI-powered legal assistance tool and is not a substitute for professional legal advice.",
+    "banner": "ClarifAI is an AI-powered legal assistance tool and is not a substitute for professional legal advice."
+  },
+  "designSystem": {
+    "title": "Design System Foundation",
+    "phase": "Phase 01 Complete",
+    "primitives": "UI Primitives",
+    "tokens": "Design Tokens",
+    "colorPalette": "Approved Color Palette"
+  },
+  "risk": {
+    "high": "High Risk",
+    "moderate": "Moderate Risk",
+    "low": "Low Risk",
+    "safe": "Safe"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "subtitle": "Review document simplification summaries, inspect clause risk flags, and compare contract versions.",
+    "stats": {
+      "totalDocuments": "Total Documents",
+      "totalDocumentsDesc": "Uploaded for legal analysis",
+      "flaggedRisk": "Risk Flagged",
+      "flaggedRiskDesc": "Non-standard clause severity",
+      "inProgress": "In Progress",
+      "inProgressDesc": "Under active AI simplification",
+      "completed": "Completed",
+      "completedDesc": "Ready for review & chat"
+    },
+    "recentDocuments": "Recent Documents",
+    "recentDocumentsSubtitle": "Latest legal agreements uploaded and processed by ClarifAI.",
+    "viewAllHistory": "View all history",
+    "emptyTitle": "No documents analyzed yet",
+    "emptySubtitle": "Upload your first contract, NDA, or service agreement to generate plain-English summaries, pinpointed risk scores, and clause redlines.",
+    "uploadFirst": "Upload your first document",
+    "unableToLoad": "Unable to load dashboard data"
+  },
+  "history": {
+    "title": "Document History",
+    "subtitle": "Browse and manage your uploaded contracts, summaries, and risk analyses.",
+    "searchPlaceholder": "Search by filename or document type...",
+    "filterStatus": "All Statuses",
+    "filterRisk": "All Risk Levels",
+    "emptyTitle": "No matching documents found",
+    "emptySubtitle": "Try adjusting your search or filter criteria.",
+    "uploadNew": "Upload New Document",
+    "columns": {
+      "document": "Document Name",
+      "type": "Type",
+      "uploaded": "Upload Date",
+      "risk": "Risk Severity",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "viewAnalysis": "View Analysis"
+  },
+  "upload": {
+    "title": "Upload Legal Document",
+    "subtitle": "Upload contracts, NDAs, or agreements in PDF or DOCX format for instant plain-English analysis.",
+    "dragDrop": "Drag and drop your contract here, or browse files",
+    "browseFiles": "Browse Files",
+    "supportedFormats": "Supported formats: PDF, DOCX (Max 25MB)",
+    "securityReassurance": "Files are encrypted in transit and at rest per enterprise security standards.",
+    "uploading": "Uploading document...",
+    "processing": "Processing document..."
+  },
+  "processing": {
+    "title": "Analyzing Document",
+    "subtitle": "Please wait while our multi-stage AI pipeline parses, evaluates risks, and simplifies your document.",
+    "cancel": "Cancel Analysis",
+    "failed": "Processing Failed",
+    "retry": "Retry Processing",
+    "returnDashboard": "Return to Dashboard",
+    "stages": {
+      "fileUpload": "File Upload",
+      "textExtraction": "Text Extraction",
+      "documentClassification": "Document Classification",
+      "clauseSegmentation": "Clause Segmentation",
+      "plainLanguageSimplification": "Plain-English Simplification",
+      "riskEvaluation": "Legal Risk Evaluation",
+      "anomalyDetection": "Anomaly Detection",
+      "crossReferenceAnalysis": "Cross-Reference Analysis",
+      "reportCompilation": "Report Compilation"
+    }
+  },
+  "analysis": {
+    "title": "Analysis Results",
+    "defaultTitle": "Master Services Agreement Analysis",
+    "executiveSummary": "Executive Plain-Language Summary",
+    "chatWithDoc": "Chat with Document",
+    "compareWithDoc": "Compare with Another Doc",
+    "exportReport": "Export Report",
+    "metrics": {
+      "totalClauses": "Total Clauses",
+      "totalClausesDesc": "Total contractual provisions",
+      "flaggedClauses": "Flagged Clauses",
+      "flaggedClausesDesc": "Risks requiring attention",
+      "highSeverity": "High Severity Count",
+      "highSeverityDesc": "Critical legal exposures"
+    },
+    "filter": {
+      "all": "All",
+      "risky": "Risky",
+      "safe": "Safe"
+    },
+    "extractedClausesTitle": "Extracted Clauses & Risk Assessments",
+    "extractedClausesSubtitle": "Individual clause simplifications, severity badges, and legal risk drivers.",
+    "allSafeTitle": "All Analyzed Clauses Classified as Safe",
+    "allSafeDesc": "Every analyzed clause in this contract satisfies standard commercial legal baselines. No unilateral indemnity clauses, uncapped damages, or unfair termination rights were detected.",
+    "noRiskyTitle": "No Risky Clauses Detected",
+    "noRiskyDesc": "None of the clauses in this document exceed standard legal risk thresholds. All clauses have been evaluated as safe and balanced.",
+    "viewAllSafe": "View All Safe Clauses",
+    "failedToLoadClauses": "Failed to Load Clauses",
+    "retryLoadingClauses": "Retry Loading Clauses"
+  },
+  "clauseDetail": {
+    "title": "Clause Detail",
+    "backToAnalysis": "Back to Analysis",
+    "originalContractText": "Original Contract Text",
+    "plainEnglishBreakdown": "Plain-English Breakdown & Risk Driver",
+    "riskDriver": "Legal Risk Driver",
+    "keyTakeaway": "Key Commercial Takeaway",
+    "previousClause": "Previous Clause",
+    "nextClause": "Next Clause",
+    "clausePosition": "Clause {{current}} of {{total}}"
+  },
+  "chat": {
+    "title": "Document Assistant",
+    "subtitle": "Contract-Grounded Conversation",
+    "placeholder": "Ask a question about this document...",
+    "send": "Send",
+    "suggestedQuestions": "Suggested Questions",
+    "sourceClauses": "Source Clauses",
+    "noAnswer": "I couldn't find enough information in the uploaded document to answer that question.",
+    "disclaimer": "AI responses are strictly grounded in your uploaded document."
+  },
+  "comparison": {
+    "setupTitle": "Compare Legal Documents",
+    "setupSubtitle": "Select two processed documents to perform an AI-powered clause-by-clause version comparison.",
+    "docA": "Base Document (Version A)",
+    "docB": "Comparison Document (Version B)",
+    "selectDocA": "Select base contract...",
+    "selectDocB": "Select comparison contract...",
+    "compareButton": "Run Version Comparison",
+    "sameDocumentError": "Cannot compare a document against itself.",
+    "incompleteDocWarning": "Both documents must be fully processed before comparison.",
+    "resultsTitle": "Comparison Results",
+    "pairwiseAnalysis": "Pairwise Analysis",
+    "discrepancies": "Discrepancies",
+    "comparing": "Comparing",
+    "vs": "vs",
+    "groups": {
+      "changed": "Changed Clauses",
+      "changedDesc": "Wording or legal risk differences between versions.",
+      "matched": "Matched Clauses",
+      "matchedDesc": "Substantially identical terms across both agreements.",
+      "missing": "Missing & Added",
+      "missingDesc": "Deleted or newly introduced clauses."
+    },
+    "confidenceWarning": "Structural divergence detected between documents. Semantic alignment confidence is reduced.",
+    "configureNew": "Configure New Comparison",
+    "retryComparison": "Retry Comparison"
+  },
+  "reports": {
+    "exportReport": "Export Report",
+    "generateReport": "Generate Report",
+    "generating": "Generating Report...",
+    "ready": "Report Ready (PDF)",
+    "downloadPdf": "Download PDF",
+    "downloaded": "Downloaded",
+    "failed": "Generation Failed",
+    "retry": "Retry Report",
+    "readyConfirmation": "Ready for download",
+    "reDownload": "Download Again",
+    "successNotice": "Report downloaded successfully!",
+    "failedNotice": "Report generation failed. Please try again."
+  },
+  "settings": {
+    "title": "User Settings",
+    "subtitle": "Security & Token Architecture",
+    "languagePreferences": "Language Preferences",
+    "uiLanguageLabel": "Interface Language",
+    "uiLanguageDesc": "Changes the language of all UI navigation, buttons, and chrome labels.",
+    "analysisLanguageLabel": "Default Analysis Language",
+    "analysisLanguageDesc": "Determines the language of AI-generated summaries and clause explanations.",
+    "save": "Save Preferences"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email Address",
+    "password": "Password",
+    "fullName": "Full Name",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "ClarifAI encountered an unexpected issue while rendering this view. Your session and data are secure.",
+    "summaryTitle": "Error Summary:",
+    "stackDetails": "Component Stack Details",
+    "tryAgain": "Try Again",
+    "goHome": "Go to Dashboard"
+  },
+  "errors": {
+    "pageNotFound": "Page Not Found",
+    "notFoundMessage": "The page you are looking for does not exist or has been moved.",
+    "returnHome": "Return to Home",
+    "aiUnavailable": "AI processing is temporarily unavailable. Please try again later.",
+    "rateLimit": "Too many requests, please wait before trying again."
+  }
+}

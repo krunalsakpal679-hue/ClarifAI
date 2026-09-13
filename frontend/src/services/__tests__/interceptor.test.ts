@@ -109,7 +109,7 @@ describe('apiClient 401 Silent Refresh Interceptor (PRD Section 9.6 & Ch. 26.1)'
       throw err;
     };
 
-    await expect(apiClient.post('/auth/login', { email: 'bad@clarifai.internal', password: 'bad' })).rejects.toMatchObject({
+    await expect(apiClient.post('/api/auth/login', { email: 'bad@clarifai.internal', password: 'bad' })).rejects.toMatchObject({
       status: 401,
       message: 'Invalid email or password.',
       error: {

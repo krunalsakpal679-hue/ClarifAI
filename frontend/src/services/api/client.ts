@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../../store/authStore';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 /**
  * Shared Axios HTTP Client for ClarifAI Frontend (PRD Section 9.6 & Ch. 26.1)
@@ -40,7 +40,7 @@ export const defaultTokenRefresh = async (): Promise<string> => {
     refreshPromise = (async () => {
       try {
         const response = await axios.post<{ access: string }>(
-          `${API_BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );

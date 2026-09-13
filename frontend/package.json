@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "type-check": "tsc -b --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --pool=forks"
+    "test": "vitest run --pool=forks",
+    "test:integration": "node scripts/verify-backend-integration.mjs"
   },
   "dependencies": {
     "axios": "^1.7.9",

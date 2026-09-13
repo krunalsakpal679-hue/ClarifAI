@@ -24,12 +24,15 @@ import { realReportService } from './reports';
 import { mockReportService } from '../mocks/reports';
 
 /**
- * Service Factory & Mock/Real Switch (PRD Section 11)
+ * Service Factory & Mock/Real Switch (PRD Section 11 & Ch. 30.8)
  *
  * Isolated to services/api/index.ts:
- * When VITE_USE_MOCKS !== 'false', the application uses the realistic mock service layer.
+ * - Production builds (PROD): Defaults to false (real backend integration) unless explicitly enabled with VITE_USE_MOCKS=true.
+ * - Development & Test: Defaults to true (realistic mock service layer) unless VITE_USE_MOCKS=false.
  */
-export const USE_MOCKS: boolean = import.meta.env.VITE_USE_MOCKS !== 'false';
+export const USE_MOCKS: boolean = import.meta.env.PROD
+  ? import.meta.env.VITE_USE_MOCKS === 'true'
+  : import.meta.env.VITE_USE_MOCKS !== 'false';
 
 export const authService: IAuthService = USE_MOCKS ? mockAuthService : apiAuthService;
 

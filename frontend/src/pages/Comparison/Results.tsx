@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
@@ -7,21 +8,24 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import {
   ComparisonConfidenceIndicator,
   ComparisonResultGroup,
+  LanguageToggle,
+  ReportDownloadButton,
 } from '../../components/domain';
 import {
   ArrowLeft,
-  Download,
-  Globe,
   RotateCcw,
   AlertTriangle,
+  AlertCircle,
   ArrowRightLeft,
   CheckCircle2,
   MinusCircle,
 } from 'lucide-react';
 import { useComparisonStore } from '../../store/comparisonStore';
+import { useUiStore } from '../../store/uiStore';
 import type { ComparisonClauseItem } from '../../types/comparison';
 
 export const ComparisonResultsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { idA, idB, comparisonId } = useParams<{
     idA?: string;
     idB?: string;
@@ -31,7 +35,7 @@ export const ComparisonResultsPage: React.FC = () => {
   const { comparison, isLowConfidence, confidenceWarning, isLoading, error, fetchComparison } =
     useComparisonStore();
 
-  const [currentLang, setCurrentLang] = useState<'en' | 'hi'>('en');
+  const { analysisLanguage, setAnalysisLanguage } = useUiStore();
 
   // Resolved ID for fetch
   const effectiveId = useMemo(() => {
@@ -46,14 +50,9 @@ export const ComparisonResultsPage: React.FC = () => {
 
   useEffect(() => {
     if (effectiveId) {
-      fetchComparison(effectiveId, currentLang);
+      fetchComparison(effectiveId, analysisLanguage);
     }
-  }, [effectiveId, currentLang, fetchComparison]);
-
-  const handleToggleLang = () => {
-    const nextLang = currentLang === 'en' ? 'hi' : 'en';
-    setCurrentLang(nextLang);
-  };
+  }, [effectiveId, analysisLanguage, fetchComparison]);
 
   // Group clauses into the 3 categories
   const { changedItems, matchedItems, missingItems } = useMemo(() => {
@@ -110,35 +109,26 @@ export const ComparisonResultsPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
-          {/* Multilingual Toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleLang}
-            className="gap-1.5 text-xs text-secondary-700"
-            aria-label={`Switch analysis language to ${currentLang === 'en' ? 'Hindi' : 'English'}`}
-          >
-            <Globe className="w-3.5 h-3.5 text-accent-600" />
-            <span>{currentLang === 'en' ? 'हिंदी में देखें' : 'English'}</span>
-          </Button>
+          {/* Analysis Language Switch */}
+          <LanguageToggle
+            value={analysisLanguage}
+            onChange={(nextLang) => setAnalysisLanguage(nextLang)}
+          />
 
-          {/* Export Comparison Report (Phase 12 Entry Point) */}
-          <Button
+          {/* Two-Step Comparison Report Download Button */}
+          <ReportDownloadButton
+            reportType="comparison"
+            targetId={effectiveId}
+            lang={analysisLanguage}
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs text-secondary-700"
-            title="Comparison report generation (Phase 12)"
-            aria-label="Export Comparison Report"
-          >
-            <Download className="w-3.5 h-3.5 text-primary-700" />
-            <span className="hidden sm:inline">Export Report</span>
-          </Button>
+          />
 
           {/* Reconfigure Comparison Link */}
           <Link to="/compare">
             <Button variant="secondary" size="sm" className="gap-1.5 text-xs font-medium">
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Configure New Comparison</span>
+              <span>{t('comparison.configureNew', 'Configure New Comparison')}</span>
             </Button>
           </Link>
         </div>
@@ -174,7 +164,7 @@ export const ComparisonResultsPage: React.FC = () => {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => effectiveId && fetchComparison(effectiveId, currentLang)}
+              onClick={() => effectiveId && fetchComparison(effectiveId, analysisLanguage)}
               className="gap-1.5"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -193,6 +183,23 @@ export const ComparisonResultsPage: React.FC = () => {
               warning={confidenceWarning}
               className="my-2"
             />
+          )}
+
+          {/* Explicit Notice when Translation is Temporarily Unavailable */}
+          {comparison.translation_available === false && (
+            <div
+              role="alert"
+              className="p-3.5 rounded-lg bg-blue-50 border border-blue-200 text-xs sm:text-sm text-blue-900 flex items-center gap-2.5 my-2"
+              data-testid="translation-unavailable-notice"
+            >
+              <AlertCircle className="w-4 h-4 text-blue-600 shrink-0" aria-hidden="true" />
+              <span>
+                {t(
+                  'common.translationNotice',
+                  'Translation temporarily unavailable. Showing in English.'
+                )}
+              </span>
+            </div>
           )}
 
           {/* Metrics Summary Overview Bar */}

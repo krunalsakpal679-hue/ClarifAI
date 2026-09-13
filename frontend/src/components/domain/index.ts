@@ -16,3 +16,5 @@ export * from './ChatThread';
 export * from './ComparisonConfidenceIndicator';
 export * from './ComparisonClausePair';
 export * from './ComparisonResultGroup';
+export * from './LanguageToggle';
+export * from './ReportDownloadButton';

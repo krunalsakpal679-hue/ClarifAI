@@ -1,14 +1,21 @@
 import { create } from 'zustand';
-import type { SupportedLanguage } from '../i18n';
+import { changeLanguage, type SupportedLanguage } from '../i18n';
 
 export interface UiState {
+  uiLanguage: SupportedLanguage;
+  setUiLanguage: (lang: SupportedLanguage) => void;
   analysisLanguage: SupportedLanguage;
   setAnalysisLanguage: (lang: SupportedLanguage) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
+  uiLanguage: 'en',
+  setUiLanguage: (uiLanguage: SupportedLanguage) => {
+    changeLanguage(uiLanguage);
+    set({ uiLanguage });
+  },
   analysisLanguage: 'en',
-  setAnalysisLanguage: (analysisLanguage) => set({ analysisLanguage }),
+  setAnalysisLanguage: (analysisLanguage: SupportedLanguage) => set({ analysisLanguage }),
 }));
 
 export const useUIStore = useUiStore;

@@ -71,17 +71,17 @@ export const HistoryPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-secondary-200">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
-            Document History
+            {t('history.title', 'Document History')}
           </h1>
           <p className="text-secondary-600 text-sm mt-1">
-            Access and manage previously simplified and analyzed legal contracts.
+            {t('history.subtitle', 'Access and manage previously simplified and analyzed legal contracts.')}
           </p>
         </div>
 
         <Link to="/upload">
           <Button variant="primary" size="md" className="gap-2 shadow-sm">
             <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>+ Upload New Document</span>
+            <span>+ {t('history.uploadNew', 'Upload New Document')}</span>
           </Button>
         </Link>
       </div>
@@ -133,15 +133,15 @@ export const HistoryPage: React.FC = () => {
             <table
               className="w-full text-left text-sm"
               role="table"
-              aria-label="Document History"
+              aria-label={t('history.title', 'Document History')}
             >
               <thead>
                 <tr className="border-b border-secondary-200 bg-secondary-50 text-secondary-700 text-xs uppercase font-semibold tracking-wider">
-                  <th scope="col" className="py-3 px-4 sm:px-6">Document Name</th>
-                  <th scope="col" className="py-3 px-4">Status</th>
-                  <th scope="col" className="py-3 px-4">Risk Severity</th>
-                  <th scope="col" className="py-3 px-4">Upload Date</th>
-                  <th scope="col" className="py-3 px-4 sm:px-6 text-right">Actions</th>
+                  <th scope="col" className="py-3 px-4 sm:px-6">{t('history.columns.document', 'Document Name')}</th>
+                  <th scope="col" className="py-3 px-4">{t('history.columns.status', 'Status')}</th>
+                  <th scope="col" className="py-3 px-4">{t('history.columns.risk', 'Risk Severity')}</th>
+                  <th scope="col" className="py-3 px-4">{t('history.columns.uploaded', 'Upload Date')}</th>
+                  <th scope="col" className="py-3 px-4 sm:px-6 text-right">{t('history.columns.actions', 'Actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-secondary-100">

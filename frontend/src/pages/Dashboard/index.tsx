@@ -65,10 +65,13 @@ export const DashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-secondary-200">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
-            Welcome back, {user?.fullName || 'Counsel'}
+            {t('dashboard.welcome', 'Welcome back')}, {user?.fullName || 'Counsel'}
           </h1>
           <p className="text-secondary-600 text-sm mt-1">
-            Review document simplification summaries, inspect clause risk flags, and compare contract versions.
+            {t(
+              'dashboard.subtitle',
+              'Review document simplification summaries, inspect clause risk flags, and compare contract versions.'
+            )}
           </p>
         </div>
 
@@ -98,7 +101,7 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" aria-hidden="true" />
             <div>
-              <p className="text-sm font-semibold">Unable to load dashboard data</p>
+              <p className="text-sm font-semibold">{t('dashboard.unableToLoad', 'Unable to load dashboard data')}</p>
               <p className="text-xs text-red-700">{docsError || summaryError}</p>
             </div>
           </div>
@@ -121,7 +124,7 @@ export const DashboardPage: React.FC = () => {
           <Card elevation="sm" className="border-secondary-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-secondary-600">
-                Total Documents
+                {t('dashboard.stats.totalDocuments', 'Total Documents')}
               </CardDescription>
               <div className="p-2 rounded-lg bg-primary-50 text-primary-800">
                 <FileText className="w-4 h-4" aria-hidden="true" />
@@ -135,7 +138,9 @@ export const DashboardPage: React.FC = () => {
                   {summary?.total_documents ?? 0}
                 </div>
               )}
-              <p className="text-xs text-secondary-500 mt-1">Uploaded for legal analysis</p>
+              <p className="text-xs text-secondary-500 mt-1">
+                {t('dashboard.stats.totalDocumentsDesc', 'Uploaded for legal analysis')}
+              </p>
             </CardContent>
           </Card>
 
@@ -143,7 +148,7 @@ export const DashboardPage: React.FC = () => {
           <Card elevation="sm" className="border-secondary-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-amber-800">
-                Risk Flagged
+                {t('dashboard.stats.flaggedRisk', 'Risk Flagged')}
               </CardDescription>
               <div className="p-2 rounded-lg bg-amber-50 text-amber-700">
                 <AlertTriangle className="w-4 h-4" aria-hidden="true" />
@@ -157,7 +162,9 @@ export const DashboardPage: React.FC = () => {
                   {summary?.flagged_risk_count ?? 0}
                 </div>
               )}
-              <p className="text-xs text-amber-700/80 mt-1 font-medium">Non-standard clause severity</p>
+              <p className="text-xs text-amber-700/80 mt-1 font-medium">
+                {t('dashboard.stats.flaggedRiskDesc', 'Non-standard clause severity')}
+              </p>
             </CardContent>
           </Card>
 
@@ -165,7 +172,7 @@ export const DashboardPage: React.FC = () => {
           <Card elevation="sm" className="border-secondary-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-sky-800">
-                In Progress
+                {t('dashboard.stats.inProgress', 'In Progress')}
               </CardDescription>
               <div className="p-2 rounded-lg bg-sky-50 text-sky-700">
                 <Clock className="w-4 h-4" aria-hidden="true" />
@@ -179,7 +186,9 @@ export const DashboardPage: React.FC = () => {
                   {summary?.in_progress_count ?? 0}
                 </div>
               )}
-              <p className="text-xs text-sky-700/80 mt-1 font-medium">Under active AI simplification</p>
+              <p className="text-xs text-sky-700/80 mt-1 font-medium">
+                {t('dashboard.stats.inProgressDesc', 'Under active AI simplification')}
+              </p>
             </CardContent>
           </Card>
 
@@ -187,7 +196,7 @@ export const DashboardPage: React.FC = () => {
           <Card elevation="sm" className="border-secondary-200">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-emerald-800">
-                Completed
+                {t('dashboard.stats.completed', 'Completed')}
               </CardDescription>
               <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700">
                 <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
@@ -201,7 +210,9 @@ export const DashboardPage: React.FC = () => {
                   {summary?.completed_count ?? 0}
                 </div>
               )}
-              <p className="text-xs text-emerald-700/80 mt-1 font-medium">Ready for review & chat</p>
+              <p className="text-xs text-emerald-700/80 mt-1 font-medium">
+                {t('dashboard.stats.completedDesc', 'Ready for review & chat')}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -211,9 +222,11 @@ export const DashboardPage: React.FC = () => {
       <section aria-label="Recent Documents Section" className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-serif font-bold text-primary-950">Recent Documents</h2>
+            <h2 className="text-xl font-serif font-bold text-primary-950">
+              {t('dashboard.recentDocuments', 'Recent Documents')}
+            </h2>
             <p className="text-xs text-secondary-500">
-              Latest legal agreements uploaded and processed by ClarifAI.
+              {t('dashboard.recentDocumentsSubtitle', 'Latest legal agreements uploaded and processed by ClarifAI.')}
             </p>
           </div>
 
@@ -221,7 +234,7 @@ export const DashboardPage: React.FC = () => {
             to="/history"
             className="inline-flex items-center gap-1 text-sm font-semibold text-primary-800 hover:text-primary-950 hover:underline"
           >
-            <span>View all history</span>
+            <span>{t('dashboard.viewAllHistory', 'View all history')}</span>
             <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </Link>
         </div>
@@ -257,17 +270,20 @@ export const DashboardPage: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <CardTitle className="text-lg sm:text-xl font-serif text-primary-950">
-                  No documents analyzed yet
+                  {t('dashboard.emptyTitle', 'No documents analyzed yet')}
                 </CardTitle>
                 <CardDescription className="text-sm text-secondary-600">
-                  Upload your first contract, NDA, or service agreement to generate plain-English summaries, pinpointed risk scores, and clause redlines.
+                  {t(
+                    'dashboard.emptySubtitle',
+                    'Upload your first contract, NDA, or service agreement to generate plain-English summaries, pinpointed risk scores, and clause redlines.'
+                  )}
                 </CardDescription>
               </div>
 
               <Link to="/upload" className="pt-2">
                 <Button variant="primary" size="md" className="gap-2 shadow-sm">
                   <Plus className="w-4 h-4" aria-hidden="true" />
-                  <span>Upload your first document</span>
+                  <span>{t('dashboard.uploadFirst', 'Upload your first document')}</span>
                 </Button>
               </Link>
             </CardContent>

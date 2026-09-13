@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RefreshCw, ArrowLeft, Plus } from 'lucide-react';
 import { usePolling } from '../../hooks/usePolling';
 import { documentService } from '../../services/api';
@@ -11,6 +12,7 @@ import { PROCESSING_STAGES, type ProcessingStageId } from '../../constants/proce
 import type { DocumentItem, DocumentStatusType } from '../../types/documents';
 
 export const ProcessingPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -64,7 +66,7 @@ export const ProcessingPage: React.FC = () => {
       {/* Page Header */}
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
-          Analyzing Document
+          {t('processing.title', 'Analyzing Document')}
         </h1>
         <p className="text-xs text-secondary-500 font-mono">
           Document ID: {id || 'doc-preview'}

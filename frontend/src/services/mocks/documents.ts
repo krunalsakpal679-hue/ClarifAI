@@ -13,6 +13,7 @@ import type {
   PaginatedClauseResponse,
   PaginatedDocumentListResponse,
 } from '../../types';
+import { MockApiError } from '../../utils/errors';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -135,7 +136,7 @@ export const mockDocumentService: IDocumentService = {
     await delay(150);
     const index = mockDocumentsDb.findIndex((doc) => doc.id === id);
     if (index === -1) {
-      throw new Error('Document not found or access denied (404)');
+      throw new MockApiError('Document not found or access denied (404)', 'DOCUMENT_NOT_FOUND', 404);
     }
     mockDocumentsDb.splice(index, 1);
   },
@@ -154,19 +155,19 @@ export const mockDocumentService: IDocumentService = {
     // 1. Password-protected PDF check (Distinct message per PRD Ch. 14, Ch. 58 R-12)
     if (lowerName.includes('password') || lowerName.includes('encrypted')) {
       await delay(100);
-      throw new Error('Password-protected PDFs are not supported. Please upload an unencrypted document.');
+      throw new MockApiError('Password-protected PDFs are not supported. Please upload an unencrypted document.', 'ENCRYPTED_PDF_NOT_SUPPORTED', 422);
     }
 
     // 2. Corrupted PDF check
     if (lowerName.includes('corrupted')) {
       await delay(100);
-      throw new Error('PDF file is corrupted or unparseable.');
+      throw new MockApiError('PDF file is corrupted or unparseable.', 'CORRUPTED_PDF', 422);
     }
 
     // 3. Empty PDF check
     if (file.size === 0 || lowerName.includes('empty')) {
       await delay(100);
-      throw new Error('PDF file is corrupted or empty.');
+      throw new MockApiError('PDF file is corrupted or empty.', 'EMPTY_PDF', 422);
     }
 
     // Step-by-step progress simulation (e.g. 25% -> 50% -> 75% -> 100%)
@@ -225,7 +226,7 @@ export const mockDocumentService: IDocumentService = {
         mockDocumentsDb.push(fallbackDoc);
         return { ...fallbackDoc };
       }
-      throw new Error(`Document not found with ID ${id} (404)`);
+      throw new MockApiError(`Document not found with ID ${id} (404)`, 'DOCUMENT_NOT_FOUND', 404);
     }
 
     // Auto progression simulation for in-progress documents
@@ -256,11 +257,11 @@ export const mockDocumentService: IDocumentService = {
 
     const doc = mockDocumentsDb.find((d) => d.id === id);
     if (!doc && !id.startsWith('doc-')) {
-      throw new Error(`Document not found with ID ${id} (404)`);
+      throw new MockApiError(`Document not found with ID ${id} (404)`, 'DOCUMENT_NOT_FOUND', 404);
     }
 
     if (doc && doc.status !== 'complete') {
-      throw new Error(`Document analysis not complete (422)`);
+      throw new MockApiError(`Document analysis not complete (422)`, 'DOCUMENT_NOT_READY', 422);
     }
 
     const summaryKey = id === 'doc-safe-001' ? 'doc-safe-001' : 'doc-msa-001';
@@ -290,11 +291,11 @@ export const mockDocumentService: IDocumentService = {
 
     const doc = mockDocumentsDb.find((d) => d.id === id);
     if (!doc && !id.startsWith('doc-')) {
-      throw new Error(`Document not found with ID ${id} (404)`);
+      throw new MockApiError(`Document not found with ID ${id} (404)`, 'DOCUMENT_NOT_FOUND', 404);
     }
 
     if (doc && doc.status !== 'complete') {
-      throw new Error(`Document analysis not complete (422)`);
+      throw new MockApiError(`Document analysis not complete (422)`, 'DOCUMENT_NOT_READY', 422);
     }
 
     const clausesKey = id === 'doc-safe-001' ? 'doc-safe-001' : 'doc-msa-001';
@@ -346,11 +347,11 @@ export const mockDocumentService: IDocumentService = {
 
     const doc = mockDocumentsDb.find((d) => d.id === documentId);
     if (!doc && !documentId.startsWith('doc-')) {
-      throw new Error(`Document not found with ID ${documentId} (404)`);
+      throw new MockApiError(`Document not found with ID ${documentId} (404)`, 'DOCUMENT_NOT_FOUND', 404);
     }
 
     if (doc && doc.status !== 'complete') {
-      throw new Error(`Document analysis not complete (422)`);
+      throw new MockApiError(`Document analysis not complete (422)`, 'DOCUMENT_NOT_READY', 422);
     }
 
     const clausesKey = documentId === 'doc-safe-001' ? 'doc-safe-001' : 'doc-msa-001';
@@ -358,7 +359,7 @@ export const mockDocumentService: IDocumentService = {
     const clause = clauses.find((c) => c.id === clauseId);
 
     if (!clause) {
-      throw new Error(`Clause not found with ID ${clauseId} (404)`);
+      throw new MockApiError(`Clause not found with ID ${clauseId} (404)`, 'CLAUSE_NOT_FOUND', 404);
     }
 
     const localizedClause: ClauseItem = {

@@ -112,8 +112,94 @@ describe('apiClient 401 Silent Refresh Interceptor (PRD Section 9.6 & Ch. 26.1)'
     await expect(apiClient.post('/auth/login', { email: 'bad@clarifai.internal', password: 'bad' })).rejects.toMatchObject({
       status: 401,
       message: 'Invalid email or password.',
+      error: {
+        message: 'Invalid email or password.',
+      },
     });
 
     expect(refreshInvoked).toBe(false);
   });
+
+  it('handles 429 rate-limiting with Retry-After header and surfaces formatted message', async () => {
+    apiClient.defaults.adapter = async (config: any) => {
+      const err: any = new Error('Rate limit exceeded');
+      err.response = {
+        status: 429,
+        headers: { 'retry-after': '45' },
+        data: { error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } },
+        config,
+      };
+      err.config = config;
+      throw err;
+    };
+
+    await expect(apiClient.get('/documents/doc_123')).rejects.toMatchObject({
+      status: 429,
+      message: 'Too many requests, try again in 45s.',
+      retryAfter: 45,
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many requests, try again in 45s.',
+      },
+    });
+  });
+
+  it('handles 502/503 on AI endpoints with exact verbatim copy and strips provider details', async () => {
+    apiClient.defaults.adapter = async (config: any) => {
+      const err: any = new Error('Bad Gateway');
+      err.response = {
+        status: 503,
+        data: {
+          detail: 'OpenAI quota exceeded: model gpt-4o-mini rate_limit_error',
+          error: { code: 'OPENAI_ERROR', message: 'Raw internal LLM crash' },
+        },
+        config,
+      };
+      err.config = config;
+      throw err;
+    };
+
+    const rejected = await apiClient.get('/documents/doc_123/chat').catch((e) => e);
+
+    expect(rejected).toEqual({
+      status: 503,
+      message: 'AI processing is temporarily unavailable. Please try again later.',
+      error: {
+        code: 'AI_SERVICE_UNAVAILABLE',
+        message: 'AI processing is temporarily unavailable. Please try again later.',
+      },
+      errors: null,
+    });
+    // Ensure raw quota / provider details are NOT exposed
+    expect(rejected.message).not.toContain('OpenAI');
+    expect(rejected.message).not.toContain('quota');
+  });
+
+  it('preserves code-keyed error shape { error: { code, message } } on standard API errors', async () => {
+    apiClient.defaults.adapter = async (config: any) => {
+      const err: any = new Error('Request failed with 404');
+      err.response = {
+        status: 404,
+        data: {
+          error: {
+            code: 'DOCUMENT_NOT_FOUND',
+            message: 'Requested document does not exist.',
+          },
+        },
+        config,
+      };
+      err.config = config;
+      throw err;
+    };
+
+    await expect(apiClient.get('/documents/missing_doc')).rejects.toMatchObject({
+      status: 404,
+      message: 'Requested document does not exist.',
+      error: {
+        code: 'DOCUMENT_NOT_FOUND',
+        message: 'Requested document does not exist.',
+      },
+    });
+  });
 });
+

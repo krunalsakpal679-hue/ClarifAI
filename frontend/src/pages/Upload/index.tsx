@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   FileText,
   ShieldCheck,
@@ -17,6 +18,7 @@ import { toast } from '../../components/ui/Toast';
 import { UploadDropzone } from '../../components/domain/UploadDropzone';
 
 export const UploadPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fetchDocuments = useDocumentStore((state) => state.fetchDocuments);
 
@@ -115,10 +117,10 @@ export const UploadPage: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
-          Upload Legal Document
+          {t('upload.title', 'Upload Legal Document')}
         </h1>
         <p className="text-sm text-secondary-600 max-w-lg mx-auto">
-          Upload a contract or agreement in PDF format for automated clause extraction and risk analysis.
+          {t('upload.subtitle', 'Upload a contract or agreement in PDF format for automated clause extraction and risk analysis.')}
         </p>
       </div>
 

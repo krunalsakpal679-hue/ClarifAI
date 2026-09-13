@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import type { ComparisonDetail } from '../types/comparison';
 import { comparisonService } from '../services/api';
+import { registerResetHandler } from './resetRegistry';
 
 export interface ComparisonState {
   selectedDocAId: string | null;
@@ -92,3 +93,5 @@ export const useComparisonStore = create<ComparisonState>((set) => ({
       error: null,
     }),
 }));
+
+registerResetHandler(() => useComparisonStore.getState().reset());

@@ -62,7 +62,7 @@ describe('ChatStore (Zustand Document-Scoped State Management)', () => {
 
     expect(lastMsg.role).toBe('system');
     expect(lastMsg.isError).toBe(true);
-    expect(lastMsg.content).toContain('AI chat service currently unavailable');
+    expect(lastMsg.content).toMatch(/AI (processing is temporarily|chat service currently) unavailable/i);
     expect(state.isSendingByDoc['doc-msa-001']).toBe(false);
   });
 

@@ -3,6 +3,7 @@
  */
 import type { ChatMessage, ChatSession, IChatService } from '../../types/chat';
 import { mockDocumentService } from './documents';
+import { MockApiError } from '../../utils/errors';
 
 const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, process.env.NODE_ENV === 'test' ? 10 : ms));
@@ -48,14 +49,14 @@ export const mockChatService: IChatService = {
     try {
       const doc = await mockDocumentService.getById(documentId);
       if (doc && doc.status !== 'complete') {
-        throw new Error('DOCUMENT_NOT_READY: Document analysis is still in progress (422)');
+        throw new MockApiError('DOCUMENT_NOT_READY: Document analysis is still in progress (422)', 'DOCUMENT_NOT_READY', 422);
       }
     } catch (err) {
       if (err instanceof Error && err.message.includes('DOCUMENT_NOT_READY')) {
         throw err;
       }
       if (!documentId.startsWith('doc-')) {
-        throw new Error(`Document not found with ID ${documentId} (404)`);
+        throw new MockApiError(`Document not found with ID ${documentId} (404)`, 'DOCUMENT_NOT_FOUND', 404);
       }
     }
 
@@ -76,21 +77,21 @@ export const mockChatService: IChatService = {
     await delay(120);
 
     if (!message || !message.trim()) {
-      throw new Error('Message query content cannot be empty.');
+      throw new MockApiError('Message query content cannot be empty.', 'INVALID_PAYLOAD', 400);
     }
 
     // Verify document status
     try {
       const doc = await mockDocumentService.getById(documentId);
       if (doc && doc.status !== 'complete') {
-        throw new Error('DOCUMENT_NOT_READY: Document analysis is still in progress (422)');
+        throw new MockApiError('DOCUMENT_NOT_READY: Document analysis is still in progress (422)', 'DOCUMENT_NOT_READY', 422);
       }
     } catch (err) {
       if (err instanceof Error && err.message.includes('DOCUMENT_NOT_READY')) {
         throw err;
       }
       if (!documentId.startsWith('doc-')) {
-        throw new Error(`Document not found with ID ${documentId} (404)`);
+        throw new MockApiError(`Document not found with ID ${documentId} (404)`, 'DOCUMENT_NOT_FOUND', 404);
       }
     }
 
@@ -111,10 +112,10 @@ export const mockChatService: IChatService = {
     };
     mockMessagesByDoc[documentId].push(userMsg);
 
-    // 2. Error simulation check
+    // 2. Error simulation check (PRD Section 56.20 verbatim copy)
     const lowerQuery = trimmedQuery.toLowerCase();
     if (lowerQuery.includes('trigger-error') || lowerQuery.includes('simulate-error')) {
-      throw new Error('AI chat service currently unavailable. Your message was saved.');
+      throw new MockApiError('AI processing is temporarily unavailable. Please try again later.', 'AI_SERVICE_UNAVAILABLE', 503);
     }
 
     // 3. Grounded answer vs. PRD Ch. 17.7 controlled no-answer simulation

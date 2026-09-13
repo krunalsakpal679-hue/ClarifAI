@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -9,6 +10,7 @@ import { documentService } from '../../services/api';
 import type { DocumentItem } from '../../types/documents';
 
 export const ComparisonSetupPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { createComparison, isCreating, error: storeError, reset } = useComparisonStore();
 
@@ -90,10 +92,13 @@ export const ComparisonSetupPage: React.FC = () => {
           Contract Redlining
         </Badge>
         <h1 className="text-3xl font-serif font-bold text-primary-950">
-          Compare Legal Documents
+          {t('comparison.setupTitle', 'Compare Legal Documents')}
         </h1>
         <p className="text-sm text-secondary-600 max-w-xl mx-auto">
-          Select two document versions to compare clause changes, additions, deletions, and risk level shifts side by side.
+          {t(
+            'comparison.setupSubtitle',
+            'Select two document versions to compare clause changes, additions, deletions, and risk level shifts side by side.'
+          )}
         </p>
       </div>
 
@@ -248,7 +253,7 @@ export const ComparisonSetupPage: React.FC = () => {
               disabled={isCreating}
               className="w-full sm:w-auto text-xs"
             >
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
 
             <Button
@@ -257,7 +262,7 @@ export const ComparisonSetupPage: React.FC = () => {
               size="md"
               disabled={!canInitiate}
               className="w-full sm:w-auto gap-2 text-xs font-semibold"
-              aria-label="Run Version Comparison"
+              aria-label={t('comparison.compareButton', 'Run Version Comparison')}
             >
               {isCreating ? (
                 <>
@@ -266,7 +271,7 @@ export const ComparisonSetupPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <span>Run Version Comparison</span>
+                  <span>{t('comparison.compareButton', 'Run Version Comparison')}</span>
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </>
               )}

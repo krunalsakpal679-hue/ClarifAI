@@ -19,6 +19,10 @@ import type { IComparisonService } from '../../types/comparison';
 import { realComparisonService } from './comparison';
 import { mockComparisonService } from '../mocks/comparison';
 
+import type { IReportService } from '../../types/reports';
+import { realReportService } from './reports';
+import { mockReportService } from '../mocks/reports';
+
 /**
  * Service Factory & Mock/Real Switch (PRD Section 11)
  *
@@ -52,10 +56,15 @@ export const comparisonService: IComparisonService = USE_MOCKS
   ? mockComparisonService
   : realComparisonService;
 
+export const reportService: IReportService = USE_MOCKS
+  ? mockReportService
+  : realReportService;
+
 export * from './client';
 export * from './auth';
 export * from './dashboard';
 export * from './documents';
 export * from './chat';
 export * from './comparison';
+export * from './reports';
 

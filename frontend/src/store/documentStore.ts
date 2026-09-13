@@ -6,6 +6,7 @@ import type {
   DocumentSummary,
 } from '../types';
 import { documentService } from '../services/api';
+import { registerResetHandler } from './resetRegistry';
 
 export interface DocumentState {
   documents: DocumentItem[];
@@ -129,5 +130,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
     });
   },
 }));
+
+registerResetHandler(() => useDocumentStore.getState().reset());
 
 export default useDocumentStore;

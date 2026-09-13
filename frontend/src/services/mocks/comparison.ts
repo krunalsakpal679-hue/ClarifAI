@@ -3,6 +3,7 @@
  */
 import type { ComparisonClauseItem, ComparisonDetail, IComparisonService } from '../../types/comparison';
 import { mockDocumentService } from './documents';
+import { MockApiError } from '../../utils/errors';
 
 const delay = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, process.env.NODE_ENV === 'test' ? 10 : ms));
@@ -186,12 +187,12 @@ export const mockComparisonService: IComparisonService = {
     await delay(70);
 
     if (!documentIdA || !documentIdB) {
-      throw new Error('Both base (Document A) and target (Document B) documents are required.');
+      throw new MockApiError('Both base (Document A) and target (Document B) documents are required.', 'MISSING_DOCUMENTS', 400);
     }
 
     // Client-side & backend validation: disallow comparing same document
     if (documentIdA === documentIdB) {
-      throw new Error('Cannot compare a document against itself. (400)');
+      throw new MockApiError('Cannot compare a document against itself. (400)', 'SAME_DOCUMENT_COMPARISON', 400);
     }
 
     // Validate both documents exist and are complete
@@ -200,8 +201,10 @@ export const mockComparisonService: IComparisonService = {
       const docB = await mockDocumentService.getById(documentIdB);
 
       if (docA.status !== 'complete' || docB.status !== 'complete') {
-        throw new Error(
-          'DOCUMENT_NOT_READY: Both documents must complete analysis before comparison can be initiated. (422)'
+        throw new MockApiError(
+          'DOCUMENT_NOT_READY: Both documents must complete analysis before comparison can be initiated. (422)',
+          'DOCUMENT_NOT_READY',
+          422
         );
       }
     } catch (err) {
@@ -281,7 +284,7 @@ export const mockComparisonService: IComparisonService = {
     }
 
     if (!found) {
-      throw new Error(`Comparison not found with ID ${comparisonId} (404)`);
+      throw new MockApiError(`Comparison not found with ID ${comparisonId} (404)`, 'COMPARISON_NOT_FOUND', 404);
     }
 
     // Multilingual Hindi translation support

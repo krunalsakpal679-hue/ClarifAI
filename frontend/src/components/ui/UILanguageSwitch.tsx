@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { useUiStore } from '../../store/uiStore';
 import { cn } from '../../utils/cn';
 
 export interface UILanguageSwitchProps
@@ -16,14 +17,17 @@ export const UILanguageSwitch: React.FC<UILanguageSwitchProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const { language, setLanguage } = useAppStore();
+  const { uiLanguage, setUiLanguage } = useUiStore();
 
-  const isEnglish = language === 'en';
+  const currentUiLang = uiLanguage || language || (i18n.language?.startsWith('hi') ? 'hi' : 'en');
+  const isEnglish = currentUiLang === 'en';
   const targetLang = isEnglish ? 'hi' : 'en';
   const displayLabel = isEnglish ? 'हिन्दी' : 'English';
   const fullLabel = isEnglish ? 'Switch UI to Hindi' : 'Switch UI to English';
 
   const handleToggle = () => {
     setLanguage(targetLang);
+    setUiLanguage(targetLang);
     i18n.changeLanguage(targetLang);
   };
 

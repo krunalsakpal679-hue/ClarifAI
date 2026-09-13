@@ -21,6 +21,8 @@ import {
   NotFoundPage,
 } from '../pages';
 
+import { ErrorBoundary } from './ErrorBoundary';
+
 /**
  * Route path constants providing type-safe path resolution.
  */
@@ -44,6 +46,7 @@ export const routes: RouteObject[] = [
   // Auth Layout Routes (Split-screen auth)
   {
     element: <AuthLayout />,
+    errorElement: <ErrorBoundary />,
     children: [
       {
         path: '/login',
@@ -59,6 +62,7 @@ export const routes: RouteObject[] = [
   // Main AppShell Routes (with nav bar, skip-link, and persistent legal disclaimer)
   {
     element: <AppShell />,
+    errorElement: <ErrorBoundary />,
     children: [
       // Public Landing Route
       {

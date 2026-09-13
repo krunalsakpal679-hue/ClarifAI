@@ -8,9 +8,10 @@ export const AuthLayout: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-surface">
-      {/* Left Branding Panel (Visible on Desktop lg+) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary-950 text-white p-12 flex-col justify-between relative overflow-hidden">
+    <div className="min-h-screen bg-surface flex justify-center">
+      <div className="w-full max-w-[1920px] mx-auto min-h-screen flex flex-col lg:flex-row">
+        {/* Left Branding Panel (Visible on Desktop lg+) */}
+        <div className="hidden lg:flex lg:w-1/2 bg-primary-950 text-white p-12 flex-col justify-between relative overflow-hidden">
         {/* Background ambient gradient */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary-800/30 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent-900/20 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
@@ -119,9 +120,9 @@ export const AuthLayout: React.FC = () => {
           <p>&copy; {new Date().getFullYear()} ClarifAI. All rights reserved.</p>
         </div>
       </div>
-
-      {/* Global Notifications */}
-      <ToastContainer />
     </div>
-  );
+    {/* Global Notifications */}
+    <ToastContainer />
+  </div>
+);
 };

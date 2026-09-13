@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   MessageSquare,
   GitCompare,
-  Download,
   AlertTriangle,
   CheckCircle2,
   ArrowLeft,
@@ -17,6 +17,8 @@ import { RiskBadge } from '../../components/domain/RiskBadge';
 import { RiskOverviewChart } from '../../components/domain/RiskOverviewChart';
 import { SummaryPanel } from '../../components/domain/SummaryPanel';
 import { ClauseCard } from '../../components/domain/ClauseCard';
+import { LanguageToggle } from '../../components/domain/LanguageToggle';
+import { ReportDownloadButton } from '../../components/domain/ReportDownloadButton';
 import { documentService } from '../../services/api';
 import { useDocumentStore } from '../../store/documentStore';
 import { useUiStore } from '../../store/uiStore';
@@ -27,6 +29,7 @@ import type { ClauseFilterOption } from '../../types';
 export const AnalysisResultsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Global UI State
   const { analysisLanguage, setAnalysisLanguage } = useUiStore();
@@ -46,7 +49,6 @@ export const AnalysisResultsPage: React.FC = () => {
   const [documentLoading, setDocumentLoading] = useState(true);
   const [documentError, setDocumentError] = useState<string | null>(null);
   const [clauseFilter, setClauseFilter] = useState<ClauseFilterOption>('ALL');
-  const [isExporting, setIsExporting] = useState(false);
 
   // 1. Fetch Document Metadata & verify completion
   const loadDocument = useCallback(async () => {
@@ -92,17 +94,6 @@ export const AnalysisResultsPage: React.FC = () => {
     if (newLang === analysisLanguage) return;
     setAnalysisLanguage(newLang);
     toast.info(newLang === 'hi' ? 'विश्लेषण भाषा हिंदी में बदली जा रही है...' : 'Switching analysis language to English...');
-  };
-
-  // Report download action
-  const handleDownloadReport = async () => {
-    if (!id) return;
-    setIsExporting(true);
-    toast.info('Generating PDF report...');
-    setTimeout(() => {
-      setIsExporting(false);
-      toast.success('Document report ready for download!');
-    }, 1200);
   };
 
   // Compute PRD Ch. 16 Metrics (Strict Rule: NO numerical risk score or percentage)
@@ -196,62 +187,33 @@ export const AnalysisResultsPage: React.FC = () => {
         {/* Action Buttons: Language toggle + Persistent entry points */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Analysis Language Switch */}
-          <div
-            role="group"
-            aria-label="Analysis Language Selection"
-            className="inline-flex items-center p-1 rounded-lg border border-secondary-200 bg-secondary-50 text-xs font-semibold"
-          >
-            <button
-              type="button"
-              onClick={() => handleLanguageChange('en')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                analysisLanguage === 'en'
-                  ? 'bg-white text-primary-950 shadow-xs'
-                  : 'text-secondary-600 hover:text-primary-900'
-              }`}
-              aria-pressed={analysisLanguage === 'en'}
-            >
-              English
-            </button>
-            <button
-              type="button"
-              onClick={() => handleLanguageChange('hi')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                analysisLanguage === 'hi'
-                  ? 'bg-white text-primary-950 shadow-xs'
-                  : 'text-secondary-600 hover:text-primary-900'
-              }`}
-              aria-pressed={analysisLanguage === 'hi'}
-            >
-              हिंदी (Hindi)
-            </button>
-          </div>
+          <LanguageToggle
+            value={analysisLanguage}
+            onChange={handleLanguageChange}
+          />
 
           <Link to={`/documents/${id}/chat`}>
             <Button variant="primary" size="md" className="gap-2 shadow-xs">
               <MessageSquare className="w-4 h-4" aria-hidden="true" />
-              <span>Chat with Document</span>
+              <span>{t('analysis.chatWithDoc', 'Chat with Document')}</span>
             </Button>
           </Link>
 
           <Link to="/compare">
             <Button variant="outline" size="md" className="gap-2">
               <GitCompare className="w-4 h-4" aria-hidden="true" />
-              <span>Compare with Another Doc</span>
+              <span>{t('analysis.compareWithDoc', 'Compare with Another Doc')}</span>
             </Button>
           </Link>
 
-          <Button
+          {/* Two-Step Document Report Download Button */}
+          <ReportDownloadButton
+            reportType="document"
+            targetId={id!}
+            lang={analysisLanguage}
             variant="ghost"
             size="md"
-            onClick={handleDownloadReport}
-            disabled={isExporting}
-            className="gap-2 text-secondary-700 hover:text-primary-950"
-            title="Download PDF Analysis Report"
-          >
-            <Download className="w-4 h-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Export Report</span>
-          </Button>
+          />
         </div>
       </div>
 

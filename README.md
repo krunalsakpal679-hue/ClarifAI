@@ -81,3 +81,19 @@ Run test suite:
 ```bash
 python -m pytest -v
 ```
+
+---
+
+## Frontend Application (`/frontend`)
+
+The ClarifAI Frontend is built with React 18, Vite, TypeScript, Tailwind CSS, Zustand, and Axios.
+
+### Mock Service Layer & Production Isolation (PRD Section 11 & Ch. 30.8)
+
+The frontend features a realistic mock service layer under `src/services/mocks/` covering all Section 8 API contracts (Auth, Dashboard, Documents, Chat, Comparisons, Reports).
+
+- **Switching Strategy**: Controlled strictly in `src/services/api/index.ts` via the `VITE_USE_MOCKS` environment variable:
+  - **Development & UI Preview**: Defaults to `VITE_USE_MOCKS=true` (`import.meta.env.VITE_USE_MOCKS !== 'false'`), allowing complete offline frontend verification, state testing, and UI demonstration without backend dependencies.
+  - **Production & Live Integration**: Configured with `VITE_USE_MOCKS=false`. When set, the application exclusively connects through the production Axios client (`apiClient`) targeting the live API gateway (`VITE_API_BASE_URL`), with silent 401 token refresh, 429 rate-limit handling (`Retry-After`), AI-service-unavailable formatting, and standard `{ error: { code, message } }` parsing.
+- **Production Safety**: Mock data stores contain only synthetic contracts with zero baked-in credentials or secrets. Production builds configured with `VITE_USE_MOCKS=false` route exclusively to the real backend.
+

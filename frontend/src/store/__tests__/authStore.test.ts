@@ -66,4 +66,28 @@ describe('useAuthStore (PRD Section 9.6 & Ch. 26.1)', () => {
     expect(loggedOut.user).toBeNull();
     expect(loggedOut.accessToken).toBeNull();
   });
+
+  it('resets all domain stores (document, chat, comparison, clauseNav) cleanly on logout', async () => {
+    const { useDocumentStore } = await import('../documentStore');
+    const { useChatStore } = await import('../chatStore');
+    const { useComparisonStore } = await import('../comparisonStore');
+    const { useClauseNavStore } = await import('../clauseNavStore');
+
+    // Populate stores with mock session data
+    useDocumentStore.setState({ totalCount: 42 });
+    useChatStore.setState({ errorByDoc: { 'doc-1': 'some error' } });
+    useComparisonStore.setState({ selectedDocAId: 'doc_a_123', comparisonId: 'comp_123' });
+    useClauseNavStore.setState({ documentId: 'doc_nav_123', clauseIds: ['c1', 'c2'] });
+
+    // Trigger logout
+    useAuthStore.getState().logout();
+
+    // Verify all stores were cleanly purged
+    expect(useDocumentStore.getState().totalCount).toBe(0);
+    expect(useChatStore.getState().errorByDoc).toEqual({});
+    expect(useComparisonStore.getState().selectedDocAId).toBeNull();
+    expect(useComparisonStore.getState().comparisonId).toBeNull();
+    expect(useClauseNavStore.getState().documentId).toBeNull();
+    expect(useClauseNavStore.getState().clauseIds).toEqual([]);
+  });
 });

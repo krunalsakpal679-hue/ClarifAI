@@ -64,7 +64,7 @@ describe('ChatService (Section 8.4 & PRD Ch. 17, 30.4)', () => {
     it('throws 503 error on simulated AI service failure but retains user message', async () => {
       await expect(
         chatService.sendMessage('doc-msa-001', 'trigger-error: test AI failure')
-      ).rejects.toThrow(/AI chat service currently unavailable/i);
+      ).rejects.toThrow(/AI (processing is temporarily|chat service currently) unavailable/i);
 
       // Verify user message was retained in history
       const history = await chatService.getHistory('doc-msa-001');

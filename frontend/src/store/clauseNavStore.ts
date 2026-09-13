@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { registerResetHandler } from './resetRegistry';
 
 export interface ClauseNavState {
   documentId: string | null;
@@ -61,3 +62,5 @@ export const useClauseNavStore = create<ClauseNavState>((set, get) => ({
     });
   },
 }));
+
+registerResetHandler(() => useClauseNavStore.getState().reset());

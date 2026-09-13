@@ -233,9 +233,19 @@
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?"
   },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "ClarifAI encountered an unexpected issue while rendering this view. Your session and data are secure.",
+    "summaryTitle": "Error Summary:",
+    "stackDetails": "Component Stack Details",
+    "tryAgain": "Try Again",
+    "goHome": "Go to Dashboard"
+  },
   "errors": {
     "pageNotFound": "Page Not Found",
     "notFoundMessage": "The page you are looking for does not exist or has been moved.",
-    "returnHome": "Return to Home"
+    "returnHome": "Return to Home",
+    "aiUnavailable": "AI processing is temporarily unavailable. Please try again later.",
+    "rateLimit": "Too many requests, please wait before trying again."
   }
 }

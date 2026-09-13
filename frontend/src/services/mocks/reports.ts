@@ -8,6 +8,7 @@
  */
 import type { IReportService, ReportDetail } from '../../types/reports';
 import type { SupportedLanguage } from '../../i18n';
+import { MockApiError } from '../../utils/errors';
 
 const mockReportsStore: Map<string, ReportDetail> = new Map();
 let simulateFailureOnce = false;
@@ -45,7 +46,7 @@ export const mockReportService: IReportService & {
 
     if (simulateFailureOnce || documentId.includes('fail')) {
       simulateFailureOnce = false;
-      throw new Error('Failed to compile document report PDF. Generation pipeline encountered an error.');
+      throw new MockApiError('Failed to compile document report PDF. Generation pipeline encountered an error.', 'REPORT_GENERATION_FAILED', 500);
     }
 
     const reportId = `rep-doc-${documentId}-${Date.now().toString().slice(-4)}`;
@@ -73,7 +74,7 @@ export const mockReportService: IReportService & {
 
     if (simulateFailureOnce || comparisonId.includes('fail')) {
       simulateFailureOnce = false;
-      throw new Error('Failed to compile comparison report PDF. Generation pipeline encountered an error.');
+      throw new MockApiError('Failed to compile comparison report PDF. Generation pipeline encountered an error.', 'REPORT_GENERATION_FAILED', 500);
     }
 
     const reportId = `rep-comp-${comparisonId}-${Date.now().toString().slice(-4)}`;
@@ -98,7 +99,7 @@ export const mockReportService: IReportService & {
 
     if (simulateFailureOnce || reportId.includes('fail-download')) {
       simulateFailureOnce = false;
-      throw new Error('Report download failed: Binary stream interrupted or file not found.');
+      throw new MockApiError('Report download failed: Binary stream interrupted or file not found.', 'REPORT_DOWNLOAD_FAILED', 404);
     }
 
     const report = mockReportsStore.get(reportId);

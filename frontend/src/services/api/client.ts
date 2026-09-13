@@ -96,7 +96,72 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const message =
+    const originalUrl = originalRequest?.url || '';
+    const status = error.response?.status;
+
+    // AI-service-unavailable handling (PRD Section 56.20 & Ch. 30.8)
+    // For 502/503 on AI-backed endpoints, show verbatim copy and never expose provider/quota details
+    const isAiEndpoint =
+      originalUrl.includes('/documents') ||
+      originalUrl.includes('/chat') ||
+      originalUrl.includes('/comparisons') ||
+      originalUrl.includes('lang=');
+
+    if ((status === 502 || status === 503) && isAiEndpoint) {
+      const verbatimAiMessage = 'AI processing is temporarily unavailable. Please try again later.';
+      return Promise.reject({
+        status,
+        message: verbatimAiMessage,
+        error: {
+          code: 'AI_SERVICE_UNAVAILABLE',
+          message: verbatimAiMessage,
+        },
+        errors: null,
+      });
+    }
+
+    // 429 Rate-limit handling (PRD Ch. 30.8)
+    if (status === 429) {
+      const retryAfterHeader =
+        error.response?.headers?.['retry-after'] ??
+        error.response?.headers?.['Retry-After'] ??
+        (typeof error.response?.headers?.get === 'function' ? error.response.headers.get('retry-after') : null);
+
+      let retrySeconds = 60;
+      if (retryAfterHeader) {
+        const parsed = parseInt(String(retryAfterHeader), 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          retrySeconds = parsed;
+        } else {
+          const dateDiff = Math.max(1, Math.round((new Date(String(retryAfterHeader)).getTime() - Date.now()) / 1000));
+          if (!isNaN(dateDiff) && dateDiff > 0) {
+            retrySeconds = dateDiff;
+          }
+        }
+      }
+
+      const rateLimitMessage = `Too many requests, try again in ${retrySeconds}s.`;
+      return Promise.reject({
+        status: 429,
+        message: rateLimitMessage,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: rateLimitMessage,
+        },
+        retryAfter: retrySeconds,
+        errors: error.response?.data?.errors || null,
+      });
+    }
+
+    // Standard code-keyed error shape (PRD Ch. 30.8: { error: { code, message } })
+    const responseError = error.response?.data?.error;
+    const errorCode =
+      (typeof responseError === 'object' && responseError?.code) ||
+      error.response?.data?.code ||
+      (status ? `HTTP_${status}` : 'NETWORK_ERROR');
+
+    const errorMessage =
+      (typeof responseError === 'object' && responseError?.message) ||
       error.response?.data?.detail ||
       error.response?.data?.message ||
       (Array.isArray(error.response?.data?.email) && error.response.data.email[0]) ||
@@ -104,11 +169,16 @@ apiClient.interceptors.response.use(
       'An unexpected network error occurred';
 
     return Promise.reject({
-      status: error.response?.status,
-      message,
+      status,
+      message: errorMessage,
+      error: {
+        code: errorCode,
+        message: errorMessage,
+      },
       errors: error.response?.data?.errors || error.response?.data,
     });
   }
 );
 
 export default apiClient;
+

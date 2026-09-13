@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Scale,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
 import { SkeletonBlock } from '../../components/ui/Skeleton';
@@ -22,6 +23,7 @@ import { documentService } from '../../services/api';
 import type { ClauseItem } from '../../types';
 
 export const ClauseDetailPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id, clauseId } = useParams<{ id: string; clauseId: string }>();
   const navigate = useNavigate();
 
@@ -303,7 +305,7 @@ export const ClauseDetailPage: React.FC = () => {
           <Link to={`/documents/${id}`}>
             <Button variant="secondary" size="sm" className="gap-1.5 text-xs font-medium">
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-              <span>Back to Analysis</span>
+              <span>{t('clauseDetail.backToAnalysis', 'Back to Analysis')}</span>
             </Button>
           </Link>
         </div>
@@ -318,7 +320,7 @@ export const ClauseDetailPage: React.FC = () => {
         <Card elevation="sm" className="border-secondary-300 flex flex-col h-full">
           <CardHeader className="bg-secondary-50/70 border-b border-secondary-200/80">
             <CardTitle className="text-base font-semibold text-secondary-900 flex items-center justify-between">
-              <span>Original Contract Text</span>
+              <span>{t('clauseDetail.originalContractText', 'Original Contract Text')}</span>
               <span className="text-xs font-normal text-secondary-500 font-sans">
                 Verbatim Source
               </span>
@@ -343,7 +345,7 @@ export const ClauseDetailPage: React.FC = () => {
         <Card elevation="sm" className="border-secondary-300 flex flex-col h-full">
           <CardHeader className="bg-primary-50/50 border-b border-primary-100">
             <CardTitle className="text-base font-semibold text-primary-950 flex items-center justify-between">
-              <span>Plain-English Breakdown &amp; Risk Driver</span>
+              <span>{t('clauseDetail.plainEnglishBreakdown', 'Plain-English Breakdown & Risk Driver')}</span>
               <Sparkles className="w-4 h-4 text-primary-600" aria-hidden="true" />
             </CardTitle>
             <CardDescription className="text-xs">

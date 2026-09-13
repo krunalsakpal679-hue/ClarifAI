@@ -1,15 +1,8 @@
 import { create } from 'zustand';
 import type { User } from '../types';
+import { resetAllDomainStores } from './resetRegistry';
 
-/**
- * ClarifAI Authentication Store (PRD v2.3 Section 9.6 & Chapter 26.1)
- *
- * ARCHITECTURAL RULE:
- * - Access token is held strictly IN-MEMORY in this Zustand state.
- * - The refresh token is an httpOnly cookie managed entirely by the browser/server.
- * - The frontend NEVER reads, writes, stores, or handles the refresh token.
- * - Long-lived tokens are never written to localStorage or sessionStorage.
- */
+export { resetAllDomainStores };
 
 export interface AuthState {
   user: User | null;
@@ -46,16 +39,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   setIsLoggingOut: (isLoggingOut: boolean) =>
     set({ isLoggingOut }),
 
-  clearAuth: () =>
+  clearAuth: () => {
+    resetAllDomainStores();
     set({
       user: null,
       accessToken: null,
       isAuthenticated: false,
       isLoggingOut: false,
-    }),
+    });
+  },
 
   logout: () => {
-    // In-memory state is cleared immediately with isLoggingOut flag to allow clean redirection to Landing
+    // In-memory state and all domain stores are cleared immediately with isLoggingOut flag
+    resetAllDomainStores();
     set({
       user: null,
       accessToken: null,

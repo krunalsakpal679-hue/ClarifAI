@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, RotateCcw, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -11,6 +12,7 @@ import { useDocumentStore } from '../../store/documentStore';
 import { documentService } from '../../services/api';
 
 export const ChatbotPage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -99,7 +101,7 @@ export const ChatbotPage: React.FC = () => {
             <span className="text-xs text-secondary-500 font-mono">Doc: {documentId}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
-            Document Assistant
+            {t('chat.title', 'Document Assistant')}
           </h1>
           <p className="text-xs sm:text-sm text-secondary-600 truncate max-w-xl">
             {documentTitle}
@@ -123,7 +125,7 @@ export const ChatbotPage: React.FC = () => {
           <Link to={`/documents/${documentId}`}>
             <Button variant="secondary" size="sm" className="gap-1.5 text-xs font-medium">
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-              <span>Back to Analysis</span>
+              <span>{t('clauseDetail.backToAnalysis', 'Back to Analysis')}</span>
             </Button>
           </Link>
         </div>

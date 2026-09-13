@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { ChatMessage, ChatSession } from '../types/chat';
 import { chatService } from '../services/api';
+import { registerResetHandler } from './resetRegistry';
 
 export interface ChatState {
   sessionsByDoc: Record<string, ChatSession>;
@@ -130,3 +131,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 }));
+
+registerResetHandler(() => useChatStore.getState().reset());
+
+export default useChatStore;

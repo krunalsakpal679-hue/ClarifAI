@@ -121,7 +121,7 @@ export const DashboardPage: React.FC = () => {
       <section aria-label="Dashboard Aggregate Statistics">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Total Documents */}
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-secondary-600">
                 {t('dashboard.stats.totalDocuments', 'Total Documents')}
@@ -145,7 +145,7 @@ export const DashboardPage: React.FC = () => {
           </Card>
 
           {/* Card 2: Flagged Risk */}
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-amber-800">
                 {t('dashboard.stats.flaggedRisk', 'Risk Flagged')}
@@ -169,7 +169,7 @@ export const DashboardPage: React.FC = () => {
           </Card>
 
           {/* Card 3: In Progress Pipeline */}
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-sky-800">
                 {t('dashboard.stats.inProgress', 'In Progress')}
@@ -193,7 +193,7 @@ export const DashboardPage: React.FC = () => {
           </Card>
 
           {/* Card 4: Completed Documents */}
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardDescription className="text-xs uppercase font-semibold text-emerald-800">
                 {t('dashboard.stats.completed', 'Completed')}

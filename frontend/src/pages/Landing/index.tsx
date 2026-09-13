@@ -12,8 +12,18 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="space-y-16 py-8">
-      {/* Hero Section */}
-      <section className="text-center max-w-3xl mx-auto space-y-6">
+      {/* Hero Section with Isolated Parallax Depth Layer (Section 9.4) */}
+      <section className="text-center max-w-3xl mx-auto space-y-6 relative">
+        {/* Isolated decorative floating depth layer (strictly contained in Landing Hero) */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-10 -left-12 w-24 h-24 rounded-full bg-primary-100/40 blur-xl pointer-events-none hero-parallax-element"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-8 -right-12 w-32 h-32 rounded-full bg-accent-100/30 blur-xl pointer-events-none hero-parallax-element [animation-delay:-3s]"
+        />
+
         <Badge variant="info" size="md" className="uppercase tracking-wider font-semibold">
           AI Legal Intelligence Platform
         </Badge>
@@ -48,7 +58,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Feature Grid */}
+      {/* Feature Grid with 3D Micro-interaction Tilt */}
       <section className="space-y-8">
         <div className="text-center max-w-xl mx-auto">
           <h2 className="text-2xl font-serif font-bold text-primary-900">
@@ -60,7 +70,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader>
               <div className="w-10 h-10 rounded-lg bg-primary-100 text-primary-800 flex items-center justify-center font-bold mb-2">
                 📄
@@ -74,7 +84,7 @@ export const LandingPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader>
               <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-2">
                 ⚠️
@@ -88,7 +98,7 @@ export const LandingPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader>
               <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-2">
                 ⚖️
@@ -102,7 +112,7 @@ export const LandingPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card elevation="sm" className="border-secondary-200">
+          <Card elevation="sm" className="border-secondary-200 card-3d-tilt">
             <CardHeader>
               <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold mb-2">
                 💬

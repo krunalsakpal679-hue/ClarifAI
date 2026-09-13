@@ -61,6 +61,37 @@
   outline-offset: 2px;
 }
 
+/* ==============================================================================
+   Tasteful 3D Micro-interactions & Parallax (PRD Section 9.4)
+   ============================================================================== */
+
+@media (hover: hover) and (pointer: fine) {
+  .card-3d-tilt {
+    transition: transform var(--duration-micro) cubic-bezier(0.16, 1, 0.3, 1), box-shadow var(--duration-micro) ease;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .card-3d-tilt:hover {
+    transform: perspective(800px) translateY(-3px) rotateX(1.5deg) rotateY(-1deg);
+    box-shadow: var(--shadow-elevation-2);
+  }
+}
+
+/* Landing-hero subtle ambient floating parallax layer */
+@keyframes hero-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.5deg);
+  }
+}
+
+.hero-parallax-element {
+  animation: hero-float 6s ease-in-out infinite;
+}
+
 /* Reduced motion preference override */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -71,4 +102,16 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  .card-3d-tilt,
+  .card-3d-tilt:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .hero-parallax-element {
+    animation: none !important;
+    transform: none !important;
+  }
 }
+

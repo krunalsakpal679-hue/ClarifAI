@@ -23,7 +23,7 @@ flowchart TD
         BART["BART-base<br/>Executive Summarizer"]
         MultilingualE5["Multilingual-E5<br/>Vector Embedder (768d)"]
         QdrantDB[("Qdrant Vector DB<br/>Ownership-Scoped Index")]
-        GroqLLM["Llama 3.1 8B via Groq<br/>Simplification, Chatbot, Comparison"]
+        GroqLLM["openai/gpt-oss-20b via Groq<br/>Simplification, Chatbot, Comparison"]
     end
 
     FastAPIAI --> PyMuPDF
@@ -58,7 +58,7 @@ flowchart LR
 flowchart TD
     UserQuestion["User Question"] --> EmbedQuery["Multilingual-E5 Embedding<br/>(query: prefix)"]
     EmbedQuery --> QdrantSearch["Qdrant Vector Search<br/>(user_id + document_id scoped)"]
-    QdrantSearch --> RelevanceGate{"Relevance Gate<br/>(score >= 0.35?)"}
+    QdrantSearch --> RelevanceGate{"Relevance Gate<br/>(score >= 0.65?)"}
     RelevanceGate -- No --> ControlledNoAnswer["Controlled No-Answer Response<br/>(No LLM Call Made)"]
     RelevanceGate -- Yes --> SufficiencyGate{"Sufficiency Gate<br/>(evidence complete?)"}
     SufficiencyGate -- No --> ControlledNoAnswer
@@ -135,7 +135,7 @@ flowchart TD
 | **AI-PHASE-SUMMARY** | Executive Document Summary | **DONE** | Committed (`a30b201`) | 4-field BART executive summary active |
 | **AI-PHASE-EMBEDDINGS** | Multilingual-E5 Clause Embeddings | **DONE** | Committed (`ff7eb64`) | 768d dense vector embedding active |
 | **AI-PHASE-QDRANT** | Ownership-Scoped Qdrant Helper | **DONE** | Committed (`df032bb`) | Qdrant vector database storage active |
-| **AI-PHASE-RAG** | RAG Retrieval & Evidence Gating | **DONE** | Committed (`8ca240f`) | Relevance (0.35) & sufficiency gating active |
+| **AI-PHASE-RAG** | RAG Retrieval & Evidence Gating | **DONE** | Committed (`8ca240f`) | Relevance (0.65) & sufficiency gating (0.70) active |
 | **AI-PHASE-CHATBOT** | Evidence-Grounded Chatbot Q&A | **DONE** | Committed (`eb0fe58`) | Grounded RAG chatbot active |
 | **AI-PHASE-LLM-INTEGRATION** | Shared LLM Calling Infrastructure | **DONE** | Committed (`ee9aa1f`) | Delimited prompts & retry active |
 | **AI-PHASE-COMPARISON** | Contract Comparison Engine | **DONE** | Committed (`161dc3d`) | Embedding similarity comparison active |

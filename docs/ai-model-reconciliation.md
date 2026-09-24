@@ -97,3 +97,44 @@ All temporary placeholder comments (Classification E) in `services/ai_client/cli
 - **Total Django Caller Methods Implemented**: 25 matching methods in `RealAIClient`.
 - **Placeholder Routes Remaining**: 0 (all Classification E items resolved).
 - **Match Rate**: 100% MATCHED.
+
+---
+
+## 5. Authoritative AI Model, Threshold & Generation Runtime Configuration
+
+### 5.1 Authoritative Generation Model Runtime Specification
+
+| Property | Authoritative Value / Configuration | Source of Truth / Reference |
+| :--- | :--- | :--- |
+| **Model Identifier** | `openai/gpt-oss-20b` | `app/core/config.py`, `llm_client.py`, Decision DEC-AI-04 |
+| **Provider** | Groq Cloud API (Hosted Cloud Inference) | `groq.Groq` SDK Client |
+| **Historical Predecessor** | `llama-3.1-8b-instant` (retired by Groq 2026-08-16; migrated per PRD Ch. 44) | `docs/ai-feasibility-report.md`, DEC-AI-04 |
+| **Environment Variables** | `GROQ_API_KEY` (secret), `GROQ_MODEL_NAME` (default `openai/gpt-oss-20b`) | `.env.example`, `app/core/config.py` |
+| **Request Timeout** | `LLM_REQUEST_TIMEOUT_SECONDS = 30` (30 seconds) | `app/core/config.py` |
+| **Measured Latency** | ~742.74 ms / call average | `docs/ai-feasibility-report.md` |
+| **Retry & Failure Policy** | 3 attempts with exponential backoff (2s, 4s). Non-transient errors (401/404) fail immediately without retry. | `llm_client.py` (PRD §56.20) |
+| **API Key Redaction** | `sanitize_error_message()` redacts `GROQ_API_KEY` into `gsk_***[REDACTED]***` before logging. | `llm_client.py` |
+| **Standard User Error** | `"AI processing is temporarily unavailable. Please try again later."` | `llm_client.py` (PRD §56.20) |
+| **Structured Output Safety** | Validated via `validate_untrusted_llm_output()` against prohibited legal advice, prompt injection delimiters, and ungrounded claims. | `llm_client.py` (PRD §17.3, §56.26) |
+
+### 5.2 Authoritative Threshold Configuration
+
+*Note: All thresholds are explicitly designated as configurable / interim defaults per PRD §17.7 and Chapter 59, governed by the AI safety rule "favor controlled no-answer over hallucinated guessing".*
+
+| Threshold Parameter | Authoritative Code Value | Configuration Location | Functional Purpose |
+| :--- | :---: | :--- | :--- |
+| `RAG_RELEVANCE_THRESHOLD` | **0.65** | `app/core/config.py` | Stage 1 Relevance Gate: Cosine similarity cutoff for retrieved clause candidates in Qdrant. Candidates below 0.65 are discarded. |
+| `RAG_SUFFICIENCY_THRESHOLD` | **0.70** | `app/core/config.py` | Stage 2 Sufficiency Gate: Minimum top similarity score required to trigger LLM generation. Below 0.70 returns controlled no-answer response. |
+| `COMPARISON_MATCHED_THRESHOLD` | **0.88** | `app/core/config.py` | Pairwise Comparison MATCHED Cutoff: Cosine similarity $\ge 0.88$ classifies clause pairing as `MATCHED`. |
+| `COMPARISON_CHANGED_THRESHOLD` | **0.65** | `app/core/config.py` | Pairwise Comparison CHANGED Cutoff: Cosine similarity $\ge 0.65$ and $< 0.88$ classifies pairing as `CHANGED` and triggers LLM diff explanation. Scores $< 0.65$ classify as `MISSING` / `ADDED`. |
+
+### 5.3 Authoritative Local & Embedding Model Checkpoints
+
+| Component | Model Checkpoint / Tool | Vector Size / Spec | Execution Runtime |
+| :--- | :--- | :---: | :--- |
+| **Clause Embeddings** | `intfloat/multilingual-e5-base` | 768 dimensions (Cosine) | Local SentenceTransformers (`/backend/fastapi-ai`) |
+| **Vector Database** | Qdrant (`clarifai_clause_embeddings`) | 768 dimensions (Cosine) | Local / Hosted Qdrant instance |
+| **Risk Classifier** | `nlpaueb/legal-bert-base-uncased` | Contextual 4-severity | Local PyTorch classifier (`/backend/fastapi-ai`) |
+| **Executive Summarizer** | `facebook/bart-base` | 4-field structured summary | Local Transformers Seq2Seq (`/backend/fastapi-ai`) |
+| **OCR Text Extraction** | Tesseract OCR v5.4.0 | English + Hindi traineddata | Local binary engine |
+| **PDF Extraction** | PyMuPDF (`fitz`) | Digital text / layout blocks | Local Python library |

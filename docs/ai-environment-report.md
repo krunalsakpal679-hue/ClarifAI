@@ -59,7 +59,7 @@ This report documents the machine and local runtime environment inspection for t
 | **Legal-BERT** | `nlpaueb/legal-bert-base-uncased` | **Local** (PyTorch / Transformers) | ~440 MB weights. Feasible on CPU / GPU. Marked as **FEASIBILITY CHECK** for `AI-FEASIBILITY-01`. |
 | **BART-base** | `facebook/bart-base` | **Local** (PyTorch / Transformers) | ~500 MB weights. Feasible on CPU / GPU for summarization. Marked as **FEASIBILITY CHECK** for `AI-FEASIBILITY-01`. |
 | **Multilingual-E5** | `intfloat/multilingual-e5-small` / `base` | **Local** (Sentence-Transformers / PyTorch) | ~470 MB to 1.1 GB weights for document embeddings. Feasible on CPU / GPU. Marked as **FEASIBILITY CHECK** for `AI-FEASIBILITY-01`. |
-| **Llama 3.1 8B** | Cloud API via Groq | **API-based** (Groq SDK / REST API) | **No local GPU VRAM required.** Offloaded to Groq cloud inference engine. Requires valid `GROQ_API_KEY`. |
+| **GPT-OSS-20B** | Cloud API (Groq / API) | **API-based** (REST API) | **No local GPU VRAM required.** Offloaded to cloud inference engine. |
 | **Tesseract OCR** | Native Binary (`tesseract.exe`) | **Local** (Native C++ Binary) | Runs on CPU. Binary exists at `C:\Program Files\Tesseract-OCR\tesseract.exe`. Requires PATH configuration. |
 
 ---

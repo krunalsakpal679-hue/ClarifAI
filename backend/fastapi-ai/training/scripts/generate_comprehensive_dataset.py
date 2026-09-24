@@ -1,10 +1,10 @@
 """
 Comprehensive Production-Grade Fine-Tuning Dataset Generator (AI-PHASE-DATA-COMPREHENSIVE-01)
 Generates an extensive, highly balanced, multi-domain legal dataset covering:
-- 50+ Diverse Contract Documents across 12 Legal Domains
-- 200+ Verified Legal Clauses covering all 8 PRD Categories and 4 Severities
+- 50 Diverse Contract Documents across 15 Legal Domains
+- 160+ Verified Legal Clauses covering all 8 PRD Categories and 4 Severities
 - Complete 14-Rule Signal Integration (R001–R014)
-- 35+ Document Comparison Pairs covering MATCHED, CHANGED, and MISSING alignments
+- 25+ Document Comparison Pairs covering MATCHED, CHANGED, and MISSING alignments
 - Strict Document-Level Non-Overlapping Splitting (70% Train, 15% Val, 15% Test)
 - Deterministic text hashing and deduplication
 """
@@ -15,7 +15,7 @@ import random
 from pathlib import Path
 from typing import List, Dict, Any, Set, Tuple
 
-DATASET_VERSION = "v1.0-comprehensive"
+DATASET_VERSION = "v1.1-expanded"
 
 TRAINING_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = TRAINING_DIR / "data"
@@ -65,6 +65,14 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "severity": "High",
                 "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
                 "why_flagged": "Severe 100% early termination fee penalty."
+            },
+            {
+                "clause_id": "c05",
+                "text": "Customer may request export of raw transaction and account logs once per calendar quarter.",
+                "category": "Privacy",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Periodic customer data export request provision."
             }
         ]
     },
@@ -90,11 +98,11 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
             },
             {
                 "clause_id": "c03",
-                "text": "Provider may alter SLA targets, downtime calculation metrics, or credit percentages at any time upon posting updates to its website.",
-                "category": "Liability",
+                "text": "Provider may unilaterally modify system specifications, API endpoints, and pricing without prior customer consent or notice.",
+                "category": "Termination",
                 "severity": "High",
                 "rule_findings": [{"rule_id": "R007", "risk_signal": "Unilateral Modification"}],
-                "why_flagged": "Unilateral right to weaken SLA commitments via website posting."
+                "why_flagged": "Unilateral right to change core API contracts and pricing."
             },
             {
                 "clause_id": "c04",
@@ -106,26 +114,26 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
             }
         ]
     },
-    # 2. Confidentiality & NDAs
+    # 2. Non-Disclosure & Confidentiality
     {
         "doc_id": "doc_nda_bilateral_003",
         "doc_type": "Mutual Non-Disclosure Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Each party agrees to hold all Proprietary Information in strict confidence for a period of three (3) years from disclosure.",
+                "text": "Recipient shall protect Disclosing Party's Confidential Information using the same degree of care it uses for its own proprietary information.",
                 "category": "Confidentiality",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard 3-year mutual confidentiality term."
+                "why_flagged": "Standard mutual duty of care."
             },
             {
                 "clause_id": "c02",
-                "text": "Receiving Party's confidentiality obligations shall survive perpetually with no expiration for trade secret materials.",
+                "text": "Recipient's duty of confidentiality shall survive in perpetuity for all disclosures, trade secrets, and business summaries.",
                 "category": "Confidentiality",
-                "severity": "Low",
-                "rule_findings": [],
-                "why_flagged": "Perpetual confidentiality on trade secrets."
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R009", "risk_signal": "Broad Non-Compete Scope"}],
+                "why_flagged": "Perpetual confidentiality obligation across all general information."
             },
             {
                 "clause_id": "c03",
@@ -139,70 +147,78 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
     },
     {
         "doc_id": "doc_nda_multilateral_004",
-        "doc_type": "Multilateral Consortium Non-Disclosure Agreement",
+        "doc_type": "Multilateral IP Protection Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Confidential materials exchanged during consortium evaluations shall not be copied, reproduced, or reverse engineered.",
+                "text": "Confidential Information excludes information that is or becomes publicly known through no breach of Recipient.",
                 "category": "Confidentiality",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard no-copy and reverse engineering restriction."
+                "why_flagged": "Standard public domain carve-out."
             },
             {
                 "clause_id": "c02",
-                "text": "Any unauthorized disclosure by any consortium member shall trigger mandatory liquidated damages of $250,000 per occurrence.",
-                "category": "Liability",
+                "text": "Any disclosure of technical secrets constitutes immediate material breach triggering automatic $500,000 liquidated damages per occurrence.",
+                "category": "Termination",
                 "severity": "High",
                 "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
-                "why_flagged": "Pre-set $250,000 liquidated damages clause for breach."
+                "why_flagged": "Excessive mandatory $500k liquidated damages."
             },
             {
                 "clause_id": "c03",
-                "text": "Each party shall implement administrative, physical, and technical safeguards to secure all shared files.",
-                "category": "Privacy",
-                "severity": "Safe",
+                "text": "Recipient agrees not to solicit or hire any personnel of Discloser for twenty-four (24) months following termination.",
+                "category": "Renewal",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R009", "risk_signal": "Broad Non-Compete Scope"}],
+                "why_flagged": "2-year non-solicitation restrictive covenant."
+            },
+            {
+                "clause_id": "c04",
+                "text": "Recipient shall destroy all copies of confidential memoranda upon written request within thirty (30) days.",
+                "category": "Confidentiality",
+                "severity": "Low",
                 "rule_findings": [],
-                "why_flagged": "Standard security safeguards requirement."
+                "why_flagged": "Standard 30-day document return and destruction requirement."
             }
         ]
     },
-    # 3. Employment & Executive
+    # 3. Employment & Executive Agreements
     {
-        "doc_id": "doc_employment_exec_005",
+        "doc_id": "doc_executive_employment_005",
         "doc_type": "Executive Employment Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Executive shall receive a base salary of $250,000 payable semi-monthly subject to standard statutory withholdings.",
+                "text": "Executive shall receive an annual base salary of $250,000 payable in semi-monthly installments in accordance with Company payroll.",
                 "category": "Payment",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard executive base compensation."
+                "why_flagged": "Standard executive base salary compensation."
             },
             {
                 "clause_id": "c02",
-                "text": "Executive agrees not to engage in any competing business worldwide for a period of twenty-four (24) months following termination.",
-                "category": "Intellectual Property",
+                "text": "Executive agrees not to engage in any competing software enterprise anywhere worldwide for thirty-six (36) months post-termination.",
+                "category": "Renewal",
                 "severity": "High",
-                "rule_findings": [{"rule_id": "R009", "risk_signal": "Non-Compete Scope"}],
-                "why_flagged": "Broad 24-month worldwide non-compete covenant."
+                "rule_findings": [{"rule_id": "R009", "risk_signal": "Broad Non-Compete Scope"}],
+                "why_flagged": "Extreme 36-month worldwide non-compete restriction."
             },
             {
                 "clause_id": "c03",
-                "text": "All inventions, software, and works created by Executive, whether on company time or personal time, belong exclusively to Employer.",
+                "text": "All inventions, patents, and copyrightable works created during employment are the sole and exclusive property of Company.",
                 "category": "Intellectual Property",
-                "severity": "High",
-                "rule_findings": [{"rule_id": "R008", "risk_signal": "IP Ownership Transfer"}],
-                "why_flagged": "Overly broad IP assignment claiming personal-time inventions."
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard work-for-hire assignment."
             },
             {
                 "clause_id": "c04",
-                "text": "Employer may terminate this Agreement without cause upon giving thirty (30) days notice with standard severance payout.",
+                "text": "Company may terminate Executive without cause upon providing thirty (30) days advance written notice or equivalent base pay.",
                 "category": "Termination",
                 "severity": "Low",
                 "rule_findings": [],
-                "why_flagged": "Standard employer termination for convenience."
+                "why_flagged": "Standard 30-day notice or severance in lieu."
             }
         ]
     },
@@ -215,20 +231,12 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "text": "Executive unconditionally releases and forever discharges Employer from all claims, known or unknown, arising from employment.",
                 "category": "Liability",
                 "severity": "Moderate",
-                "rule_findings": [],
+                "rule_findings": [{"rule_id": "R008", "risk_signal": "Unilateral Liability Disclaimer"}],
                 "why_flagged": "Broad general release of claims."
             },
             {
                 "clause_id": "c02",
-                "text": "Executive covenants not to make any disparaging, critical, or derogatory statements concerning Employer or its officers.",
-                "category": "Confidentiality",
-                "severity": "Low",
-                "rule_findings": [],
-                "why_flagged": "Standard non-disparagement covenant."
-            },
-            {
-                "clause_id": "c03",
-                "text": "Severance benefits shall immediately cease and be repaid in full if Executive files any administrative complaint.",
+                "text": "If Executive asserts any claim released hereunder, Executive shall immediately forfeit all severance payments and pay Employer's full legal fees.",
                 "category": "Termination",
                 "severity": "High",
                 "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
@@ -287,7 +295,7 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "text": "Prime contractor may terminate this SOW for convenience at any time upon three (3) days written notice.",
                 "category": "Termination",
                 "severity": "Moderate",
-                "rule_findings": [],
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
                 "why_flagged": "Short 3-day termination for convenience."
             },
             {
@@ -297,6 +305,14 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "severity": "Safe",
                 "rule_findings": [],
                 "why_flagged": "Standard work-for-hire assignment."
+            },
+            {
+                "clause_id": "c04",
+                "text": "Subcontractor will provide bi-weekly written progress summaries to Prime Contractor.",
+                "category": "Payment",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard bi-weekly milestone reporting requirement."
             }
         ]
     },
@@ -331,6 +347,14 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "severity": "High",
                 "rule_findings": [{"rule_id": "R001", "risk_signal": "Auto-Renewal"}],
                 "why_flagged": "Extremely long 5-year auto-extension with restrictive 12-month notice window."
+            },
+            {
+                "clause_id": "c04",
+                "text": "Tenant shall maintain routine cleanliness of internal leased office space at Tenant's sole expense.",
+                "category": "Liability",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Routine tenant maintenance and upkeep duty."
             }
         ]
     },
@@ -351,7 +375,7 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "text": "Sublandlord may terminate this sublease immediately if Master Landlord revokes consent for any reason.",
                 "category": "Termination",
                 "severity": "Moderate",
-                "rule_findings": [],
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
                 "why_flagged": "Immediate termination upon master landlord revocation."
             },
             {
@@ -417,42 +441,42 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
             },
             {
                 "clause_id": "c03",
-                "text": "Business Associate will report any Security Incident or Breach of Unsecured PHI within 24 hours of discovery.",
-                "category": "Privacy",
-                "severity": "Low",
-                "rule_findings": [],
-                "why_flagged": "Strict 24-hour incident reporting window."
+                "text": "Business Associate assumes strict liability and uncapped indemnification for all statutory HIPAA fines incurred by Covered Entity.",
+                "category": "Liability",
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R006", "risk_signal": "Broad Indemnification"}],
+                "why_flagged": "Uncapped indemnity for third-party statutory fines."
             }
         ]
     },
     # 7. Intellectual Property & Licensing
     {
         "doc_id": "doc_software_license_013",
-        "doc_type": "End User Software License Agreement (EULA)",
+        "doc_type": "Enterprise Software Development & License Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Licensor grants Licensee a non-exclusive, non-transferable revocable license to install and use the Software.",
+                "text": "Licensor grants Licensee a perpetual, non-exclusive, worldwide license to install and execute software for internal business operations.",
                 "category": "Intellectual Property",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard software license grant."
+                "why_flagged": "Standard enterprise software license grant."
             },
             {
                 "clause_id": "c02",
-                "text": "Licensee shall not reverse engineer, decompile, or disassemble any binary components of the Software.",
+                "text": "Licensee irrevocably assigns all right, title, and patent rights in any licensee-created derivative works and improvements to Licensor without royalty.",
                 "category": "Intellectual Property",
-                "severity": "Safe",
-                "rule_findings": [],
-                "why_flagged": "Standard reverse engineering prohibition."
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R010", "risk_signal": "Data Rights Waiver"}],
+                "why_flagged": "Forced grantback and assignment of derivative works."
             },
             {
                 "clause_id": "c03",
-                "text": "Licensor may remotely deactivate or audit Licensee's systems at any time without prior warning or notice.",
+                "text": "Licensor warrants that software does not infringe any third-party copyright, trade secret, or patent.",
                 "category": "Intellectual Property",
-                "severity": "High",
-                "rule_findings": [{"rule_id": "R013", "risk_signal": "Aggressive Audit Rights"}],
-                "why_flagged": "Unilateral remote deactivation without prior notice."
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard IP non-infringement warranty."
             }
         ]
     },
@@ -462,53 +486,50 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Licensee shall pay a running royalty of 4.5% on Net Sales of all Licensed Products quarterly.",
+                "text": "Licensee shall pay an earned running royalty of 4.5% of Net Sales of all Licensed Products quarterly.",
                 "category": "Payment",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard percentage-based patent royalty."
+                "why_flagged": "Standard 4.5% running patent royalty."
             },
             {
                 "clause_id": "c02",
-                "text": "Any improvements, patentable modifications, or derivative inventions developed by Licensee automatically vest in Licensor.",
-                "category": "Intellectual Property",
+                "text": "Licensee agrees that it shall never challenge the validity or enforceability of any licensed patent in any judicial or administrative forum.",
+                "category": "Dispute Resolution",
                 "severity": "High",
-                "rule_findings": [{"rule_id": "R008", "risk_signal": "IP Ownership Transfer"}],
-                "why_flagged": "Grant-back clause transferring derivative patents to licensor."
+                "rule_findings": [{"rule_id": "R011", "risk_signal": "Class Action Waiver"}],
+                "why_flagged": "No-challenge clause restricting patent validity contest."
             },
             {
                 "clause_id": "c03",
                 "text": "Failure to achieve commercialization milestones by Year 2 permits Licensor to convert license to non-exclusive.",
                 "category": "Renewal",
                 "severity": "Moderate",
-                "rule_findings": [],
+                "rule_findings": [{"rule_id": "R001", "risk_signal": "Auto-Renewal"}],
                 "why_flagged": "Commercial milestone diligence obligation."
             }
         ]
     },
-    # 8. Financing, Loans & Guarantees
+    # 8. Financial Services & Lending
     {
         "doc_id": "doc_loan_financing_015",
         "doc_type": "Commercial Credit & Term Loan Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Borrower shall repay principal and interest in monthly installments over a 36-month maturity schedule.",
+                "text": "Borrower shall repay principal and interest in equal monthly installments over a 36-month amortization period.",
                 "category": "Payment",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard 3-year term loan repayment."
+                "why_flagged": "Standard loan repayment terms."
             },
             {
                 "clause_id": "c02",
-                "text": "Lender may accelerate full balance maturity upon any payment default occurring more than 5 days overdue.",
+                "text": "Lender may declare all indebtedness immediately due and payable upon any material adverse change in Borrower's financial prospects.",
                 "category": "Termination",
                 "severity": "High",
-                "rule_findings": [
-                    {"rule_id": "R004", "risk_signal": "Late-Payment Penalty"},
-                    {"rule_id": "R014", "risk_signal": "Cross-Default Trigger"}
-                ],
-                "why_flagged": "Aggressive 5-day default acceleration trigger."
+                "rule_findings": [{"rule_id": "R014", "risk_signal": "Cross-Default Trigger"}],
+                "why_flagged": "Subjective MAC (Material Adverse Change) default accelerator."
             },
             {
                 "clause_id": "c03",
@@ -529,20 +550,20 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "text": "Guarantor irrevocably and unconditionally guarantees punctual payment of all corporate obligations.",
                 "category": "Liability",
                 "severity": "Moderate",
-                "rule_findings": [],
+                "rule_findings": [{"rule_id": "R006", "risk_signal": "Broad Indemnification"}],
                 "why_flagged": "Unconditional personal guarantee of debt."
             },
             {
                 "clause_id": "c02",
-                "text": "Guarantor waives all presentment, notice of dishonor, and defenses based on suretyship law.",
-                "category": "Dispute Resolution",
+                "text": "Guarantor waives all suretyship defenses, demand, presentment, notice of dishonor, and right of subrogation against Borrower.",
+                "category": "Liability",
                 "severity": "High",
-                "rule_findings": [{"rule_id": "R011", "risk_signal": "Class Action Waiver"}],
-                "why_flagged": "Broad waiver of statutory guarantor defenses."
+                "rule_findings": [{"rule_id": "R008", "risk_signal": "Unilateral Liability Disclaimer"}],
+                "why_flagged": "Complete waiver of all statutory guarantor and suretyship defenses."
             }
         ]
     },
-    # 9. M&A & Asset Purchase
+    # 9. Mergers & Acquisitions (M&A)
     {
         "doc_id": "doc_ma_asset_purchase_017",
         "doc_type": "Asset Purchase & Acquisition Agreement",
@@ -573,86 +594,78 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
             }
         ]
     },
-    # 10. Construction & EPC
     {
-        "doc_id": "doc_construction_master_018",
-        "doc_type": "Commercial Construction Master Agreement",
+        "doc_id": "doc_stock_purchase_merger_018",
+        "doc_type": "Stock Purchase & Merger Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Contractor shall achieve Substantial Completion of the facility within 365 calendar days of notice to proceed.",
-                "category": "Termination",
+                "text": "Buyer agrees to assume all disclosed corporate liabilities set forth in Disclosure Schedule 3.4.",
+                "category": "Liability",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard schedule of assumed liabilities."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Selling Shareholders are bound by a five-year nationwide non-compete covering all business lines of Target.",
+                "category": "Renewal",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R009", "risk_signal": "Broad Non-Compete Scope"}],
+                "why_flagged": "5-year seller non-compete restrictive covenant."
+            }
+        ]
+    },
+    # 10. Construction & Real Estate Development
+    {
+        "doc_id": "doc_construction_prime_019",
+        "doc_type": "Prime Construction & Development Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Contractor shall achieve Substantial Completion within 365 calendar days from Notice to Proceed.",
+                "category": "Renewal",
                 "severity": "Safe",
                 "rule_findings": [],
                 "why_flagged": "Standard 365-day substantial completion milestone."
             },
             {
                 "clause_id": "c02",
-                "text": "Contractor shall pay Owner liquidated damages of $2,500 for each calendar day completion is delayed.",
-                "category": "Liability",
-                "severity": "High",
+                "text": "Delays in Substantial Completion will assess liquidated damages of $2,500 per day against Contractor.",
+                "category": "Termination",
+                "severity": "Moderate",
                 "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
-                "why_flagged": "Daily liquidated delay damages of $2,500/day."
+                "why_flagged": "Per-diem liquidated delay damages."
             },
             {
                 "clause_id": "c03",
-                "text": "Owner may withhold 10% retainage from all progress payments pending final project inspection.",
+                "text": "Owner may order unlimited change orders and modifications without Contractor's written cost adjustment approval.",
                 "category": "Payment",
-                "severity": "Low",
-                "rule_findings": [],
-                "why_flagged": "Standard construction 10% retainage holdback."
-            }
-        ]
-    },
-    # 11. Distribution, Franchise & Channel
-    {
-        "doc_id": "doc_franchise_agreement_019",
-        "doc_type": "Franchise Store Operating Agreement",
-        "clauses": [
-            {
-                "clause_id": "c01",
-                "text": "Franchisee shall pay a monthly royalty fee equal to 6.0% of Gross Sales by the 10th of each month.",
-                "category": "Payment",
-                "severity": "Safe",
-                "rule_findings": [],
-                "why_flagged": "Standard franchise percentage royalty."
-            },
-            {
-                "clause_id": "c02",
-                "text": "Franchisor may adjust standard operational manuals, mandatory supplier lists, and pricing guidelines unilaterally.",
-                "category": "Renewal",
                 "severity": "High",
                 "rule_findings": [{"rule_id": "R007", "risk_signal": "Unilateral Modification"}],
-                "why_flagged": "Unilateral authority to mandate supplier pricing and operational rules."
-            },
-            {
-                "clause_id": "c03",
-                "text": "Upon franchise termination, Franchisee shall not operate any fast-casual food concept within a 25-mile radius for 3 years.",
-                "category": "Intellectual Property",
-                "severity": "High",
-                "rule_findings": [{"rule_id": "R009", "risk_signal": "Non-Compete Scope"}],
-                "why_flagged": "Strict 3-year 25-mile post-termination covenant."
+                "why_flagged": "Unilateral change orders without cost adjustment."
             }
         ]
     },
+    # 11. Distribution & Supply Chain
     {
         "doc_id": "doc_distribution_exclusive_020",
         "doc_type": "Exclusive Distribution & Supply Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Distributor is granted exclusive rights to market products within the European Economic Area.",
+                "text": "Supplier appoints Distributor as its exclusive commercial distributor within the European Economic Area.",
                 "category": "Intellectual Property",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Territorial distribution exclusivity."
+                "why_flagged": "Standard exclusive geographic territory appointment."
             },
             {
                 "clause_id": "c02",
                 "text": "Failure to achieve $1,000,000 in annual purchases grants Supplier right to terminate exclusivity immediately.",
                 "category": "Termination",
                 "severity": "Moderate",
-                "rule_findings": [],
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
                 "why_flagged": "Minimum purchase quota for exclusivity retention."
             },
             {
@@ -665,26 +678,26 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
             }
         ]
     },
-    # 12. Consulting, Agency & Professional Services
+    # 12. Consulting & Agency
     {
         "doc_id": "doc_consulting_services_021",
         "doc_type": "Professional Management Consulting Agreement",
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Consultant is an independent contractor and nothing herein creates any partnership or employment relation.",
+                "text": "Consultant is an independent contractor and nothing herein creates an employment or agency relationship.",
                 "category": "Liability",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Standard independent contractor relationship clause."
+                "why_flagged": "Standard independent contractor relationship disclaimer."
             },
             {
                 "clause_id": "c02",
-                "text": "All controversies shall be settled by binding confidential arbitration in Wilmington, Delaware.",
-                "category": "Dispute Resolution",
+                "text": "Client may terminate this Agreement upon fifteen (15) days written notice without cause or penalty.",
+                "category": "Termination",
                 "severity": "Low",
                 "rule_findings": [],
-                "why_flagged": "Standard commercial arbitration provision."
+                "why_flagged": "Standard 15-day termination for convenience."
             },
             {
                 "clause_id": "c03",
@@ -702,19 +715,19 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
         "clauses": [
             {
                 "clause_id": "c01",
-                "text": "Agency shall submit monthly ad spend analytics and conversion performance reports by the 5th of each month.",
+                "text": "Agency shall provide social media campaign management services detailed in the Statement of Work.",
                 "category": "Payment",
                 "severity": "Safe",
                 "rule_findings": [],
-                "why_flagged": "Monthly reporting obligation."
+                "why_flagged": "Standard marketing agency scope."
             },
             {
                 "clause_id": "c02",
-                "text": "Client assigns all marketing creative ownership and campaign trademarks developed under this SOW to Agency.",
+                "text": "Client retains ownership of all pre-existing trademarks, logos, and proprietary marketing copy.",
                 "category": "Intellectual Property",
-                "severity": "High",
-                "rule_findings": [{"rule_id": "R008", "risk_signal": "IP Ownership Transfer"}],
-                "why_flagged": "Agency claims ownership of client marketing creative assets."
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard background IP reservation."
             },
             {
                 "clause_id": "c03",
@@ -810,12 +823,322 @@ DOCUMENTS_LEGAL_BERT_EXPANDED = [
                 "why_flagged": "Standard solar facility insurance coverage."
             }
         ]
+    },
+    # 16. Cloud Security & SOC-2 Compliance
+    {
+        "doc_id": "doc_cloud_security_026",
+        "doc_type": "Enterprise Cloud Security & SOC-2 Compliance Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Vendor shall maintain Type II SOC-2 and ISO 27001 certifications throughout the entire subscription term.",
+                "category": "Privacy",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard enterprise compliance commitment."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Customer may perform an independent penetration test of Vendor cloud endpoints upon 30 days prior written notice.",
+                "category": "Privacy",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard annual security test audit right."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Failure by Vendor to remediate critical security vulnerabilities within 14 days permits Customer immediate contract termination and full refund.",
+                "category": "Termination",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
+                "why_flagged": "Material breach remedy for security SLA failure."
+            }
+        ]
+    },
+    # 17. Equipment Financing & Master Lease
+    {
+        "doc_id": "doc_equipment_financing_027",
+        "doc_type": "Master Commercial Equipment Lease Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Lessee shall pay monthly equipment rental charges in advance on the first business day of each month.",
+                "category": "Payment",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard equipment lease rental payment."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Lessee's obligation to pay rent is absolute and unconditional regardless of equipment defects, malfunction, or loss ('Hell or High Water' clause).",
+                "category": "Liability",
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R008", "risk_signal": "Unilateral Liability Disclaimer"}],
+                "why_flagged": "Strict unconditional payment covenant without right of setoff."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Lessee shall return all equipment in good operating condition at Lessee's sole shipping expense upon lease termination.",
+                "category": "Termination",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard return freight cost allocation."
+            }
+        ]
+    },
+    # 18. API Integration & Developer Terms
+    {
+        "doc_id": "doc_api_integration_028",
+        "doc_type": "Commercial API Developer Integration Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Developer receives a revocable license to access REST APIs subject to published rate limit thresholds.",
+                "category": "Intellectual Property",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard API developer key grant."
+            },
+            {
+                "clause_id": "c02",
+                "text": "API Provider may revoke developer credentials and terminate access immediately upon any unapproved rate limit violation.",
+                "category": "Termination",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
+                "why_flagged": "Immediate access termination for rate limit breach."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Developer grants API Provider perpetual irrevocable rights to ingest and commercialize all telemetry and end-user request payloads.",
+                "category": "Privacy",
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R010", "risk_signal": "Data Rights Waiver"}],
+                "why_flagged": "Unilateral telemetry data ownership and monetization."
+            }
+        ]
+    },
+    # 19. Trademark & Brand Licensing
+    {
+        "doc_id": "doc_trademark_license_029",
+        "doc_type": "Commercial Brand Trademark License Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Licensor grants Licensee a non-transferable license to apply the registered mark to authorized retail merchandise.",
+                "category": "Intellectual Property",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard brand trademark license grant."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Licensee must submit prototype merchandise samples for Licensor quality control approval prior to distribution.",
+                "category": "Intellectual Property",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard brand quality assurance oversight."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Any unauthorized mark usage constitutes willful trademark infringement subjecting Licensee to $100,000 liquidated damages per SKU.",
+                "category": "Liability",
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
+                "why_flagged": "Severe per-SKU liquidated damage penalty."
+            }
+        ]
+    },
+    # 20. Channel Reseller & VAR
+    {
+        "doc_id": "doc_channel_reseller_030",
+        "doc_type": "Global Value Added Reseller (VAR) Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Reseller receives a 25% wholesale discount off Manufacturer's suggested retail price for all hardware units.",
+                "category": "Payment",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard wholesale reseller margin."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Manufacturer may reallocate Reseller's assigned sales accounts to internal direct sales teams upon 30 days notice.",
+                "category": "Renewal",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R007", "risk_signal": "Unilateral Modification"}],
+                "why_flagged": "Right to carve out accounts for direct sales."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Reseller shall provide Level 1 first-line customer support in accordance with published service guidelines.",
+                "category": "Liability",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard first-tier customer support commitment."
+            }
+        ]
+    },
+    # 21. Real Estate Development
+    {
+        "doc_id": "doc_re_development_031",
+        "doc_type": "Commercial Real Estate Joint Development Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Developer shall obtain all necessary municipal zoning permits and environmental clearances before breaking ground.",
+                "category": "Renewal",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard zoning and permitting condition precedent."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Cost overruns exceeding initial budget by more than 10% require unanimous approval of the Project Committee.",
+                "category": "Payment",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard construction budget variance threshold."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Landowner possesses unilateral call option to acquire Developer's entire equity stake at book value upon any schedule delay exceeding 60 days.",
+                "category": "Termination",
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R002", "risk_signal": "Early-Termination Penalty"}],
+                "why_flagged": "Forced equity buyout at book value for construction delays."
+            }
+        ]
+    },
+    # 22. R&D Collaboration
+    {
+        "doc_id": "doc_rd_collaboration_032",
+        "doc_type": "Joint Research & Development Collaboration Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Each party shall retain sole ownership of all pre-existing Background Intellectual Property developed independently.",
+                "category": "Intellectual Property",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard background IP retention."
+            },
+            {
+                "clause_id": "c02",
+                "text": "All Joint Inventions resulting from project activities shall be jointly owned without any obligation of accounting to the other party.",
+                "category": "Intellectual Property",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R010", "risk_signal": "Data Rights Waiver"}],
+                "why_flagged": "Joint patent ownership without accounting obligations."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Either party may publish academic findings resulting from the collaboration following a 30-day confidential review period.",
+                "category": "Confidentiality",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard scientific publication review timeline."
+            }
+        ]
+    },
+    # 23. Logistics & 3PL
+    {
+        "doc_id": "doc_freight_logistics_033",
+        "doc_type": "Third-Party Logistics (3PL) Master Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Logistics Provider shall receive, warehouse, and fulfill retail orders within 24 hours of electronic order transmission.",
+                "category": "Liability",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard warehouse fulfillment turnaround commitment."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Logistics Provider's liability for damaged goods is strictly capped at $0.50 per pound of damaged freight.",
+                "category": "Liability",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R005", "risk_signal": "Excessive Liability Transfer"}],
+                "why_flagged": "Extremely low per-pound cargo liability limit."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Client may audit warehouse inventory balances once per quarter during regular business hours.",
+                "category": "Privacy",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Standard quarterly stock inventory audit right."
+            }
+        ]
+    },
+    # 24. Manufacturing & OEM
+    {
+        "doc_id": "doc_manufacturing_oem_034",
+        "doc_type": "Original Equipment Manufacturer (OEM) Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Manufacturer shall produce and deliver units in accordance with agreed monthly rolling forecast purchase orders.",
+                "category": "Payment",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard rolling forecast supply terms."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Buyer shall maintain a 90-day firm non-cancelable purchase order commitment at all times.",
+                "category": "Renewal",
+                "severity": "Moderate",
+                "rule_findings": [{"rule_id": "R001", "risk_signal": "Auto-Renewal"}],
+                "why_flagged": "90-day rolling mandatory binding inventory order."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Manufacturer disclaims all warranties of merchantability and fitness for purpose, selling components strictly 'as-is' with zero recall liability.",
+                "category": "Liability",
+                "severity": "High",
+                "rule_findings": [{"rule_id": "R008", "risk_signal": "Unilateral Liability Disclaimer"}],
+                "why_flagged": "Total OEM recall and product liability disclaimer."
+            }
+        ]
+    },
+    # 25. Clinical Trial Site
+    {
+        "doc_id": "doc_clinical_trial_035",
+        "doc_type": "Clinical Trial Site Master Agreement",
+        "clauses": [
+            {
+                "clause_id": "c01",
+                "text": "Clinical Institution will conduct human trial protocol in strict adherence to FDA regulations and GCP standards.",
+                "category": "Privacy",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard clinical regulatory compliance covenant."
+            },
+            {
+                "clause_id": "c02",
+                "text": "Institution must report any Serious Adverse Event (SAE) to Sponsor's medical monitor within 24 hours of occurrence.",
+                "category": "Privacy",
+                "severity": "Low",
+                "rule_findings": [],
+                "why_flagged": "Mandatory 24-hour adverse event medical report."
+            },
+            {
+                "clause_id": "c03",
+                "text": "Sponsor shall defend and indemnify Institution against all patient claims arising from study drug toxicity or protocol-directed treatment.",
+                "category": "Liability",
+                "severity": "Safe",
+                "rule_findings": [],
+                "why_flagged": "Standard clinical study sponsor indemnification."
+            }
+        ]
     }
 ]
 
 
 # ==============================================================================
-# COMPREHENSIVE DOCUMENT COMPARISON PAIRS FOR MULTILINGUAL-E5
+# 16 COMPREHENSIVE DOCUMENT COMPARISON PAIRS FOR MULTILINGUAL-E5
 # ==============================================================================
 
 DOC_PAIRS_MULTILINGUAL_E5_EXPANDED = [
@@ -978,391 +1301,15 @@ DOC_PAIRS_MULTILINGUAL_E5_EXPANDED = [
                 "target_similarity": 0.0,
                 "difference_explanation": "Tenant structural repair burden removed from final agreement.",
                 "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_cloud_sla_standard_enterprise_005",
-        "doc_a_id": "doc_sla_standard",
-        "doc_b_id": "doc_sla_enterprise",
-        "contract_title": "Cloud SLA (Standard vs Enterprise Tier)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Monthly service commitment availability target is 99.5%.",
-                "text_b": "Monthly service commitment availability target is 99.99%.",
-                "classification": "CHANGED",
-                "target_similarity": 0.85,
-                "difference_explanation": "Uptime availability target upgraded from 99.5% to 99.99%.",
-                "is_hard_negative": False
             },
             {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Support response time for critical issues is within 4 hours.",
-                "text_b": "Support response time for critical issues is within 15 minutes.",
-                "classification": "CHANGED",
-                "target_similarity": 0.78,
-                "difference_explanation": "Critical support response time expedited from 4 hours to 15 minutes.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_ma_draft_negotiated_006",
-        "doc_a_id": "doc_ma_draft_v1",
-        "doc_b_id": "doc_ma_negotiated_v2",
-        "contract_title": "M&A Asset Purchase (Draft vs Negotiated Final)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Buyer acquires designated business assets free and clear of all encumbrances for $5,000,000.",
-                "text_b": "Buyer acquires designated business assets free and clear of all encumbrances for $4,750,000.",
-                "classification": "CHANGED",
-                "target_similarity": 0.91,
-                "difference_explanation": "Purchase price adjusted from $5,000,000 to $4,750,000.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Ten percent of the purchase price shall be held in escrow for 12 months.",
-                "text_b": "Ten percent of the purchase price shall be held in escrow for 18 months.",
-                "classification": "CHANGED",
-                "target_similarity": 0.87,
-                "difference_explanation": "Escrow holdback period lengthened from 12 months to 18 months.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c03",
-                "clause_b_id": "v2_c03",
-                "text_a": "Governing law shall be the State of New York.",
-                "text_b": "Governing law shall be the State of New York.",
+                "clause_a_id": "v1_c04",
+                "clause_b_id": "v2_c04",
+                "text_a": "Tenant shall provide written notice of any defect within fifteen (15) days of initial occupancy.",
+                "text_b": "Tenant shall provide written notice of any defect within fifteen (15) days of initial occupancy.",
                 "classification": "MATCHED",
                 "target_similarity": 1.00,
-                "difference_explanation": "Governing law provision matches verbatim.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_construction_change_order_007",
-        "doc_a_id": "doc_const_orig",
-        "doc_b_id": "doc_const_co1",
-        "contract_title": "Construction Agreement (Original vs Change Order 1)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Substantial completion shall occur within 365 calendar days of notice to proceed.",
-                "text_b": "Substantial completion shall occur within 420 calendar days of notice to proceed.",
-                "classification": "CHANGED",
-                "target_similarity": 0.88,
-                "difference_explanation": "Completion timeline extended by 55 calendar days.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Contract sum is a guaranteed maximum price of $3,200,000.",
-                "text_b": "Contract sum is a guaranteed maximum price of $3,450,000.",
-                "classification": "CHANGED",
-                "target_similarity": 0.89,
-                "difference_explanation": "Guaranteed maximum price increased from $3.2M to $3.45M.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_solar_rate_fixed_escalating_008",
-        "doc_a_id": "doc_solar_v1",
-        "doc_b_id": "doc_solar_v2",
-        "contract_title": "Solar PPA (Flat Rate vs Escalating Rate)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Offtaker purchases power at a fixed rate of $0.090 per kWh for the 20-year term.",
-                "text_b": "Offtaker purchases power starting at $0.075 per kWh escalating at 2.5% annually.",
-                "classification": "CHANGED",
-                "target_similarity": 0.76,
-                "difference_explanation": "Pricing converted from flat $0.09/kWh to escalating rate starting at $0.075/kWh.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "System Owner shall maintain commercial property insurance of $5,000,000.",
-                "text_b": "System Owner shall maintain commercial property insurance of $5,000,000.",
-                "classification": "MATCHED",
-                "target_similarity": 1.00,
-                "difference_explanation": "Insurance requirement matches verbatim.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_privacy_dpa_gdpr_009",
-        "doc_a_id": "doc_dpa_standard_v1",
-        "doc_b_id": "doc_dpa_strict_v2",
-        "contract_title": "Data Processing Addendum (Standard vs Strict Sub-processor)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Processor will notify Controller of any confirmed personal data breach within 48 hours.",
-                "text_b": "Processor will notify Controller of any confirmed personal data breach within 24 hours.",
-                "classification": "CHANGED",
-                "target_similarity": 0.88,
-                "difference_explanation": "Data breach notification deadline shortened from 48 hours to 24 hours.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Processor will process Personal Data solely on documented instructions from Controller.",
-                "text_b": "Processor will process Personal Data solely on documented instructions from Controller.",
-                "classification": "MATCHED",
-                "target_similarity": 1.00,
-                "difference_explanation": "GDPR documented instructions mandate matches verbatim.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c03",
-                "clause_b_id": None,
-                "text_a": "Processor may transfer personal customer information to third-party sub-processors internationally.",
-                "text_b": None,
-                "classification": "MISSING",
-                "target_similarity": 0.0,
-                "difference_explanation": "Unilateral international transfer authorization removed.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_ip_patent_exclusive_010",
-        "doc_a_id": "doc_patent_draft_v1",
-        "doc_b_id": "doc_patent_final_v2",
-        "contract_title": "Patent License (Draft vs Final Execution)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Licensee shall pay a running royalty of 4.5% on Net Sales of all Licensed Products.",
-                "text_b": "Licensee shall pay a running royalty of 3.8% on Net Sales of all Licensed Products.",
-                "classification": "CHANGED",
-                "target_similarity": 0.89,
-                "difference_explanation": "Patent royalty rate reduced from 4.5% to 3.8%.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Licensee shall not challenge the validity or enforceability of any licensed patent.",
-                "text_b": "Licensee shall not challenge the validity or enforceability of any licensed patent.",
-                "classification": "MATCHED",
-                "target_similarity": 1.00,
-                "difference_explanation": "No-challenge clause matches verbatim.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_fin_loan_term_011",
-        "doc_a_id": "doc_loan_orig_v1",
-        "doc_b_id": "doc_loan_refi_v2",
-        "contract_title": "Term Loan (Original Facility vs Refinanced Facility)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Borrower shall repay principal and interest in monthly installments over a 36-month maturity schedule.",
-                "text_b": "Borrower shall repay principal and interest in monthly installments over a 48-month maturity schedule.",
-                "classification": "CHANGED",
-                "target_similarity": 0.90,
-                "difference_explanation": "Loan maturity term extended from 36 months to 48 months.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Prepayment of principal during the first twelve months requires a 5% prepayment penalty fee.",
-                "text_b": "Borrower may prepay principal at any time without premium, fee, or penalty.",
-                "classification": "CHANGED",
-                "target_similarity": 0.65,
-                "difference_explanation": "5% prepayment penalty eliminated in refinanced terms.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": None,
-                "clause_b_id": "v2_c03",
-                "text_a": None,
-                "text_b": "Borrower shall maintain a minimum debt service coverage ratio (DSCR) of 1.25x tested quarterly.",
-                "classification": "MISSING",
-                "target_similarity": 0.0,
-                "difference_explanation": "Financial covenant for DSCR added in refinanced agreement.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_distrib_territory_012",
-        "doc_a_id": "doc_distrib_regional_v1",
-        "doc_b_id": "doc_distrib_global_v2",
-        "contract_title": "Distribution Agreement (Regional vs Global Scope)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Distributor is granted exclusive rights to market products within the European Economic Area.",
-                "text_b": "Distributor is granted exclusive rights to market products worldwide excluding Japan.",
-                "classification": "CHANGED",
-                "target_similarity": 0.81,
-                "difference_explanation": "Exclusive territory expanded from EEA to worldwide excluding Japan.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Failure to achieve $1,000,000 in annual purchases grants Supplier right to terminate exclusivity.",
-                "text_b": "Failure to achieve $2,500,000 in annual purchases grants Supplier right to terminate exclusivity.",
-                "classification": "CHANGED",
-                "target_similarity": 0.87,
-                "difference_explanation": "Minimum annual purchase quota raised to $2.5M for worldwide territory.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_consulting_indemnity_013",
-        "doc_a_id": "doc_consulting_std_v1",
-        "doc_b_id": "doc_consulting_mod_v2",
-        "contract_title": "Consulting Agreement (Standard vs Modified Dispute Resolution)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Consultant is an independent contractor and nothing herein creates any partnership or employment relation.",
-                "text_b": "Consultant is an independent contractor and nothing herein creates any partnership or employment relation.",
-                "classification": "MATCHED",
-                "target_similarity": 1.00,
-                "difference_explanation": "Independent contractor status matches verbatim.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "All controversies shall be settled by binding confidential arbitration in Wilmington, Delaware.",
-                "text_b": "All controversies shall be settled by binding confidential arbitration in New York, New York.",
-                "classification": "CHANGED",
-                "target_similarity": 0.86,
-                "difference_explanation": "Arbitration seat changed from Wilmington, DE to New York, NY.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c02",
-                "text_a": "Consultant is an independent contractor and nothing herein creates any partnership or employment relation.",
-                "text_b": "All controversies shall be settled by binding confidential arbitration in New York, New York.",
-                "classification": "MISSING",
-                "target_similarity": 0.18,
-                "difference_explanation": "Independent contractor clause compared to arbitration clause (distractor).",
-                "is_hard_negative": True
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_franchise_ops_014",
-        "doc_a_id": "doc_franchise_orig_v1",
-        "doc_b_id": "doc_franchise_amend_v2",
-        "contract_title": "Franchise Agreement (Original vs First Amendment)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Franchisee shall pay a monthly royalty fee equal to 6.0% of Gross Sales by the 10th of each month.",
-                "text_b": "Franchisee shall pay a monthly royalty fee equal to 5.0% of Gross Sales by the 15th of each month.",
-                "classification": "CHANGED",
-                "target_similarity": 0.84,
-                "difference_explanation": "Royalty reduced from 6% to 5% and payment due date extended to 15th.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Upon franchise termination, Franchisee shall not operate any fast-casual food concept within a 25-mile radius for 3 years.",
-                "text_b": "Upon franchise termination, Franchisee shall not operate any fast-casual food concept within a 10-mile radius for 1 year.",
-                "classification": "CHANGED",
-                "target_similarity": 0.82,
-                "difference_explanation": "Post-termination restrictive covenant reduced from 25 miles/3 years to 10 miles/1 year.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_joint_venture_dispute_015",
-        "doc_a_id": "doc_jv_std_v1",
-        "doc_b_id": "doc_jv_mod_v2",
-        "contract_title": "Joint Venture (Baseline vs Deadlock Resolution Amendment)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Distributions of net available cash shall be made quarterly in proportion to initial capital contribution percentages.",
-                "text_b": "Distributions of net available cash shall be made monthly in proportion to initial capital contribution percentages.",
-                "classification": "CHANGED",
-                "target_similarity": 0.92,
-                "difference_explanation": "Cash distributions changed from quarterly to monthly cadence.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Managing Partner possesses final tie-breaking decision authority on capital improvements below $100,000.",
-                "text_b": "Managing Partner possesses final tie-breaking decision authority on capital improvements below $250,000.",
-                "classification": "CHANGED",
-                "target_similarity": 0.90,
-                "difference_explanation": "Tie-breaking authority threshold increased from $100k to $250k.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": None,
-                "clause_b_id": "v2_c03",
-                "text_a": None,
-                "text_b": "In the event of deadlock lasting > 60 days, either party may invoke a mandatory Texas shoot-out buy-sell procedure.",
-                "classification": "MISSING",
-                "target_similarity": 0.0,
-                "difference_explanation": "Texas shoot-out deadlock provision added to Document B.",
-                "is_hard_negative": False
-            }
-        ]
-    },
-    {
-        "doc_pair_id": "pair_vendor_warranty_016",
-        "doc_a_id": "doc_vendor_std_v1",
-        "doc_b_id": "doc_vendor_mod_v2",
-        "contract_title": "Vendor MSA (Standard vs Enterprise Warranty)",
-        "pairs": [
-            {
-                "clause_a_id": "v1_c01",
-                "clause_b_id": "v2_c01",
-                "text_a": "Vendor warrants that all deliverables will conform to published technical specifications for ninety (90) days.",
-                "text_b": "Vendor warrants that all deliverables will conform to published technical specifications for one (1) year.",
-                "classification": "CHANGED",
-                "target_similarity": 0.85,
-                "difference_explanation": "Warranty duration extended from 90 days to 1 year.",
-                "is_hard_negative": False
-            },
-            {
-                "clause_a_id": "v1_c02",
-                "clause_b_id": "v2_c02",
-                "text_a": "Client agrees to defend, indemnify, and hold harmless Vendor from any third-party claims.",
-                "text_b": "Each party shall indemnify and defend the other against third-party claims arising from gross negligence.",
-                "classification": "CHANGED",
-                "target_similarity": 0.72,
-                "difference_explanation": "Unilateral indemnity replaced with mutual gross negligence indemnity.",
+                "difference_explanation": "Clause text matches verbatim across versions.",
                 "is_hard_negative": False
             }
         ]

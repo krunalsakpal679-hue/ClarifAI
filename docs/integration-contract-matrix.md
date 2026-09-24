@@ -1,6 +1,6 @@
 # System Integration Contract Matrix & Drift Audit
 
-**Phase:** `BOOK4-PHASE-01`  
+**Phase:** `BOOK4-PHASE-06`  
 **Service/Component:** Full System (Django API Backend + FastAPI AI Service + Frontend App)  
 **Role:** Book 4 Lead (Full-System Integration, DevOps, E2E, Security, AI Validation & Release)  
 **Date:** September 24, 2026  
@@ -15,7 +15,7 @@ This document establishes the reconciled **Integration Contract Matrix** across 
 2. **Django REST API Backend** (Django + Celery + PostgreSQL)
 3. **FastAPI AI Microservice** (FastAPI + PyTorch/Transformers + Qdrant)
 
-It catalogues every internal and external endpoint, reconciles route paths across service boundaries, verifies cross-cutting security and error handling conventions, and registers all identified **Contract Drifts** for resolution in `BOOK4-PHASE-05`.
+It catalogues every internal and external endpoint, reconciles route paths across service boundaries, verifies cross-cutting security and error handling conventions, and registers database schema contract compliance.
 
 ---
 
@@ -23,13 +23,13 @@ It catalogues every internal and external endpoint, reconciles route paths acros
 
 The Django backend communicates with the internal FastAPI AI service via `services.ai_client.client.RealAIClient`. Below is the catalog of calls made by `RealAIClient` compared against the actual route paths exposed by FastAPI routers under `backend/fastapi-ai/app/routers/`:
 
-| Call Site in `client.py` | Django Target Path | Actual FastAPI Exposed Route | Status | Notes / Discrepancy |
+| Call Site in `client.py` | Django Target Path | Actual FastAPI Exposed Route | Status | Notes / Resolution |
 | :--- | :--- | :--- | :--- | :--- |
-| `process_document()` | `POST /api/v1/process-document` | *None* (Requires multi-step pipeline invocation) | **DRIFT (P0)** | FastAPI exposes discrete processing endpoints (`/api/v1/extract-pdf`, `/api/v1/segment-clauses`, `/api/v1/categorize-clauses`, `/api/v1/classify-document-risk`, `/api/v1/summarize-document`, `/api/v1/generate-embeddings`, `/api/v1/qdrant/index-document`) instead of a single `/process-document` route. |
-| `chat()` | `POST /api/v1/chat` | `POST /api/v1/chatbot/chat` | **DRIFT (P1)** | Prefix mismatch: Django calls `/api/v1/chat`, FastAPI expects `/api/v1/chatbot/chat`. |
-| `compare()` | `POST /api/v1/compare` | `POST /api/v1/comparison/compare-documents` | **DRIFT (P1)** | Path mismatch: Django calls `/api/v1/compare`, FastAPI expects `/api/v1/comparison/compare-documents`. |
-| `translate()` | `POST /api/v1/translate` | `POST /api/v1/translation/translate-document` | **DRIFT (P1)** | Path mismatch: Django calls `/api/v1/translate`, FastAPI expects `/api/v1/translation/translate-document`. |
-| `delete_document_embeddings()` | `DELETE /api/v1/documents/{id}/embeddings` | `DELETE /api/v1/qdrant/delete-document` | **DRIFT (P1)** | Path & method mismatch: Django calls `DELETE /api/v1/documents/{id}/embeddings`, FastAPI expects `DELETE /api/v1/qdrant/delete-document` with JSON body `{"document_id": "..."}`. |
+| `process_document()` | Sequential 10-stage orchestration | `/api/v1/extract-pdf`<br>`/api/v1/clean-text`<br>`/api/v1/segment-clauses`<br>`/api/v1/categorize-clauses`<br>`/api/v1/evaluate-rules`<br>`/api/v1/classify-document-risk`<br>`/api/v1/simplify-clauses`<br>`/api/v1/summarize-document`<br>`/api/v1/generate-embeddings`<br>`/api/v1/qdrant/index-document` | **RESOLVED (BOOK4-PHASE-05)** | Django `RealAIClient.process_document()` executes the full 10-stage sequential AI pipeline across FastAPI's exposed granular routers and returns validated payload. |
+| `chat()` | `POST /api/v1/chatbot/chat` | `POST /api/v1/chatbot/chat` | **RESOLVED (BOOK4-PHASE-05)** | Reconciled to `/api/v1/chatbot/chat` with structured response validation. |
+| `compare()` | `POST /api/v1/comparison/compare-documents` | `POST /api/v1/comparison/compare-documents` | **RESOLVED (BOOK4-PHASE-05)** | Reconciled to `/api/v1/comparison/compare-documents`. |
+| `translate()` | `POST /api/v1/translation/translate-document` | `POST /api/v1/translation/translate-document` | **RESOLVED (BOOK4-PHASE-05)** | Reconciled to `/api/v1/translation/translate-document`. |
+| `delete_document_embeddings()` | `DELETE /api/v1/qdrant/delete-document` | `DELETE /api/v1/qdrant/delete-document` | **RESOLVED (BOOK4-PHASE-05)** | Reconciled to `DELETE /api/v1/qdrant/delete-document` with JSON body `{"user_id": ..., "document_id": ...}`. |
 
 ---
 
@@ -37,24 +37,24 @@ The Django backend communicates with the internal FastAPI AI service via `servic
 
 The internal FastAPI service (`backend/fastapi-ai`) exposes 16 routers. Below is the complete catalog of all exposed internal endpoints:
 
-| Router Module | Router Prefix | HTTP Method & Path | Functionality |
-| :--- | :--- | :--- | :--- |
-| `health.py` | *None* | `GET /health`<br>`GET /health/live`<br>`GET /health/ready` | Liveness & readiness probes |
-| `pdf.py` | `/api/v1` | `POST /api/v1/extract-pdf` | PyMuPDF / Tesseract PDF text & OCR extraction |
-| `text_cleaning.py` | `/api/v1` | `POST /api/v1/clean-text` | Text normalization & whitespace cleaning |
-| `clause_segmentation.py` | `/api/v1` | `POST /api/v1/segment-clauses` | Regex/heuristic legal clause segmentation |
-| `clause_categorization.py` | `/api/v1` | `POST /api/v1/categorize-clauses` | Zero-shot / Legal-BERT clause categorization |
-| `risk.py` | `/api/v1` | `POST /api/v1/classify-risk`<br>`POST /api/v1/classify-document-risk`<br>`POST /api/v1/validate-risk-output` | Legal-BERT risk classification & score aggregation |
-| `summarization.py` | `/api/v1` | `POST /api/v1/summarize`<br>`POST /api/v1/summarize-document` | BART-base abstractive legal summarization |
-| `simplification.py` | `/api/v1` | `POST /api/v1/simplify-clauses` | Plain-English legal clause simplification |
-| `rule_engine.py` | `/api/v1` | `POST /api/v1/evaluate-rules` | Deterministic legal compliance rule evaluation |
-| `embedding.py` | `/api/v1` | `POST /api/v1/generate-embedding`<br>`POST /api/v1/generate-embeddings` | Multilingual-E5 vector embedding generation |
-| `qdrant.py` | `/api/v1/qdrant` | `POST /api/v1/qdrant/index-document`<br>`POST /api/v1/qdrant/query`<br>`DELETE /api/v1/qdrant/delete-document` | Qdrant vector database indexing & vector search |
-| `rag.py` | `/api/v1/rag` | `POST /api/v1/rag/retrieve-evidence` | RAG evidence retrieval from Qdrant |
-| `chatbot.py` | `/api/v1/chatbot` | `POST /api/v1/chatbot/chat`<br>`DELETE /api/v1/chatbot/session/{session_id}` | Conversational RAG with GPT-OSS-20B / Groq |
-| `comparison.py` | `/api/v1/comparison` | `POST /api/v1/comparison/compare-documents` | Pairwise document alignment & comparison |
-| `translation.py` | `/api/v1/translation` | `POST /api/v1/translation/translate-document` | Multilingual translation engine |
-| `llm.py` | `/api/v1` | `POST /api/v1/llm-completion` | Direct LLM prompt completion wrapper |
+| Router Module | Router Prefix | HTTP Method & Path | Functionality | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `health.py` | *None* | `GET /health`<br>`GET /health/live`<br>`GET /health/ready` | Liveness & readiness probes | **MATCHED** |
+| `pdf.py` | `/api/v1` | `POST /api/v1/extract-pdf` | PyMuPDF / Tesseract PDF text & OCR extraction | **MATCHED** |
+| `text_cleaning.py` | `/api/v1` | `POST /api/v1/clean-text` | Text normalization & whitespace cleaning | **MATCHED** |
+| `clause_segmentation.py` | `/api/v1` | `POST /api/v1/segment-clauses` | Regex/heuristic legal clause segmentation | **MATCHED** |
+| `clause_categorization.py` | `/api/v1` | `POST /api/v1/categorize-clauses` | Zero-shot / Legal-BERT clause categorization | **MATCHED** |
+| `risk.py` | `/api/v1` | `POST /api/v1/classify-risk`<br>`POST /api/v1/classify-document-risk`<br>`POST /api/v1/validate-risk-output` | Legal-BERT risk classification & score aggregation | **MATCHED** |
+| `summarization.py` | `/api/v1` | `POST /api/v1/summarize`<br>`POST /api/v1/summarize-document` | BART-base abstractive legal summarization | **MATCHED** |
+| `simplification.py` | `/api/v1` | `POST /api/v1/simplify-clauses` | Plain-English legal clause simplification | **MATCHED** |
+| `rule_engine.py` | `/api/v1` | `POST /api/v1/evaluate-rules` | Deterministic legal compliance rule evaluation | **MATCHED** |
+| `embedding.py` | `/api/v1` | `POST /api/v1/generate-embedding`<br>`POST /api/v1/generate-embeddings` | Multilingual-E5 vector embedding generation | **MATCHED** |
+| `qdrant.py` | `/api/v1/qdrant` | `POST /api/v1/qdrant/index-document`<br>`POST /api/v1/qdrant/query`<br>`DELETE /api/v1/qdrant/delete-document` | Qdrant vector database indexing & vector search | **MATCHED** |
+| `rag.py` | `/api/v1/rag` | `POST /api/v1/rag/retrieve-evidence` | RAG evidence retrieval from Qdrant | **MATCHED** |
+| `chatbot.py` | `/api/v1/chatbot` | `POST /api/v1/chatbot/chat`<br>`DELETE /api/v1/chatbot/session/{session_id}` | Conversational RAG with GPT-OSS-20B / Groq | **MATCHED** |
+| `comparison.py` | `/api/v1/comparison` | `POST /api/v1/comparison/compare-documents` | Pairwise document alignment & comparison | **MATCHED** |
+| `translation.py` | `/api/v1/translation` | `POST /api/v1/translation/translate-document` | Multilingual translation engine | **MATCHED** |
+| `llm.py` | `/api/v1` | `POST /api/v1/llm-completion` | Direct LLM prompt completion wrapper | **MATCHED** |
 
 ---
 
@@ -96,49 +96,39 @@ The public API exposed by Django (`backend/django-api/config/urls.py` and app `u
 
 ---
 
-## 6. Numbered Contract Drift Register
+## 6. Database Schema & Migration Contract Matrix (BOOK4-PHASE-06)
 
-Below is the complete, prioritized log of identified Contract Drifts to be addressed in `BOOK4-PHASE-05`:
+Reconciled against PRD v2.3 Chapter 29 & Backend Prompt Book Part B.4:
 
-### **DRIFT-001: Missing Document Processing Pipeline Orchestration Endpoint**
-* **Owning Component:** `/backend/django-api` (`RealAIClient`) & `/backend/fastapi-ai`
-* **Severity:** **P0 (Critical)**
-* **Description:** `RealAIClient.process_document()` calls `POST /api/v1/process-document`, but FastAPI does not expose a single `/process-document` endpoint.
-* **Root Cause:** FastAPI implements discrete pipeline stage routers (`extract-pdf`, `segment-clauses`, `categorize-clauses`, `classify-document-risk`, `summarize-document`, `generate-embeddings`, `qdrant/index-document`) rather than a monolithic orchestrator endpoint.
-* **Recommended Resolution (per Hierarchy):** Update Django Celery task `process_document` or `RealAIClient` to execute the sequential pipeline calls against FastAPI's exposed router endpoints, or expose a composite `/process-document` pipeline endpoint in FastAPI.
-
-### **DRIFT-002: Internal RAG Chat Route Path Mismatch**
-* **Owning Component:** `/backend/django-api` (`RealAIClient`)
-* **Severity:** **P1 (High)**
-* **Description:** `RealAIClient.chat()` calls `POST /api/v1/chat`, whereas FastAPI router `chatbot.py` exposes `POST /api/v1/chatbot/chat`.
-* **Root Cause:** Path prefix mismatch during initial client stubbing.
-* **Recommended Resolution:** Update `RealAIClient.chat()` target path to `/api/v1/chatbot/chat`.
-
-### **DRIFT-003: Internal Document Comparison Route Path Mismatch**
-* **Owning Component:** `/backend/django-api` (`RealAIClient`)
-* **Severity:** **P1 (High)**
-* **Description:** `RealAIClient.compare()` calls `POST /api/v1/compare`, whereas FastAPI router `comparison.py` exposes `POST /api/v1/comparison/compare-documents`.
-* **Root Cause:** Path prefix mismatch during initial client stubbing.
-* **Recommended Resolution:** Update `RealAIClient.compare()` target path to `/api/v1/comparison/compare-documents`.
-
-### **DRIFT-004: Internal Document Translation Route Path Mismatch**
-* **Owning Component:** `/backend/django-api` (`RealAIClient`)
-* **Severity:** **P1 (High)**
-* **Description:** `RealAIClient.translate()` calls `POST /api/v1/translate`, whereas FastAPI router `translation.py` exposes `POST /api/v1/translation/translate-document`.
-* **Root Cause:** Path prefix mismatch during initial client stubbing.
-* **Recommended Resolution:** Update `RealAIClient.translate()` target path to `/api/v1/translation/translate-document`.
-
-### **DRIFT-005: Internal Vector Embedding Deletion Signature Mismatch**
-* **Owning Component:** `/backend/django-api` (`RealAIClient`)
-* **Severity:** **P1 (High)**
-* **Description:** `RealAIClient.delete_document_embeddings()` calls `DELETE /api/v1/documents/{id}/embeddings`, whereas FastAPI router `qdrant.py` exposes `DELETE /api/v1/qdrant/delete-document`.
-* **Root Cause:** Method and endpoint URL structural mismatch.
-* **Recommended Resolution:** Update `RealAIClient.delete_document_embeddings()` to invoke `DELETE /api/v1/qdrant/delete-document` with JSON body `{"document_id": document_id}`.
+| Table Name | Model Class | Primary Key | Ownership FK | Active-Data Cascade | Key Special Fields | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `users` | `apps.users.models.User` | UUID (`id`) | N/A | Cascades to child resources | `email` (unique, indexed), `is_admin`, `is_staff` | **MATCH** |
+| `documents` | `apps.documents.models.Document` | UUID (`id`) | `user` (indexed, non-null) | `ON DELETE CASCADE` from user; cascade to clauses/summary | `status` (10-state lifecycle), `file_reference` | **MATCH** |
+| `clauses` | `apps.documents.models.Clause` | UUID (`id`) | via `document` | `ON DELETE CASCADE` from document | `rule_findings` (JSONField, §29.10), `severity`, `category` | **MATCH** |
+| `document_summaries` | `apps.documents.models.DocumentSummary` | UUID (`id`) | via `document` | `ON DELETE CASCADE` (1:1 with doc) | `purpose_text`, `obligations_text`, `key_terms_text`, `key_risks_text` | **MATCH** |
+| `chat_sessions` | `apps.chat.models.ChatSession` | UUID (`id`) | `user` (indexed, non-null) | `ON DELETE SET_NULL` for doc; cascade to messages | `title`, `document` (nullable FK) | **MATCH** |
+| `chat_messages` | `apps.chat.models.ChatMessage` | UUID (`id`) | via `session` | `ON DELETE CASCADE` from session | `source_clause_ids` (JSONField), `role` (user/assistant/system) | **MATCH** |
+| `comparisons` | `apps.comparison.models.Comparison` | UUID (`id`) | `user` (indexed, non-null) | `ON DELETE SET_NULL` for base/target docs; cascade to results | `status` (pending/processing/complete/failed) | **MATCH** |
+| `comparison_results` | `apps.comparison.models.ComparisonResult` | UUID (`id`) | via `comparison` | `ON DELETE CASCADE` from comparison | `category` (changed/matched/missing), `similarity_score` | **MATCH** |
+| `reports` | `apps.reports.models.Report` | UUID (`id`) | `user` (indexed, non-null) | `ON DELETE CASCADE` from user; SET_NULL on doc/comparison | `language` (en/hi), `status`, `file_reference` | **MATCH** |
+| `audit_logs` | `apps.audit.models.AuditLog` | UUID (`id`) | `user` (nullable, SET_NULL) | Preserved on user deletion (`SET_NULL`) | `event_type` (indexed), `metadata` (JSONField, sanitized) | **MATCH** |
 
 ---
 
-## 7. Conclusion & Action Items
+## 7. Numbered Contract Drift Resolution Register
 
-1. **Public API & Cross-Cutting Policies:** Verified 100% compliant with PRD v2.3 and Frontend Prompt Book §8 (Auth, Documents, Chat, Comparison, Reports, Dashboard, Error Envelope, Rate Limiting, 404 Privacy).
-2. **Internal AI Microservice Contract:** Catalogued all 16 FastAPI routers and 5 internal AI client call sites. Identified 5 internal route mismatches (`DRIFT-001` through `DRIFT-005`).
-3. **Next Steps:** Proceed to **BOOK4-PHASE-02** to validate E2E Integration and prepare for contract drift resolution in **BOOK4-PHASE-05**.
+| Drift ID | Description | Component | Initial Status | Final Status | Resolution Details |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **DRIFT-001** | Missing Document Processing Pipeline Endpoint | Backend AI Client | P0 (Critical) | **RESOLVED** | `RealAIClient.process_document()` orchestrates full sequential 10-stage AI pipeline. |
+| **DRIFT-002** | RAG Chat Route Path Mismatch (`/chat` vs `/chatbot/chat`) | Backend AI Client | P1 (High) | **RESOLVED** | Reconciled target path to `POST /api/v1/chatbot/chat`. |
+| **DRIFT-003** | Pairwise Comparison Path Mismatch (`/compare` vs `/comparison/compare-documents`) | Backend AI Client | P1 (High) | **RESOLVED** | Reconciled target path to `POST /api/v1/comparison/compare-documents`. |
+| **DRIFT-004** | Translation Route Path Mismatch (`/translate` vs `/translation/translate-document`) | Backend AI Client | P1 (High) | **RESOLVED** | Reconciled target path to `POST /api/v1/translation/translate-document`. |
+| **DRIFT-005** | Qdrant Deletion Route Mismatch (`/documents/{id}/embeddings` vs `/qdrant/delete-document`) | Backend AI Client | P1 (High) | **RESOLVED** | Reconciled to `DELETE /api/v1/qdrant/delete-document` with JSON body payload. |
+
+---
+
+## 8. Summary & Release Readiness
+
+1. **Public API & Cross-Cutting Policies:** 100% compliant with PRD v2.3 and Frontend Prompt Book §8.
+2. **Internal AI Microservice Contract:** 100% matched across all 25 endpoints (24 routers + root) with 0 unresolved route drifts.
+3. **Database Schema & Migrations:** 100% compliant with PRD v2.3 Chapter 29 & Backend Prompt Book Part B.4 (10 tables, UUID PKs, non-nullable indexed ownership FKs, rule findings storage shape, active-data deletion cascade).

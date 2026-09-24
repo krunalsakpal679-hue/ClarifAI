@@ -83,3 +83,15 @@ def test_multilingual_e5_schema_validity():
                 assert r["e5_text_a"].startswith("passage: ")
             if r.get("text_b"):
                 assert r["e5_text_b"].startswith("passage: ")
+
+
+def test_finetuned_e5_checkpoint_dimension_unchanged():
+    """Verifies that the fine-tuned E5 checkpoint exists and output dimension is strictly 768."""
+    from sentence_transformers import SentenceTransformer
+    checkpoint_dir = BASE_FASTAPI_AI / "training" / "checkpoints" / "e5" / "v1.0"
+    assert checkpoint_dir.exists(), f"Checkpoint directory {checkpoint_dir} does not exist."
+
+    model = SentenceTransformer(str(checkpoint_dir))
+    dim = model.get_sentence_embedding_dimension() if hasattr(model, "get_sentence_embedding_dimension") else model.get_embedding_dimension()
+    assert dim == 768, f"Output dimension changed to {dim}, expected 768."
+

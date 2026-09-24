@@ -56,17 +56,17 @@ This document establishes the official AI dependency inventory for the `/backend
 * **License Note:** MIT License.
 * **Implementation Decision Required:** Max length, min length, and beam search parameter defaults for summarization are not specified in PRD v2.3.
 
-### 3.3 Llama 3.1 8B via Groq
-* **Purpose:** Offloaded cloud LLM inference engine powering chatbot RAG answer generation (PRD Chapter 28.4) and plain-language clause simplification. Answers are strictly constrained to retrieved Qdrant context.
-* **Approved Source / Provider:** Groq Cloud API (`llama-3.1-8b-instant`).
+### 3.3 Groq Cloud LLM (openai/gpt-oss-20b)
+* **Purpose:** Offloaded cloud LLM inference engine powering chatbot RAG answer generation (PRD Chapter 28.4), plain-language clause simplification, and pairwise comparison difference explanations. Answers are strictly constrained to retrieved Qdrant context.
+* **Approved Source / Provider:** Groq Cloud API (`openai/gpt-oss-20b`; migrated per PRD Chapter 44 and Decision DEC-AI-04 from retired `llama-3.1-8b-instant`).
 * **Execution Location:** External API (Groq Cloud Infrastructure).
 * **Model Loading Mechanism:** Instantiated via `groq.Groq(api_key=os.getenv("GROQ_API_KEY"))` SDK client.
 * **Health Verification Method:** Perform a lightweight test API call (or models list request) on startup.
 * **Test Verification Method:** Unit test using mocked API responses; integration test invoking live API with test prompt.
 * **Failure Behavior:** Handles API timeout, rate limits (HTTP 429), or 5xx failures gracefully by returning a controlled message ("AI service temporarily unavailable"). Never fabricates output.
-* **License Note:** Subject to Groq Terms of Service & Meta Llama 3.1 Community License.
-* **Environment Variables:** `GROQ_API_KEY` (holds secret key), `GROQ_MODEL_NAME`.
-* **Implementation Decision Required:** Exact model ID string mapping (e.g. `llama-3.1-8b-instant` vs `llama3-8b-8192`) and exact exponential backoff retry thresholds.
+* **License Note:** Subject to Groq Terms of Service.
+* **Environment Variables:** `GROQ_API_KEY` (holds secret key), `GROQ_MODEL_NAME` (default: `openai/gpt-oss-20b`).
+* **Implementation Decision Required:** Resolved model ID string mapping (`openai/gpt-oss-20b`) and 3-attempt exponential backoff retry policy (PRD Section 56.20).
 
 ### 3.4 Multilingual-E5 (Fine-Tuned)
 * **Purpose:** Computes dense vector embeddings for clauses to enable vector indexing in Qdrant, semantic search for RAG chatbot context retrieval, and pairwise document comparison (PRD Chapter 28.4, 28.5).

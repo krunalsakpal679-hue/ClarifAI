@@ -68,7 +68,11 @@ def process_document(document_id):
         # 2. Extracting & AI Microservice Call
         document.transition_to(DocumentStatus.EXTRACTING)
         logger.info(f"Invoking AI service process_document for document {document_id}")
-        ai_response = ai_client.process_document(str(document.id), str(document.file_reference))
+        ai_response = ai_client.process_document(
+            str(document.id),
+            str(document.file_reference),
+            user_id=str(document.user_id) if document.user_id else None
+        )
 
         # 3. State Progression: OCR -> Segmenting -> Classifying -> Simplifying -> Summarizing
         document.transition_to(DocumentStatus.OCR)

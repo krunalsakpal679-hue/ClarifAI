@@ -26,6 +26,9 @@ OCR_RENDER_DPI: int = 150
 
 SCHEMA_VERSION: str = "1.0.0"
 
+HTTP_422 = getattr(status, "HTTP_422_UNPROCESSABLE_CONTENT", 422)
+HTTP_413 = getattr(status, "HTTP_413_CONTENT_TOO_LARGE", 413)
+
 
 def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[str, Any]:
     """
@@ -50,7 +53,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
         size_mb = file_size_bytes / (1024 * 1024)
         logger.warning(f"PDF extraction rejected: File size ({size_mb:.2f} MB) exceeds 20 MB limit.")
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=HTTP_413,
             detail={
                 "code": "EXCEEDS_FILE_SIZE_LIMIT",
                 "message": f"PDF file size ({size_mb:.2f} MB) exceeds maximum allowed limit of 20 MB."
@@ -74,7 +77,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
     except Exception as e:
         logger.error(f"PyMuPDF failed to parse document stream: {e}")
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_422,
             detail={
                 "code": "CORRUPTED_PDF",
                 "message": "Failed to parse PDF document. File appears to be corrupted or unreadable."
@@ -86,7 +89,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
         doc.close()
         logger.warning("PDF extraction rejected: Document is password-protected or encrypted.")
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_422,
             detail={
                 "code": "ENCRYPTED_PDF_REJECTED",
                 "message": "Password-protected or encrypted PDFs are not supported. Please remove encryption and re-upload."
@@ -98,7 +101,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
     if total_pages == 0:
         doc.close()
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_422,
             detail={
                 "code": "CORRUPTED_PDF",
                 "message": "PDF contains 0 pages."
@@ -157,7 +160,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
                 pil_image.close()
                 logger.error(f"Tesseract OCR failed on page {page_idx + 1}: {ocr_err}")
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=HTTP_422,
                     detail={
                         "code": "OCR_EXTRACTION_FAILED",
                         "message": f"Tesseract OCR extraction failed on scanned page {page_idx + 1}."
@@ -177,7 +180,7 @@ def extract_pdf_text_service(pdf_bytes: bytes, enable_ocr: bool = True) -> Dict[
                 doc.close()
                 logger.warning(f"OCR produced 0 usable characters for scanned page {page_idx + 1}.")
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=HTTP_422,
                     detail={
                         "code": "OCR_EXTRACTION_FAILED",
                         "message": f"OCR produced no usable text for scanned page {page_idx + 1}."

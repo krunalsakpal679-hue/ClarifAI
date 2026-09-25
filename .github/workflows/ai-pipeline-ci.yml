@@ -79,6 +79,5 @@ jobs:
       - name: Test Container Execution Inside Docker
         run: |
           docker run -d --name test_ai -p 8000:8000 -e GROQ_API_KEY="gsk_ci_test" clarifai-fastapi-ai:ci
-          sleep 5
-          curl --fail http://localhost:8000/health || exit 1
+          curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/health || exit 1
           docker stop test_ai

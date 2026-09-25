@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Vitest Suite
         working-directory: frontend
-        run: npx vitest run --reporter=verbose
+        run: npm test
 
       - name: Build Production Bundle
         working-directory: frontend

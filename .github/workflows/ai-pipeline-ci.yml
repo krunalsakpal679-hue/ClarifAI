@@ -43,15 +43,15 @@ jobs:
         run: |
           python -m pip_audit -r backend/fastapi-ai/requirements.txt || true
 
-      - name: Secret Scan (Current Changeset Audit)
+      - name: Secret Scan (Workspace Source Audit)
         run: |
-          SECRET_MATCHES=$(git diff HEAD~1 HEAD -- . ':!*.md' ':!*.yml' ':!*.yaml' | grep -iE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" || true)
+          SECRET_MATCHES=$(grep -rE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" backend/fastapi-ai/app || true)
           if [ -n "$SECRET_MATCHES" ]; then
-            echo "::error::Hardcoded secret assignment detected in current changeset:"
+            echo "::error::Hardcoded secret assignment detected in source code:"
             echo "$SECRET_MATCHES"
             exit 1
           else
-            echo "No hardcoded secret assignments found in current changeset."
+            echo "No hardcoded secret assignments found in source code."
           fi
 
   docker-build:

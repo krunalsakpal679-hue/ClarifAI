@@ -43,8 +43,9 @@ jobs:
         working-directory: backend/django-api
         env:
           PYTHONPATH: "."
+          DJANGO_SETTINGS_MODULE: "config.settings.test"
           SECRET_KEY: "ci-insecure-test-key-never-use-in-production"
           DEBUG: "True"
-          CELERY_BROKER_URL: "redis://localhost:6379/0"
+          CELERY_BROKER_URL: "memory://"
         run: |
           python manage.py test tests.test_e2e_05_to_15_document_pipeline tests.test_e2e_16_to_19_analysis_and_clauses tests.test_e2e_20_to_22_chatbot tests.test_e2e_23_to_24_comparison tests.test_e2e_25_to_26_translation tests.test_e2e_27_to_29_reports tests.test_e2e_30_to_31_dashboard_history tests.test_e2e_32_to_33_deletion_qdrant tests.test_e2e_34_security_matrix tests.test_e2e_37_to_41_failure_recovery tests.test_e2e_ai_safety_and_guardrails tests.test_e2e_user_journey tests.test_correlation_id

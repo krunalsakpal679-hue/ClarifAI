@@ -38,9 +38,9 @@ class Settings(BaseSettings):
     COMPARISON_MATCHED_THRESHOLD: float = 0.88
     COMPARISON_CHANGED_THRESHOLD: float = 0.65
 
-    # Local AI Model Checkpoint Identifiers
-    LEGAL_BERT_MODEL_NAME: str = "nlpaueb/legal-bert-base-uncased"
-    EMBEDDING_MODEL_NAME: str = "intfloat/multilingual-e5-base"
+    # Local AI Model Checkpoint Identifiers (Fine-Tuned Validated Checkpoints)
+    LEGAL_BERT_MODEL_NAME: str = "backend/fastapi-ai/training/checkpoints/legal-bert/v2.0"
+    EMBEDDING_MODEL_NAME: str = "backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1"
     BART_MODEL_NAME: str = "facebook/bart-base"
     TESSERACT_CMD: Optional[str] = None
 

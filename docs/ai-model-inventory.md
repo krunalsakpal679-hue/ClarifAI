@@ -19,10 +19,10 @@ This document establishes the official AI dependency inventory for the `/backend
 
 | Component / Model | Purpose | Approved Provider / Source | Execution Location | Download Req.? | Credentials Req.? | Storage & Runtime Requirement | Required Environment Variables | Failure Behavior | Feasibility Status / Decision Flag |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Legal-BERT (fine-tuned)** | Clause risk classification (High, Moderate, Low, Safe), risk type, explanation, and evidence generation. | Hugging Face (`nlpaueb/legal-bert-base-uncased` base) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~440 MB<br>**RAM:** ~1.5 GB<br>**VRAM:** ~1.0 GB (GPU) | `LEGAL_BERT_MODEL_PATH`<br>`LEGAL_BERT_MODEL_NAME` | Invalid/failed output is rejected (never defaults to Safe). Logs error; pipeline task marked failed. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Fine-tuned checkpoint path.* |
+| **Legal-BERT (fine-tuned v2.0)** | Clause risk classification (High, Moderate, Low, Safe), risk type, explanation, and evidence generation. | Local checkpoint (`backend/fastapi-ai/training/checkpoints/legal-bert/v2.0/`; base: `nlpaueb/legal-bert-base-uncased`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~440 MB base + ~11 MB LoRA<br>**RAM:** ~1.5 GB<br>**VRAM:** ~1.0 GB (GPU) | `LEGAL_BERT_MODEL_NAME` | Invalid/failed output is rejected (never defaults to Safe). Logs error; pipeline task marked failed. | **FINE-TUNED CHECKPOINT SELECTED & ACTIVE (v2.0)**<br>*Validated: Test Acc 73.68%, Macro-F1 0.7208, Moderate-risk F1 0.6667, 100% High-risk recall.* |
 | **BART-base** | Executive summary generation (document-level and clause-level summaries). | Hugging Face (`facebook/bart-base`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~500 MB<br>**RAM:** ~1.5–2.0 GB<br>**VRAM:** ~1.5 GB (GPU) | `BART_MODEL_PATH`<br>`BART_MODEL_NAME` | Logs error; marks summarization pipeline stage as failed. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Summarization prompt parameters.* |
 | **Groq LLM Service (`openai/gpt-oss-20b`)** | Chatbot answer generation (RAG) and plain-language clause simplification. | Groq Cloud API (`openai/gpt-oss-20b`) | External API (Groq Cloud) | No | Yes | **Storage:** 0 MB<br>**RAM:** Negligible<br>**Network:** Low latency HTTPS | `GROQ_API_KEY`<br>`GROQ_MODEL_NAME` | Catch timeout/rate-limit/5xx. Return controlled error message ("AI service temporarily unavailable"). | **VERIFIED OPERATIONAL (RESOLVED 2026-08-23)**<br>*Note: Original model llama-3.1-8b-instant was retired by Groq (shutdown 2026-08-16). Migrated per PRD Chapter 44 to provider-recommended replacement openai/gpt-oss-20b.* |
-| **Multilingual-E5 (fine-tuned)** | Clause embedding generation for Qdrant vector search, RAG retrieval, and pairwise comparison similarity. | Hugging Face (`intfloat/multilingual-e5-base` / `small`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~470 MB – 1.1 GB<br>**RAM:** ~1.0–2.0 GB<br>**VRAM:** ~1.0 GB (GPU) | `EMBEDDING_MODEL_NAME`<br>`EMBEDDING_MODEL_PATH` | Logs embedding error; aborts vector indexing and comparison processing. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Small vs. Base variant selection.* |
+| **Multilingual-E5 (fine-tuned v1.1)** | Clause embedding generation for Qdrant vector search, RAG retrieval, and pairwise comparison similarity. | Local checkpoint (`backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1/`; base: `intfloat/multilingual-e5-base`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~1.1 GB<br>**RAM:** ~1.0–2.0 GB<br>**VRAM:** ~1.0 GB (GPU) | `EMBEDDING_MODEL_NAME` | Logs embedding error; aborts vector indexing and comparison processing. | **FINE-TUNED CHECKPOINT SELECTED & ACTIVE (v1.1)**<br>*Validated: Test Acc 85.71%, Macro-F1 0.8857, 0 False Matches, 768 Vector Dimension.* |
 | **sentence-transformers** | Python framework powering embedding generation (Multilingual-E5) and vector ops. | PyPI (`sentence-transformers`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~50 MB<br>**RAM:** Negligible (uses PyTorch) | None | FastAPI app fails startup if import or instantiation fails. | `VERIFIED FUNCTIONAL`<br>*Standard library requirement.* |
 | **IndicTrans2** | English $\leftrightarrow$ Hindi translation for summaries, simplifications, explanations, reports, and chatbot responses. | AI4Bharat / Hugging Face (`ai4bharat/indictrans2-en-indic-1B`) | Local Process (`fastapi-ai`) | Yes | No | **Storage:** ~2.0–4.0 GB<br>**RAM:** ~4.0–8.0 GB<br>**VRAM:** ~4.0 GB (FP16) | `INDICTRANS_MODEL_PATH`<br>`TRANSLATION_ENABLED` | **Graceful Fallback:** If translation fails, English remains available and user is informed Hindi is temporarily unavailable. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Quantization (FP16/INT8/ONNX).* |
 | **Tesseract OCR** | Native OCR text extraction for scanned or image-based PDF pages (adaptive per-page execution). | UB-Mannheim Tesseract distribution (v5.4.0) | Local Process (`tesseract.exe`) | Yes | No | **Storage:** ~150 MB<br>**RAM:** ~100–300 MB per page image | `TESSERACT_CMD`<br>`TESSDATA_PREFIX` | Logs extraction error; flags page as unreadable or returns partial text warning. | `FEASIBILITY CHECK FOR AI-FEASIBILITY-01`<br>*Implementation Decision Required: Missing from PATH environment variable.* |
@@ -34,16 +34,16 @@ This document establishes the official AI dependency inventory for the `/backend
 
 ## 3. Detailed Component Specifications
 
-### 3.1 Legal-BERT (Fine-Tuned)
+### 3.1 Legal-BERT (Fine-Tuned v2.0)
 * **Purpose:** Serves as stage 2 of the hybrid clause risk classification architecture (PRD Chapter 16.9). Receives clause text along with findings from the deterministic risk-signal rule engine and classifies severity (High, Moderate, Low, Safe), risk category, why-flagged explanation, and supporting evidence.
-* **Approved Source / Provider:** Hugging Face Model Hub (Base: `nlpaueb/legal-bert-base-uncased`).
+* **Approved Source / Provider:** Local fine-tuned checkpoint `backend/fastapi-ai/training/checkpoints/legal-bert/v2.0/` (Base: `nlpaueb/legal-bert-base-uncased` + LoRA adapter + 4-class classification head, augmented with Atticus CUAD commercial contract dataset).
 * **Execution Location:** Local process within `/backend/fastapi-ai`.
-* **Model Loading Mechanism:** Loaded at FastAPI application startup using `AutoModelForSequenceClassification.from_pretrained()` and cached in memory.
-* **Health Verification Method:** Execute a dry-run sequence classification on startup with dummy clause text to verify tensor shape and inference execution.
-* **Test Verification Method:** Unit test verifying prediction output format against predefined test clauses.
-* **Failure Behavior:** If Legal-BERT classification fails or returns invalid schema output, the system rejects the result (never defaulting to Safe). The error is logged and reported to Django API.
-* **License Note:** Base model licensed under Apache 2.0.
-* **Implementation Decision Required:** PRD v2.3 mandates a fine-tuned Legal-BERT model, but the exact Hugging Face fine-tuned checkpoint repository path / URL is unassigned.
+* **Model Loading Mechanism:** Loaded at FastAPI application startup via `app.services.risk_service.load_legal_bert_model()` and cached in memory.
+* **Health Verification Method:** Execute sequence classification on startup with dummy clause text to verify tensor shape (`[1, 4]`) and inference execution.
+* **Test Verification Method:** Unit test verifying prediction output format against predefined test clauses (`test_legal_bert.py`).
+* **Failure Behavior:** If Legal-BERT classification fails or returns invalid schema output, the system rejects the result (never defaulting to Safe). The error is logged and handled with per-clause isolation (Chapter 16.5).
+* **Evaluation Metrics (Held-Out Test Set):** Test Accuracy: 73.68%, Macro-F1: 0.7208, Moderate-risk F1: 0.6667, High-risk Recall: 100%.
+* **Status:** **FINE-TUNED CHECKPOINT ACTIVE (v2.0)** (DEC-AI-01 Resolved).
 
 ### 3.2 BART-Base
 * **Purpose:** Generates executive document-level summaries and clause-level summary highlights (PRD Chapter 28.1).
@@ -68,16 +68,16 @@ This document establishes the official AI dependency inventory for the `/backend
 * **Environment Variables:** `GROQ_API_KEY` (holds secret key), `GROQ_MODEL_NAME` (default: `openai/gpt-oss-20b`).
 * **Implementation Decision Required:** Resolved model ID string mapping (`openai/gpt-oss-20b`) and 3-attempt exponential backoff retry policy (PRD Section 56.20).
 
-### 3.4 Multilingual-E5 (Fine-Tuned)
+### 3.4 Multilingual-E5 (Fine-Tuned v1.1)
 * **Purpose:** Computes dense vector embeddings for clauses to enable vector indexing in Qdrant, semantic search for RAG chatbot context retrieval, and pairwise document comparison (PRD Chapter 28.4, 28.5).
-* **Approved Source / Provider:** Hugging Face (`intfloat/multilingual-e5-base` / `intfloat/multilingual-e5-small`).
+* **Approved Source / Provider:** Local fine-tuned checkpoint `backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1/` (Base: `intfloat/multilingual-e5-base`, fine-tuned with CosineSimilarityLoss and validation-calibrated comparison thresholds).
 * **Execution Location:** Local process within `/backend/fastapi-ai`.
-* **Model Loading Mechanism:** Loaded via `SentenceTransformer("intfloat/multilingual-e5-base")` during FastAPI lifespan initialization.
-* **Health Verification Method:** Encode test string at startup and verify output vector dimensionality (e.g. 768 floats).
-* **Test Verification Method:** Pytest unit test checking embedding output array shape and cosine distance calculation.
-* **Failure Behavior:** If embedding fails, vector storage and comparison stages halt, returning an explicit error to Django.
-* **License Note:** MIT License.
-* **Implementation Decision Required:** PRD v2.3 specifies fine-tuned `Multilingual-E5`, but model size variant (`small` vs `base`) and custom fine-tuned weights repository are not specified.
+* **Model Loading Mechanism:** Loaded via `app.services.embedding_service.get_embedding_model()` using SentenceTransformer during FastAPI lifespan initialization.
+* **Health Verification Method:** Encode test string at startup and verify output vector dimensionality strictly equals 768 floats.
+* **Test Verification Method:** Pytest unit test checking embedding output array shape (768) and cosine distance calculation (`test_embedding.py`, `test_comparison.py`).
+* **Failure Behavior:** If embedding fails, vector storage and comparison stages halt with per-clause failure isolation (Chapter 16.5).
+* **Evaluation Metrics (Held-Out Test Set):** Test Accuracy: 85.71%, Macro-F1: 0.8857, False Matches: 0, Missed Matches: 0, Output Dimension: 768.
+* **Status:** **FINE-TUNED CHECKPOINT ACTIVE (v1.1)** (DEC-AI-02 Resolved).
 
 ### 3.5 sentence-transformers
 * **Purpose:** Underlying Python framework used to instantiate, cache, and execute dense sentence vector embedding models (Multilingual-E5).
@@ -194,8 +194,8 @@ Per security directives:
 
 | Item # | Component | Description of Open Decision | Interim Safe Approach | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **DEC-AI-01** | Legal-BERT | Fine-tuned Legal-BERT checkpoint Hugging Face repository URL is not specified in PRD v2.3. | Use base `nlpaueb/legal-bert-base-uncased` with classification head stub for initial integration testing. | OPEN |
-| **DEC-AI-02** | Multilingual-E5 | Exact model size (`intfloat/multilingual-e5-small` vs `base`) and fine-tuned checkpoint repo path are unspecified. | Default to `intfloat/multilingual-e5-base` (768 dimensions) for semantic embedding evaluation. | OPEN |
+| **DEC-AI-01** | Legal-BERT | Fine-tuned Legal-BERT checkpoint selection and validation. | Fine-tuned v2.0 checkpoint on Atticus CUAD commercial contract dataset. Validated: 73.68% test accuracy, 0.7208 Macro-F1, 0.6667 Moderate F1, 100% High-risk recall. | **RESOLVED (2026-09-25)** |
+| **DEC-AI-02** | Multilingual-E5 | Fine-tuned Multilingual-E5 checkpoint selection and validation. | Fine-tuned v1.1 checkpoint with CosineSimilarityLoss. Validated: 85.71% test accuracy, 0.8857 Macro-F1, 0 false matches, 768 vector dimension. | **RESOLVED (2026-09-25)** |
 | **DEC-AI-03** | IndicTrans2 | Quantization format (FP16 / INT8 / ONNX) for 1B parameter model on 6 GB GPU VRAM / 16 GB RAM is unspecified. | Implement lazy model loading and evaluate INT8 / ONNX quantization during feasibility benchmarking. | OPEN |
 | **DEC-AI-04** | Groq LLM | Llama 3.1 8B (`llama-3.1-8b-instant`) retired by Groq (shutdown 2026-08-16). Migrated per PRD Chapter 44. | Resolved model ID: `openai/gpt-oss-20b` (Groq provider-recommended same-platform replacement). | **RESOLVED (2026-08-23)** |
 | **DEC-AI-05** | Qdrant Vector DB | Vector distance metric (Cosine / Dot / Euclidean) and collection payload schema parameters are unspecified. | Utilize Cosine similarity metric (`Distance.COSINE`) and payload schema indexed by `document_id` and `clause_id`. | OPEN |
@@ -227,9 +227,9 @@ python-dotenv==1.2.1
 
 | Component | Exact Model Checkpoint String / Path | Source / Hosting | Versioning & Implementation Notes |
 | :--- | :--- | :--- | :--- |
-| **Legal-BERT** | `nlpaueb/legal-bert-base-uncased` | Hugging Face Hub | **Interim Base Placeholder**: Fine-tuned checkpoint URL unassigned in PRD v2.3. Developer implementation decision to use base uncased checkpoint. |
+| **Legal-BERT** | `backend/fastapi-ai/training/checkpoints/legal-bert/v2.0` | Local Checkpoint (LoRA Adapter) | **Fine-Tuned Validated Checkpoint (v2.0)**: Base `nlpaueb/legal-bert-base-uncased` fine-tuned with LoRA on ClarifAI Benchmark + Atticus CUAD commercial contracts. Evaluated: 73.68% Test Acc, 0.7208 Macro-F1. |
 | **BART-base** | `facebook/bart-base` | Hugging Face Hub | **Interim Base Placeholder**: Fine-tuned summarization checkpoint URL unassigned in PRD v2.3. Developer implementation decision to use base model. |
-| **Multilingual-E5** | `intfloat/multilingual-e5-base` | Hugging Face Hub | **Interim Base Placeholder**: 768-dim base variant selected as developer implementation decision pending fine-tuned embedding URL. |
+| **Multilingual-E5** | `backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1` | Local Checkpoint (SentenceTransformer) | **Fine-Tuned Validated Checkpoint (v1.1)**: Base `intfloat/multilingual-e5-base` fine-tuned with CosineSimilarityLoss and calibrated thresholds. Evaluated: 85.71% Test Acc, 0.8857 Macro-F1, 768-dim vector. |
 | **Groq LLM** | `openai/gpt-oss-20b` | Groq Cloud API | **Resolved Model**: Migrated per PRD Chapter 44 from retired `llama-3.1-8b-instant`. |
 | **Tesseract OCR** | `v5.4.0.20240606` | Native OS / Image Layer | System binary `tesseract.exe` distribution with `eng+hin` language data. |
 

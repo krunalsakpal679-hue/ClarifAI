@@ -6,8 +6,21 @@ from django.urls import path, include
 from django.http import JsonResponse
 
 
+from django.db import connection
+
+
 def health_check(request):
-    """Basic health check endpoint for Django API service."""
+    """Health check endpoint for Django API service verifying database connectivity."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1;")
+    except Exception:
+        return JsonResponse({
+            "status": "unhealthy",
+            "service": "ClarifAI Django API",
+            "database": "disconnected"
+        }, status=503)
+
     return JsonResponse({
         "status": "healthy",
         "service": "ClarifAI Django API",

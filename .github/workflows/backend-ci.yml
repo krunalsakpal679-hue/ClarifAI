@@ -54,7 +54,12 @@ jobs:
           DEBUG: "True"
           CELERY_BROKER_URL: "memory://"
         run: |
-          python manage.py test --no-input -v 2
+          set -o pipefail
+          python manage.py test --no-input -v 2 2>&1 | tee /tmp/test.log || {
+            ERR=$(tail -n 25 /tmp/test.log | tr '\n' ' ')
+            echo "::error::Django Test Failure: $ERR"
+            exit 1
+          }
 
       - name: Run Dependency Audit (pip-audit)
         run: |

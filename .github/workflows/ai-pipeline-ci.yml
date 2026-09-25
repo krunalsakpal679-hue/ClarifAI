@@ -42,7 +42,12 @@ jobs:
           QDRANT_URL: "http://localhost:6333"
           INTERNAL_SERVICE_SECRET: "ci_internal_secret_key"
         run: |
-          pytest tests/ -v
+          set -o pipefail
+          pytest tests/ -v 2>&1 | tee /tmp/pytest.log || {
+            ERR=$(tail -n 25 /tmp/pytest.log | tr '\n' ' ')
+            echo "::error::FastAPI Pytest Failure: $ERR"
+            exit 1
+          }
 
       - name: Run Dependency Audit (pip-audit)
         run: |

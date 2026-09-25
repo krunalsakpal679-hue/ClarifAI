@@ -43,10 +43,10 @@ def chat(document_id: str, message: str, history: list = None) -> dict:
     return client.chat(document_id, message, history=history)
 
 
-def compare(document_a_id: str, document_b_id: str) -> dict:
+def compare(document_a_id: str, document_b_id: str, user_id: str = "default-user", **kwargs) -> dict:
     """Wrapper function delegating to active AI Client."""
     client = get_ai_client()
-    return client.compare(document_a_id, document_b_id)
+    return client.compare(document_a_id, document_b_id, user_id=user_id, **kwargs)
 
 
 def translate(document_id: str, target_lang: str, fields: list = None) -> dict:

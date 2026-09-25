@@ -120,3 +120,21 @@ def test_classify_document_risk_api_endpoint():
     assert data["total_clauses"] == 1
     assert data["clauses"][0]["severity"] in {"High", "Moderate", "Low", "Safe"}
     assert len(data["clauses"][0]["rule_findings"]) == 1
+
+
+def test_legal_bert_loads_without_peft_dependency(monkeypatch):
+    """
+    Verifies that the standalone Legal-BERT v2.0 checkpoint loads cleanly
+    even when PEFT is blocked from being imported, eliminating the PEFT runtime limitation.
+    """
+    import sys
+    monkeypatch.setitem(sys.modules, "peft", None)
+
+    status = get_legal_bert_status()
+    assert status["loaded"] is True
+    assert status["num_labels"] == 4
+    assert status["fine_tuned_status"] == "FINE-TUNED (v2.0)"
+
+    res = classify_clause_risk("The Supplier shall indemnify and hold harmless the Customer against any uncapped liability.")
+    assert res["severity"] in {"High", "Moderate", "Low", "Safe"}
+

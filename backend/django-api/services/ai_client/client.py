@@ -415,8 +415,8 @@ class RealAIClient:
             raw_response["target_lang"] = raw_response.get("target_language", target_lang)
         if "translated_content" not in raw_response:
             raw_response["translated_content"] = {
-                "summary": raw_response.get("summary"),
-                "clauses": raw_response.get("clauses")
+                "summary": raw_response.get("summary_hi") or raw_response.get("summary") or {},
+                "clauses": raw_response.get("clauses_hi") or raw_response.get("clauses") or []
             }
         return validate_translate_response(raw_response)
 

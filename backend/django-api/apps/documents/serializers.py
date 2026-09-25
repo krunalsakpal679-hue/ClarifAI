@@ -105,6 +105,10 @@ class DocumentSummarySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_translation_available(self, obj):
+        if getattr(obj, 'translation_available', None) is not None:
+            return bool(obj.translation_available)
+        if getattr(obj, 'purpose_text_hi', None) is not None:
+            return True
         request = self.context.get('request')
         if not request:
             return True
@@ -113,6 +117,23 @@ class DocumentSummarySerializer(serializers.ModelSerializer):
             return True
         return False
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        lang = request.query_params.get('lang', 'en').lower() if request else 'en'
+        if lang == 'hi':
+            if getattr(instance, 'purpose_text_hi', None):
+                data['purpose_text'] = instance.purpose_text_hi
+                data['obligations_text'] = getattr(instance, 'obligations_text_hi', instance.obligations_text)
+                data['key_terms_text'] = getattr(instance, 'key_terms_text_hi', instance.key_terms_text)
+                data['key_risks_text'] = getattr(instance, 'key_risks_text_hi', instance.key_risks_text)
+                data['translation_available'] = True
+            elif getattr(instance, 'translation_available', False) is True:
+                data['translation_available'] = True
+            else:
+                data['translation_available'] = False
+        return data
+
 
 class ClauseSerializer(serializers.ModelSerializer):
     """
@@ -120,6 +141,7 @@ class ClauseSerializer(serializers.ModelSerializer):
     Exposes embedded rule_findings JSON array per Ch. 30.9 decision.
     Renders classification-failure state distinctly (status: "failed", severity: null).
     Includes translation_available flag for multilingual fallback (Ch. 19).
+    Guarantees original_text is NEVER translated or altered.
     """
     translation_available = serializers.SerializerMethodField()
 
@@ -142,6 +164,10 @@ class ClauseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_translation_available(self, obj):
+        if getattr(obj, 'translation_available', None) is not None:
+            return bool(obj.translation_available)
+        if getattr(obj, 'simplified_text_hi', None) is not None:
+            return True
         request = self.context.get('request')
         if not request:
             return True
@@ -149,4 +175,21 @@ class ClauseSerializer(serializers.ModelSerializer):
         if lang == 'en':
             return True
         return False
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        lang = request.query_params.get('lang', 'en').lower() if request else 'en'
+        if lang == 'hi':
+            if getattr(instance, 'simplified_text_hi', None):
+                data['simplified_text'] = instance.simplified_text_hi
+                data['translation_available'] = True
+            elif getattr(instance, 'translation_available', False) is True:
+                data['translation_available'] = True
+            else:
+                data['translation_available'] = False
+            # PROVABLY UNALTERED: original_text ALWAYS returns instance.original_text verbatim
+            data['original_text'] = instance.original_text
+        return data
+
 

@@ -1,6 +1,8 @@
 """
 Views for Document upload, list, detail polling, and deletion endpoints (PRD Ch. 30.2).
 """
+import logging
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -22,6 +24,7 @@ from apps.documents.serializers import (
 )
 from core.pagination import StandardPageNumberPagination
 from core.permissions import IsOwner
+from services import ai_client
 from tasks.document_tasks import process_document
 
 
@@ -123,6 +126,7 @@ class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
 class DocumentSummaryView(generics.RetrieveAPIView):
     """
     GET /api/documents/{id}/summary - Retrieve document summary (Owner-only).
+    Supports optional ?lang= parameter (e.g. ?lang=hi) with graceful fallback (PRD Ch. 19).
     Returns 422 Unprocessable Entity if document is incomplete.
     Returns 404 Not Found if non-owned or nonexistent.
     """
@@ -140,9 +144,62 @@ class DocumentSummaryView(generics.RetrieveAPIView):
             raise DocumentNotReadyException()
 
         try:
-            return document.summary
+            summary = document.summary
         except DocumentSummary.DoesNotExist:
             raise DocumentNotReadyException("Summary not found for completed document.")
+
+        lang = self.request.query_params.get('lang', 'en').lower()
+        if lang == 'hi':
+            cache_key = f"doc_summary_hi_{document.id}"
+            cached_trans = cache.get(cache_key)
+            if cached_trans is not None:
+                if cached_trans.get('translation_available'):
+                    summary.purpose_text_hi = cached_trans.get('purpose_text')
+                    summary.obligations_text_hi = cached_trans.get('obligations_text')
+                    summary.key_terms_text_hi = cached_trans.get('key_terms_text')
+                    summary.key_risks_text_hi = cached_trans.get('key_risks_text')
+                    summary.translation_available = True
+                else:
+                    summary.translation_available = False
+            else:
+                try:
+                    summary_payload = {
+                        "purpose": summary.purpose_text or "",
+                        "obligations": summary.obligations_text or "",
+                        "key_terms": summary.key_terms_text or "",
+                        "key_risks": summary.key_risks_text or ""
+                    }
+                    ai_res = ai_client.translate(
+                        document_id=str(document.id),
+                        target_lang="hi",
+                        summary=summary_payload,
+                        clauses=[],
+                        user_id=str(self.request.user.id)
+                    )
+                    status_flag = ai_res.get("translation_status", "TRANSLATION_UNAVAILABLE")
+                    summary_hi = ai_res.get("summary_hi") or (ai_res.get("translated_content", {}).get("summary")) or {}
+                    if status_flag == "SUCCESS" and summary_hi and summary_hi.get("purpose"):
+                        summary.purpose_text_hi = summary_hi.get("purpose")
+                        summary.obligations_text_hi = summary_hi.get("obligations")
+                        summary.key_terms_text_hi = summary_hi.get("key_terms")
+                        summary.key_risks_text_hi = summary_hi.get("key_risks")
+                        summary.translation_available = True
+                        cache.set(cache_key, {
+                            "translation_available": True,
+                            "purpose_text": summary.purpose_text_hi,
+                            "obligations_text": summary.obligations_text_hi,
+                            "key_terms_text": summary.key_terms_text_hi,
+                            "key_risks_text": summary.key_risks_text_hi,
+                        }, 86400)
+                    else:
+                        summary.translation_available = False
+                        cache.set(cache_key, {"translation_available": False}, 300)
+                except Exception as exc:
+                    logging.getLogger(__name__).warning(f"Translation call failed for summary doc {document.id}: {exc}")
+                    summary.translation_available = False
+                    cache.set(cache_key, {"translation_available": False}, 300)
+
+        return summary
 
 
 class ClauseListView(generics.ListAPIView):
@@ -172,7 +229,66 @@ class ClauseListView(generics.ListAPIView):
         if severity_filter in ('high', 'moderate', 'low', 'safe'):
             queryset = queryset.filter(severity=severity_filter)
 
-        return queryset
+        clauses = list(queryset)
+
+        lang = self.request.query_params.get('lang', 'en').lower()
+        if lang == 'hi' and clauses:
+            cache_key = f"doc_clauses_hi_{document.id}"
+            cached_trans = cache.get(cache_key)
+            if cached_trans is not None:
+                trans_map = cached_trans.get('clauses_map', {})
+                is_available = cached_trans.get('translation_available', False)
+                for c in clauses:
+                    c.translation_available = is_available
+                    if str(c.id) in trans_map:
+                        c.simplified_text_hi = trans_map[str(c.id)].get('simplified_text_hi')
+            else:
+                try:
+                    clauses_payload = [
+                        {
+                            "id": str(c.id),
+                            "position": c.position,
+                            "original_text": c.original_text,
+                            "simplified_text": c.simplified_text or "",
+                            "why_flagged": c.explanation or ""
+                        }
+                        for c in clauses
+                    ]
+                    ai_res = ai_client.translate(
+                        document_id=str(document.id),
+                        target_lang="hi",
+                        summary={},
+                        clauses=clauses_payload,
+                        user_id=str(self.request.user.id)
+                    )
+                    status_flag = ai_res.get("translation_status", "TRANSLATION_UNAVAILABLE")
+                    clauses_hi = ai_res.get("clauses_hi") or (ai_res.get("translated_content", {}).get("clauses")) or []
+                    if status_flag == "SUCCESS" and clauses_hi:
+                        trans_map = {}
+                        for item in clauses_hi:
+                            c_id = str(item.get("id") or item.get("clause_id", ""))
+                            trans_map[c_id] = {
+                                "simplified_text_hi": item.get("simplified_text_hi") or item.get("simplified_text")
+                            }
+                        for c in clauses:
+                            c.translation_available = True
+                            if str(c.id) in trans_map:
+                                c.simplified_text_hi = trans_map[str(c.id)].get("simplified_text_hi")
+                        cache.set(cache_key, {
+                            "translation_available": True,
+                            "clauses_map": trans_map
+                        }, 86400)
+                    else:
+                        for c in clauses:
+                            c.translation_available = False
+                        cache.set(cache_key, {"translation_available": False, "clauses_map": {}}, 300)
+                except Exception as exc:
+                    logging.getLogger(__name__).warning(f"Translation call failed for clauses doc {document.id}: {exc}")
+                    for c in clauses:
+                        c.translation_available = False
+                    cache.set(cache_key, {"translation_available": False, "clauses_map": {}}, 300)
+
+        return clauses
 
 
 class ClauseDetailView(generics.RetrieveAPIView):
@@ -195,6 +311,43 @@ class ClauseDetailView(generics.RetrieveAPIView):
             raise DocumentNotReadyException()
 
         clause = get_object_or_404(Clause, pk=clause_id, document=document)
+
+        lang = self.request.query_params.get('lang', 'en').lower()
+        if lang == 'hi':
+            cache_key = f"doc_clauses_hi_{document.id}"
+            cached_trans = cache.get(cache_key)
+            if cached_trans and cached_trans.get('translation_available'):
+                trans_map = cached_trans.get('clauses_map', {})
+                if str(clause.id) in trans_map:
+                    clause.simplified_text_hi = trans_map[str(clause.id)].get('simplified_text_hi')
+                    clause.translation_available = True
+                else:
+                    clause.translation_available = False
+            else:
+                try:
+                    ai_res = ai_client.translate(
+                        document_id=str(document.id),
+                        target_lang="hi",
+                        summary={},
+                        clauses=[{
+                            "id": str(clause.id),
+                            "position": clause.position,
+                            "original_text": clause.original_text,
+                            "simplified_text": clause.simplified_text or "",
+                            "why_flagged": clause.explanation or ""
+                        }],
+                        user_id=str(self.request.user.id)
+                    )
+                    status_flag = ai_res.get("translation_status", "TRANSLATION_UNAVAILABLE")
+                    clauses_hi = ai_res.get("clauses_hi") or (ai_res.get("translated_content", {}).get("clauses")) or []
+                    if status_flag == "SUCCESS" and clauses_hi:
+                        clause.simplified_text_hi = clauses_hi[0].get("simplified_text_hi") or clauses_hi[0].get("simplified_text")
+                        clause.translation_available = True
+                    else:
+                        clause.translation_available = False
+                except Exception:
+                    clause.translation_available = False
+
         return clause
 
 

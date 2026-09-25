@@ -63,7 +63,15 @@ class ComparisonListCreateView(generics.ListCreateAPIView):
         )
 
         # 4. Enqueue Celery comparison task
-        process_comparison.delay(str(comparison.id))
+        try:
+            process_comparison.delay(str(comparison.id))
+        except Exception as exc:
+            comparison.status = ComparisonStatus.FAILED
+            comparison.save()
+            return Response(
+                {"error": {"code": "SERVICE_UNAVAILABLE", "message": "Background task broker is currently unavailable."}},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         response_serializer = ComparisonDetailSerializer(comparison, context={'request': request})
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

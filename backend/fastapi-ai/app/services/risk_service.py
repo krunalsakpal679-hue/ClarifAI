@@ -148,6 +148,8 @@ def load_legal_bert_model():
                 num_labels=len(APPROVED_SEVERITY_LABELS)
             )
 
+        device = os.getenv("TORCH_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+        _model_instance.to(device)
         _model_instance.eval()
     return _tokenizer_instance, _model_instance
 
@@ -190,6 +192,9 @@ def classify_clause_risk(
             truncation=True,
             max_length=512
         )
+
+        device = next(model.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
 
         with torch.no_grad():
             outputs = model(**inputs)

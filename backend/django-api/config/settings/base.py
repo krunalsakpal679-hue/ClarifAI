@@ -48,6 +48,7 @@ AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'core.middleware.CorrelationIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -109,6 +110,8 @@ REST_FRAMEWORK = {
         'anon': '100/minute',
         'user': '1000/minute',
         'auth': '5/minute',
+        'upload': '20/minute',
+        'chat': '60/minute',
     },
 }
 

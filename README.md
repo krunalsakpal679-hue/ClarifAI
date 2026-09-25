@@ -67,19 +67,39 @@ The AI Pipeline microservice is fully implemented, verified with **182 passing u
 
 ---
 
-## Running the AI Service Locally
+---
 
+## Quick Start (Docker Compose & Onboarding)
+
+### 1. Environment Setup
+Clone the repository and create the local environment file from the template:
 ```bash
-cd backend/fastapi-ai
-pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your GROQ_API_KEY
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Option: Add your GROQ_API_KEY to .env for live Groq LLM completions
 ```
 
-Run test suite:
+### 2. Launch Full Stack Orchestration
+Build container images and start all multi-service containers (`postgres`, `redis`, `qdrant`, `fastapi-ai`, `django-api`, `celery-worker`, `frontend`):
 ```bash
-python -m pytest -v
+docker compose up --build -d
+```
+
+Service Access Endpoints:
+- ⚛️ **Frontend SPA Application**: [http://localhost:5173](http://localhost:5173)
+- 🐍 **Django REST API Gateway**: [http://localhost:8000/api/health/](http://localhost:8000/api/health/)
+- 🤖 **FastAPI AI Microservice (Internal)**: [http://localhost:8000/health](http://localhost:8000/health)
+
+### 3. Master Test Suite Verification
+Run component and integration test suites:
+```bash
+# 1. Frontend Test Suite (Vitest - 262 tests)
+cd frontend && npm run test
+
+# 2. AI Microservice Test Suite (Pytest - 196 tests)
+cd backend/fastapi-ai && python -m pytest tests/
+
+# 3. Django Backend & Master E2E Suite (Django Test Runner - 104 tests)
+cd backend/django-api && python manage.py test
 ```
 
 ---

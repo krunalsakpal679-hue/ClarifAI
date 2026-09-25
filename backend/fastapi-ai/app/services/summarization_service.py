@@ -48,6 +48,8 @@ def load_summarization_model():
         logger.info(f"Loading BART summarization model '{model_name}'...")
         _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
         _model_instance = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        device = os.getenv("TORCH_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+        _model_instance.to(device)
         _model_instance.eval()
     return _tokenizer_instance, _model_instance
 
@@ -100,12 +102,14 @@ def summarize_text(
 
     t0 = time.time()
     tokenizer, model = load_summarization_model()
+    device = next(model.parameters()).device
 
     chunks = chunk_text_tokens(text, tokenizer)
     is_chunked = len(chunks) > 1
 
     if not is_chunked:
         inputs = tokenizer(text, return_tensors="pt", max_length=BART_MAX_CONTEXT_TOKENS, truncation=True)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
         with torch.no_grad():
             summary_ids = model.generate(
                 inputs["input_ids"],

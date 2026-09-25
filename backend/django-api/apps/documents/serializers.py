@@ -1,6 +1,7 @@
 """
 Serializers for Document upload, listing, and detail polling endpoints (PRD Ch. 30.2).
 """
+import os
 import uuid
 from django.core.files.storage import default_storage
 from rest_framework import serializers
@@ -24,7 +25,9 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         uploaded_file = validated_data.pop('file')
         user = self.context['request'].user
-        original_filename = uploaded_file.name
+        raw_name = (uploaded_file.name or 'document.pdf').replace('\\', '/')
+        clean_name = os.path.basename(raw_name)
+        original_filename = clean_name if clean_name else "document.pdf"
 
         # Generate secure non-public storage reference: uploads/documents/<uuid>_<filename>
         unique_file_id = uuid.uuid4()

@@ -37,6 +37,7 @@ jobs:
       - name: Run Full E2E & Integration Regression Suite
         working-directory: backend/django-api
         env:
+          PYTHONPATH: "."
           SECRET_KEY: "ci-insecure-test-key-never-use-in-production"
           DEBUG: "True"
           CELERY_BROKER_URL: "redis://localhost:6379/0"

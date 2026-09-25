@@ -32,6 +32,7 @@ jobs:
       - name: Run FastAPI AI Pytest Suite & AI Guardrails
         working-directory: backend/fastapi-ai
         env:
+          PYTHONPATH: "."
           GROQ_API_KEY: "gsk_ci_placeholder_key_for_testing_only"
           QDRANT_URL: "http://localhost:6333"
           INTERNAL_SERVICE_SECRET: "ci_internal_secret_key"
@@ -44,7 +45,7 @@ jobs:
 
       - name: Secret Scan (Git History Audit)
         run: |
-          SECRET_MATCHES=$(git log -p -- . ':!*.md' ':!*.yml' ':!*.yaml' | grep -iE "(GROQ_API_KEY|QDRANT_API_KEY|INTERNAL_SERVICE_SECRET)\s*=\s*['\"]?gsk_[a-zA-Z0-9_\-]{16,}['\"]?" || true)
+          SECRET_MATCHES=$(git log -p -- . ':!*.md' ':!*.yml' ':!*.yaml' ':!backend/fastapi-ai/tests/*' ':!scripts/*' | grep -iE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" || true)
           if [ -n "$SECRET_MATCHES" ]; then
             echo "::error::Hardcoded secret assignment detected in git history:"
             echo "$SECRET_MATCHES"

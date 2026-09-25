@@ -43,6 +43,16 @@ app = FastAPI(
     redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None
 )
 
+
+@app.middleware("http")
+async def correlation_id_middleware(request, call_next):
+    import uuid
+    correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
+    request.state.correlation_id = correlation_id
+    response = await call_next(request)
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
+
 # Register structured global exception handlers
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)

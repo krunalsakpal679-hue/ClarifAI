@@ -9,6 +9,7 @@ from rest_framework import generics, status
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.audit.services import (
     EVENT_DOCUMENT_DELETE,
@@ -45,6 +46,8 @@ class DocumentListCreateView(generics.ListCreateAPIView):
     """
     permission_classes = [IsAuthenticated]
     pagination_class = StandardPageNumberPagination
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'upload'
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -68,7 +71,16 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         )
 
         # Enqueue background processing task asynchronously (PRD Ch. 18.3 & 28.3)
-        process_document.delay(str(document.id))
+        try:
+            process_document.delay(str(document.id))
+        except Exception as exc:
+            document.status = DocumentStatus.FAILED
+            document.failure_reason = f"Broker unavailable: {exc}"
+            document.save()
+            return Response(
+                {"error": {"code": "SERVICE_UNAVAILABLE", "message": "Background task broker is currently unavailable."}},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         response_serializer = DocumentDetailSerializer(document)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

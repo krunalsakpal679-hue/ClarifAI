@@ -68,10 +68,12 @@ def get_embedding_model() -> SentenceTransformer:
     """
     global _model_instance
     if _model_instance is None:
+        import torch
         raw_name = get_embedding_model_name()
         model_name = resolve_embedding_path(raw_name)
-        logger.info(f"Loading embedding model '{raw_name}' (resolved: '{model_name}')...")
-        _model_instance = SentenceTransformer(model_name)
+        device = os.getenv("TORCH_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+        logger.info(f"Loading embedding model '{raw_name}' (resolved: '{model_name}') on device '{device}'...")
+        _model_instance = SentenceTransformer(model_name, device=device)
     return _model_instance
 
 

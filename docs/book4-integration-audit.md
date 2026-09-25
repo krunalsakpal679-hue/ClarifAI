@@ -200,3 +200,35 @@ ClarifAI-AIPipeline/
 
 The repository tree adheres 100% to PRD v2.3 and component Prompt Book specifications. All three primary subsystems (`/frontend`, `/backend/django-api`, `/backend/fastapi-ai`) exist, are structurally verified, and have **568/568 passing tests (100% green)**. The project baseline is verified and ready for **BOOK4-CHECKPOINT-01** / **BOOK4-PHASE-01**.
 
+---
+
+## 10. Book 4 Phase 12: Secret Audit & Environment Configuration Verification
+
+### 10.1 Automated Secret Scanning Across Repository & Git History
+* **Scan Tool & Strategy**: Regex-based automated secret scanner (`scripts/scan_secrets_history.py`) executed across all working tree source files, configuration manifests, and full git commit log history (`git log -p --all`).
+* **Audited Credential Types**:
+  * Groq API Keys (`gsk_...`)
+  * Hugging Face Tokens (`hf_...`)
+  * Database Credentials & Connection Strings (`postgres://`, `redis://`)
+  * JWT Signing Secrets (`JWT_SIGNING_KEY`)
+  * Vector DB API Keys (`QDRANT_API_KEY`)
+  * Internal Service Authentication Secrets (`INTERNAL_SERVICE_SECRET`)
+* **Audit Findings**: **0 REAL SECRETS DETECTED**.
+* **Result**: CLEAN. No real credentials or unredacted API tokens exist in any committed file or commit history diff.
+
+### 10.2 Manual Audit of `.env.example` Templates
+Every `.env.example` file was inspected to verify that all configuration keys contain safe placeholder values:
+* **`frontend/.env.example`**: Safe placeholders (`VITE_API_BASE_URL=http://localhost:8000`, `VITE_USE_MOCKS=false`).
+* **`backend/django-api/.env.example`**: Safe placeholders (`postgres://postgres:postgres@localhost:5432/clarifai_db`, `your_qdrant_api_key_here`, `your_jwt_signing_key_here`, `your_internal_service_secret_here`).
+* **`backend/fastapi-ai/.env.example`**: Safe placeholders (`gsk_your_groq_api_key_here`, `your_internal_service_secret_here`, `http://localhost:6333`).
+
+### 10.3 Resolution of `BOOK4-PHASE-05` Open Item: `INTERNAL_SERVICE_SECRET` Enforcement
+* **FastAPI Side**: `verify_internal_secret` dependency in `app/core/security.py` strictly checks incoming `X-Internal-Service-Secret` header when configured, raising `HTTP 403 Forbidden` on invalid or missing tokens. Verified via unit test `test_internal_security_header_denial` in `test_foundation.py`.
+* **Django Side**: `RealAIClient` in `backend/django-api/services/ai_client/client.py` injects `X-Internal-Service-Secret` using `settings.AI_SERVICE_SECRET`.
+* **Status**: **RESOLVED & ACTIVELY ENFORCED**.
+
+### 10.4 CI Secrets & Build Artifact Verification
+* **CI Workflows**: `.github/workflows/*.yml` references credentials strictly via GitHub Actions secrets contexts (`${{ secrets.* }}`), with zero hardcoded fallbacks.
+* **Production Build Artifacts**: Dockerfiles (`python:3.11-slim` and Nginx) rely strictly on runtime environment variable injection. No secrets or credentials are baked into image layers.
+
+

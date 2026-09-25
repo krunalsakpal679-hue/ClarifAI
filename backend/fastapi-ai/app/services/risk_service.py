@@ -89,31 +89,44 @@ def load_legal_bert_model():
         is_peft = os.path.exists(model_name) and (Path(model_name) / "adapter_config.json").exists()
 
         if is_peft:
-            from peft import PeftModel
-            from safetensors.torch import load_file
+            try:
+                from peft import PeftModel
+                from safetensors.torch import load_file
 
-            _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
-            base_model_id = "nlpaueb/legal-bert-base-uncased"
-            base_model = AutoModelForSequenceClassification.from_pretrained(
-                base_model_id,
-                num_labels=len(APPROVED_SEVERITY_LABELS)
-            )
-            model = PeftModel.from_pretrained(base_model, model_name)
+                _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
+                base_model_id = "nlpaueb/legal-bert-base-uncased"
+                base_model = AutoModelForSequenceClassification.from_pretrained(
+                    base_model_id,
+                    num_labels=len(APPROVED_SEVERITY_LABELS)
+                )
+                model = PeftModel.from_pretrained(base_model, model_name)
 
-            # Map classifier head weights if present in adapter_model.safetensors
-            weights_file = Path(model_name) / "adapter_model.safetensors"
-            if weights_file.exists():
-                weights = load_file(str(weights_file))
-                for k, v in list(weights.items()):
-                    if "base_model.model.classifier.weight" in k:
-                        weights["base_model.model.classifier.modules_to_save.default.weight"] = v
-                        weights["base_model.model.classifier.original_module.weight"] = v
-                    elif "base_model.model.classifier.bias" in k:
-                        weights["base_model.model.classifier.modules_to_save.default.bias"] = v
-                        weights["base_model.model.classifier.original_module.bias"] = v
-                model.load_state_dict(weights, strict=False)
+                # Map classifier head weights if present in adapter_model.safetensors
+                weights_file = Path(model_name) / "adapter_model.safetensors"
+                if weights_file.exists():
+                    weights = load_file(str(weights_file))
+                    for k, v in list(weights.items()):
+                        if "base_model.model.classifier.weight" in k:
+                            weights["base_model.model.classifier.modules_to_save.default.weight"] = v
+                            weights["base_model.model.classifier.original_module.weight"] = v
+                        elif "base_model.model.classifier.bias" in k:
+                            weights["base_model.model.classifier.modules_to_save.default.bias"] = v
+                            weights["base_model.model.classifier.original_module.bias"] = v
+                    model.load_state_dict(weights, strict=False)
 
-            _model_instance = model
+                _model_instance = model
+            except ImportError as peft_err:
+                logger.warning(
+                    f"PEFT module not installed ({peft_err}). Falling back to baseline model 'nlpaueb/legal-bert-base-uncased'..."
+                )
+                base_model_id = "nlpaueb/legal-bert-base-uncased"
+                _tokenizer_instance = AutoTokenizer.from_pretrained(base_model_id)
+                _model_instance = AutoModelForSequenceClassification.from_pretrained(
+                    base_model_id,
+                    num_labels=len(APPROVED_SEVERITY_LABELS)
+                )
+                _model_instance.eval()
+                return _tokenizer_instance, _model_instance
         else:
             _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
             _model_instance = AutoModelForSequenceClassification.from_pretrained(

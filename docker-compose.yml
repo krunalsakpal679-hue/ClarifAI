@@ -1,0 +1,213 @@
+# ==============================================================================
+# ClarifAI Full-Stack Multi-Service Docker Compose Orchestration
+# Services: frontend, django-api, fastapi-ai, postgres, redis, celery-worker, qdrant
+# Specification: ClarifAI PRD v2.3 Chapter 35 (DevOps & Infrastructure Topology)
+# ==============================================================================
+
+networks:
+  clarifai_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: clarifai_postgres_data
+  qdrant_data:
+    name: clarifai_qdrant_data
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. PostgreSQL Relational Database (Internal Only)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: clarifai_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-clarifai_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - clarifai_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-clarifai_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ----------------------------------------------------------------------------
+  # 2. Redis Cache & Celery Message Broker (Internal Only)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: clarifai_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - clarifai_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ----------------------------------------------------------------------------
+  # 3. Qdrant Vector Database (Internal Only)
+  # ----------------------------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:v1.12.1
+    container_name: clarifai_qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - clarifai_network
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # 4. FastAPI AI Microservice (Internal Only)
+  # ----------------------------------------------------------------------------
+  fastapi-ai:
+    build:
+      context: ./backend/fastapi-ai
+      dockerfile: Dockerfile
+    container_name: clarifai_fastapi_ai
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      FASTAPI_HOST: 0.0.0.0
+      FASTAPI_PORT: 8000
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL_NAME: ${GROQ_MODEL_NAME:-openai/gpt-oss-20b}
+      LLM_REQUEST_TIMEOUT_SECONDS: ${LLM_REQUEST_TIMEOUT_SECONDS:-30}
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      QDRANT_COLLECTION_NAME: ${QDRANT_COLLECTION_NAME:-clarifai_clause_embeddings}
+      LEGAL_BERT_MODEL_NAME: backend/fastapi-ai/training/checkpoints/legal-bert/v2.0
+      EMBEDDING_MODEL_NAME: backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1
+      BART_MODEL_NAME: facebook/bart-base
+    volumes:
+      - ./backend/fastapi-ai/training:/app/training:ro
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    networks:
+      - clarifai_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ----------------------------------------------------------------------------
+  # 5. Django Core REST API Backend (Public Host Port 8000)
+  # ----------------------------------------------------------------------------
+  django-api:
+    build:
+      context: ./backend/django-api
+      dockerfile: Dockerfile
+    container_name: clarifai_django_api
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-clarifai_db}
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      AI_SERVICE_BASE_URL: http://fastapi-ai:8000
+      AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
+      AI_SERVICE_USE_MOCK: "false"
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-30}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
+      JWT_ACCESS_TOKEN_LIFETIME_MINUTES: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
+      JWT_REFRESH_TOKEN_DAYS: ${JWT_REFRESH_TOKEN_DAYS:-7}
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:80,http://127.0.0.1:5173
+      MAX_UPLOAD_SIZE_MB: 20
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      fastapi-ai:
+        condition: service_healthy
+    networks:
+      - clarifai_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ----------------------------------------------------------------------------
+  # 6. Celery Async Task Worker (Internal Only)
+  # ----------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: ./backend/django-api
+      dockerfile: Dockerfile
+    container_name: clarifai_celery_worker
+    restart: unless-stopped
+    command: celery -A config worker --loglevel=info
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-clarifai_db}
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      AI_SERVICE_BASE_URL: http://fastapi-ai:8000
+      AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
+      AI_SERVICE_USE_MOCK: "false"
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-30}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django-api:
+        condition: service_healthy
+    networks:
+      - clarifai_network
+
+  # ----------------------------------------------------------------------------
+  # 7. React + Vite + Nginx Frontend SPA (Public Host Port 5173)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: clarifai_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      django-api:
+        condition: service_healthy
+    networks:
+      - clarifai_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

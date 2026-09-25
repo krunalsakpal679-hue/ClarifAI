@@ -3,7 +3,13 @@ Production settings for ClarifAI Django service.
 """
 import os
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from .base import *
+
+if not os.getenv('JWT_SIGNING_KEY'):
+    raise ImproperlyConfigured(
+        "JWT_SIGNING_KEY environment variable must be set in production."
+    )
 
 DEBUG = False
 

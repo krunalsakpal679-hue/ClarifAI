@@ -415,8 +415,8 @@ class RealAIClient:
             raw_response["target_lang"] = raw_response.get("target_language", target_lang)
         if "translated_content" not in raw_response:
             raw_response["translated_content"] = {
-                "summary": raw_response.get("summary"),
-                "clauses": raw_response.get("clauses")
+                "summary": raw_response.get("summary_hi") or raw_response.get("summary") or {},
+                "clauses": raw_response.get("clauses_hi") or raw_response.get("clauses") or []
             }
         return validate_translate_response(raw_response)
 
@@ -457,8 +457,21 @@ class RealAIClient:
                 extracted_text = extract_res.get('full_text', '')
                 pages_metadata = extract_res.get('pages', [])
             else:
-                # Fallback: treat file_reference itself as plain text content if not a valid file path
-                extracted_text = file_reference
+                # Fallback: check if Django default_storage can open the file_reference
+                try:
+                    from django.core.files.storage import default_storage
+                    if default_storage.exists(file_reference):
+                        with default_storage.open(file_reference, 'rb') as pdf_file:
+                            pdf_bytes = pdf_file.read()
+                        extract_res = self.extract_pdf(file_bytes=pdf_bytes, filename=os.path.basename(file_reference))
+                        extracted_text = extract_res.get('full_text', '')
+                        pages_metadata = extract_res.get('pages', [])
+                except Exception as storage_exc:
+                    logger.debug(f"default_storage fallback check failed for {file_reference}: {storage_exc}")
+
+                if not extracted_text:
+                    # Fallback: treat file_reference itself as plain text content if not a valid file path
+                    extracted_text = file_reference
 
         # Step 2: Clean Text
         clean_res = self.clean_text(extracted_text or "")

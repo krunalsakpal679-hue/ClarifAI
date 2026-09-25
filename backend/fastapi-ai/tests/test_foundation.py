@@ -82,14 +82,29 @@ def test_secret_redacting_formatter():
 def test_internal_security_header_denial():
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(settings, "INTERNAL_SERVICE_SECRET", "super-secret-internal-token-123")
-        
+
         # Missing secret header -> HTTP 403
         res_no_header = client.post("/api/v1/classify-risk", json={"clause_text": "Sample clause"})
         assert res_no_header.status_code == 403
         assert res_no_header.json()["success"] is False
-        
+
         # Correct secret header -> HTTP 200
         headers = {"X-Internal-Service-Secret": "super-secret-internal-token-123"}
         res_valid = client.post("/api/v1/classify-risk", json={"clause_text": "Sample clause"}, headers=headers)
         assert res_valid.status_code == 200
         assert res_valid.json()["success"] is True
+
+
+def test_production_internal_secret_fail_closed():
+    """Verifies that in production mode, requests fail closed if INTERNAL_SERVICE_SECRET is unset."""
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(settings, "ENVIRONMENT", "production")
+        mp.setattr(settings, "INTERNAL_SERVICE_SECRET", None)
+
+        response = client.post("/api/v1/classify-risk", json={"clause_text": "Sample clause"})
+        assert response.status_code == 403
+        data = response.json()
+        assert data["success"] is False
+        assert "INTERNAL_SERVICE_SECRET must be configured" in data.get("error", {}).get("message", "")
+
+

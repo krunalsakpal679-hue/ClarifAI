@@ -54,12 +54,15 @@ def process_comparison(comparison_id):
         doc_a_id = str(comparison.base_document.id)
         doc_b_id = str(comparison.target_document.id)
 
-        logger.info(f"Invoking AI service compare for documents {doc_a_id} and {doc_b_id}")
-        ai_response = ai_client.compare(doc_a_id, doc_b_id)
+        logger.info(f"Invoking AI service compare for documents {doc_a_id} and {doc_b_id} (user: {comparison.user.id})")
+        ai_response = ai_client.compare(doc_a_id, doc_b_id, user_id=str(comparison.user.id))
 
         with transaction.atomic():
             # Clear existing results for idempotency
             ComparisonResult.objects.filter(comparison=comparison).delete()
+
+            base_clauses_by_id = {str(c.id): c for c in comparison.base_document.clauses.all()}
+            target_clauses_by_id = {str(c.id): c for c in comparison.target_document.clauses.all()}
 
             # Handle grouped category keys ('changed', 'matched', 'missing')
             has_grouped = any(key in ai_response for key in ('changed', 'matched', 'missing'))
@@ -74,21 +77,30 @@ def process_comparison(comparison_id):
                             item.get('explanation') or
                             f"Comparison item in category '{cat_name}'."
                         )
+                        c_id_a = str(item.get('clause_a_id') or item.get('base_clause_id') or item.get('clause_id_a') or '')
+                        c_id_b = str(item.get('clause_b_id') or item.get('target_clause_id') or item.get('clause_id_b') or '')
                         ComparisonResult.objects.create(
                             comparison=comparison,
+                            base_clause=base_clauses_by_id.get(c_id_a),
+                            target_clause=target_clauses_by_id.get(c_id_b),
                             category=cat_name,
                             difference_explanation=explanation,
                             similarity_score=item.get('similarity_score', 0.8 if cat_name == ComparisonCategory.MATCHED else 0.4)
                         )
             else:
-                differences = ai_response.get('differences', ai_response.get('results', []))
-                for item in differences:
-                    raw_category = str(item.get('category', 'changed')).lower()
+                items_list = ai_response.get('comparison_results', ai_response.get('differences', ai_response.get('results', [])))
+                for item in items_list:
+                    raw_category = str(item.get('classification') or item.get('category') or 'changed').lower()
                     if raw_category not in (ComparisonCategory.CHANGED, ComparisonCategory.MATCHED, ComparisonCategory.MISSING):
                         raw_category = ComparisonCategory.CHANGED
 
+                    c_id_a = str(item.get('clause_id_a') or item.get('base_clause_id') or item.get('clause_a_id') or '')
+                    c_id_b = str(item.get('clause_id_b') or item.get('target_clause_id') or item.get('clause_b_id') or '')
+
                     ComparisonResult.objects.create(
                         comparison=comparison,
+                        base_clause=base_clauses_by_id.get(c_id_a),
+                        target_clause=target_clauses_by_id.get(c_id_b),
                         category=raw_category,
                         difference_explanation=item.get('difference_explanation', item.get('explanation', '')),
                         similarity_score=item.get('similarity_score', item.get('similarity', 0.8))

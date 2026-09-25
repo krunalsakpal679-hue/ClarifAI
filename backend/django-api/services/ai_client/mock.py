@@ -45,7 +45,7 @@ class MockAIClient:
         elif self.simulation_mode == 'unavailable':
             raise AIServiceUnavailableError("Simulated 503 Internal AI Service Unavailable.")
 
-    def process_document(self, document_id: str, file_reference: str) -> dict:
+    def process_document(self, document_id: str, file_reference: str, user_id: str = None, **kwargs) -> dict:
         """
         Mock document processing pipeline.
         Returns a mix of successful clauses and a per-clause-failure example (PRD Task 5).
@@ -159,7 +159,7 @@ class MockAIClient:
 
         return validate_chat_response(raw_response)
 
-    def compare(self, document_a_id: str, document_b_id: str) -> dict:
+    def compare(self, document_a_id: str, document_b_id: str, user_id: str = "default-user", **kwargs) -> dict:
         """Mock document comparison response."""
         self._check_simulation()
 
@@ -194,16 +194,43 @@ class MockAIClient:
 
         return validate_compare_response(raw_response)
 
-    def translate(self, document_id: str, target_lang: str, fields: list = None) -> dict:
-        """Mock document translation response."""
+    def translate(
+        self,
+        document_id: str,
+        target_lang: str = "hi",
+        fields: list = None,
+        summary: dict = None,
+        clauses: list = None,
+        user_id: str = "default-user",
+        **kwargs
+    ) -> dict:
+        """Mock document translation response matching RealAIClient & FastAPI schemas."""
         self._check_simulation()
 
         if self.simulation_mode == 'malformed':
             raw_response = {"target_lang": ""}  # Empty string fails validation
         else:
+            mock_clauses_hi = []
+            if clauses:
+                for c in clauses:
+                    c_hi = dict(c)
+                    c_hi["simplified_text_hi"] = f"[HI] {c.get('simplified_text', '')}"
+                    c_hi["why_flagged_hi"] = f"[HI] {c.get('why_flagged', '')}"
+                    mock_clauses_hi.append(c_hi)
+
             raw_response = {
+                "success": True,
                 "document_id": str(document_id),
                 "target_lang": target_lang,
+                "target_language": target_lang,
+                "translation_status": "SUCCESS",
+                "summary_hi": {
+                    "purpose": "[HI] यह एक मानक वाणिज्यिक समझौता है।",
+                    "obligations": "[HI] दायित्वों का विवरण।",
+                    "key_terms": "[HI] प्रमुख नियम व शर्तें।",
+                    "key_risks": "[HI] प्रमुख जोखिम विश्लेषण।"
+                } if summary else {},
+                "clauses_hi": mock_clauses_hi,
                 "translated_content": {
                     "summary": "यह एक मानक वाणिज्यिक समझौता है।",
                     "key_clauses": [
@@ -215,7 +242,7 @@ class MockAIClient:
 
         return validate_translate_response(raw_response)
 
-    def delete_document_embeddings(self, document_id: str) -> dict:
+    def delete_document_embeddings(self, document_id: str, user_id: str = None, **kwargs) -> dict:
         """
         Triggers vector embedding cleanup in Qdrant for deleted document (PRD Ch. 26.5.1 & Part B.3).
         """

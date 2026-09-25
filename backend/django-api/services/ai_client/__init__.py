@@ -31,10 +31,10 @@ def get_ai_client():
     return RealAIClient()
 
 
-def process_document(document_id: str, file_reference: str) -> dict:
+def process_document(document_id: str, file_reference: str, user_id: str = None, **kwargs) -> dict:
     """Wrapper function delegating to active AI Client."""
     client = get_ai_client()
-    return client.process_document(document_id, file_reference)
+    return client.process_document(document_id, file_reference, user_id=user_id, **kwargs)
 
 
 def chat(document_id: str, message: str, history: list = None) -> dict:
@@ -43,10 +43,10 @@ def chat(document_id: str, message: str, history: list = None) -> dict:
     return client.chat(document_id, message, history=history)
 
 
-def compare(document_a_id: str, document_b_id: str) -> dict:
+def compare(document_a_id: str, document_b_id: str, user_id: str = "default-user", **kwargs) -> dict:
     """Wrapper function delegating to active AI Client."""
     client = get_ai_client()
-    return client.compare(document_a_id, document_b_id)
+    return client.compare(document_a_id, document_b_id, user_id=user_id, **kwargs)
 
 
 def translate(document_id: str, target_lang: str, fields: list = None) -> dict:
@@ -55,10 +55,10 @@ def translate(document_id: str, target_lang: str, fields: list = None) -> dict:
     return client.translate(document_id, target_lang, fields=fields)
 
 
-def delete_document_embeddings(document_id: str) -> dict:
+def delete_document_embeddings(document_id: str, user_id: str = None, **kwargs) -> dict:
     """Wrapper function delegating to active AI Client for Qdrant vector cleanup."""
     client = get_ai_client()
-    return client.delete_document_embeddings(document_id)
+    return client.delete_document_embeddings(document_id, user_id=user_id, **kwargs)
 
 
 __all__ = [

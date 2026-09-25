@@ -98,12 +98,15 @@ def validate_chat_response(data: dict) -> dict:
 def validate_compare_response(data: dict) -> dict:
     """
     Validates document comparison response payload.
-    Must contain comparison results structure ('changed', 'matched', 'missing' or 'differences').
+    Must contain comparison results structure ('comparison_results', 'differences', or 'changed', 'matched', 'missing').
     """
     if not isinstance(data, dict):
         raise AIServiceValidationError("Compare response must be a dictionary.")
 
-    if 'differences' in data:
+    if 'comparison_results' in data:
+        if not isinstance(data['comparison_results'], list):
+            raise AIServiceValidationError("Compare response 'comparison_results' must be a list.")
+    elif 'differences' in data:
         if not isinstance(data['differences'], list):
             raise AIServiceValidationError("Compare response 'differences' must be a list.")
     elif all(k in data for k in ('changed', 'matched', 'missing')):
@@ -112,7 +115,7 @@ def validate_compare_response(data: dict) -> dict:
                 raise AIServiceValidationError(f"Compare response '{key}' must be a list.")
     else:
         raise AIServiceValidationError(
-            "Compare response must contain 'differences' or ('changed', 'matched', 'missing') lists."
+            "Compare response must contain 'comparison_results', 'differences' or ('changed', 'matched', 'missing') lists."
         )
 
     return data

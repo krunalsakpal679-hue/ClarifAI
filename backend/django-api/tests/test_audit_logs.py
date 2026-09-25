@@ -31,6 +31,9 @@ from tests.test_documents import create_sample_pdf
 User = get_user_model()
 
 
+from django.test import override_settings
+
+@override_settings(CELERY_BROKER_URL='memory://')
 class AuditLogsTestCase(APITestCase):
 
     def setUp(self):
@@ -103,7 +106,8 @@ class AuditLogsTestCase(APITestCase):
         log = AuditLog.objects.filter(event_type=EVENT_LOGIN_FAILURE, user__isnull=True).first()
         self.assertIsNotNone(log)
 
-    def test_document_upload_writes_audit_log(self):
+    @patch('apps.documents.views.process_document.delay')
+    def test_document_upload_writes_audit_log(self, mock_delay):
         """POST /api/documents/ creates document_upload audit log row."""
         self.client.force_authenticate(user=self.user)
         url = reverse('document_list_create')

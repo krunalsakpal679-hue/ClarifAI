@@ -44,6 +44,15 @@ class RealAIClient:
         if self.secret:
             headers['X-Internal-Secret'] = self.secret
             headers['X-Internal-Service-Secret'] = self.secret
+        
+        try:
+            from core.middleware import get_current_correlation_id
+            cid = get_current_correlation_id()
+            if cid:
+                headers['X-Correlation-ID'] = cid
+        except ImportError:
+            pass
+
         return headers
 
     def _send_request(

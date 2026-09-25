@@ -109,6 +109,8 @@ REST_FRAMEWORK = {
         'anon': '100/minute',
         'user': '1000/minute',
         'auth': '5/minute',
+        'upload': '20/minute',
+        'chat': '60/minute',
     },
 }
 

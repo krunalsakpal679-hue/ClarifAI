@@ -8,6 +8,7 @@ from rest_framework import generics, status
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.chat.models import ChatMessage, ChatSession, MessageRole
 from apps.chat.serializers import (
@@ -69,6 +70,8 @@ class ChatMessageListCreateView(generics.ListCreateAPIView):
     - No-Answer Handling: Controlled no-answer response persisted as normal message (never HTTP error).
     """
     permission_classes = [IsAuthenticated, IsOwner]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'chat'
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

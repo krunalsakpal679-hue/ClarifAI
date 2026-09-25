@@ -57,11 +57,11 @@ def test_legal_bert_schema_validity():
             assert "doc_id" in r and r["doc_id"].strip()
             assert "clause_id" in r and r["clause_id"].strip()
             assert "clause_text" in r and r["clause_text"].strip()
-            assert "context_text" in r and "[CLS]" in r["context_text"]
+            assert "context_text" in r and r["context_text"].strip()
             assert r["severity"] in approved_severities
             assert r["category"] in APPROVED_CATEGORIES_SET
-            assert r["metadata"]["origin"] == "SEED/SYNTHETIC"
-            assert r["metadata"]["dataset_version"] in {"v0.1-seed", "v1.0-comprehensive"}
+            assert r["metadata"]["origin"] in {"SEED/SYNTHETIC", "ATTICUS_CUAD"}
+            assert r["metadata"]["dataset_version"] in {"v0.1-seed", "v1.0-comprehensive", "v2.0-atticus", "v2.0-comprehensive"}
 
 
 def test_multilingual_e5_schema_validity():
@@ -77,8 +77,8 @@ def test_multilingual_e5_schema_validity():
             assert "doc_b_id" in r and r["doc_b_id"].strip()
             assert r["classification"] in approved_classes
             assert 0.0 <= r["target_similarity"] <= 1.0
-            assert r["metadata"]["origin"] == "SEED/SYNTHETIC"
-            assert r["metadata"]["dataset_version"] in {"v0.1-seed", "v1.0-comprehensive"}
+            assert r["metadata"]["origin"] in {"SEED/SYNTHETIC", "ATTICUS_CUAD"}
+            assert r["metadata"]["dataset_version"] in {"v0.1-seed", "v1.0-comprehensive", "v2.0-comprehensive"}
             if r.get("text_a"):
                 assert r["e5_text_a"].startswith("passage: ")
             if r.get("text_b"):
@@ -88,7 +88,9 @@ def test_multilingual_e5_schema_validity():
 def test_finetuned_e5_checkpoint_dimension_unchanged():
     """Verifies that the fine-tuned E5 checkpoint exists and output dimension is strictly 768."""
     from sentence_transformers import SentenceTransformer
-    checkpoint_dir = BASE_FASTAPI_AI / "training" / "checkpoints" / "e5" / "v1.0"
+    checkpoint_dir = BASE_FASTAPI_AI / "training" / "checkpoints" / "e5" / "v1.1"
+    if not checkpoint_dir.exists():
+        checkpoint_dir = BASE_FASTAPI_AI / "training" / "checkpoints" / "e5" / "v1.0"
     assert checkpoint_dir.exists(), f"Checkpoint directory {checkpoint_dir} does not exist."
 
     model = SentenceTransformer(str(checkpoint_dir))

@@ -110,6 +110,14 @@ class DocumentDetailDeleteView(generics.RetrieveDestroyAPIView):
             except Exception:
                 pass
 
+        # 2b. Clean up associated report files from storage if present (PRD Ch. 26.5.1)
+        for report in instance.reports.all():
+            if report.file_reference and default_storage.exists(report.file_reference):
+                try:
+                    default_storage.delete(report.file_reference)
+                except Exception:
+                    pass
+
         # 3. Audit Log: document_delete (PRD Ch. 26.8)
         log_audit_event(
             EVENT_DOCUMENT_DELETE,

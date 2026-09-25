@@ -91,10 +91,40 @@
 
 ---
 
-## 8. Test Suite Summary Matrix
+---
+
+## 8. Dashboard & History Scenarios (E2E-30 – E2E-31)
+
+| Scenario ID | Test Name | Target Endpoint / Workflow | Expected Behavior | Actual Behavior | Result | Evidence Citation |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **E2E-30** | Dashboard Summary & Isolation | `GET /api/dashboard/summary` | Aggregate counts (`total_documents`, `completed_count`, `in_progress_count`, `failed_count`, `flagged_risk_count`) accurately computed for authenticated user only; 0 cross-user leakage. | Returns exact aggregate counts across mixed document states; strictly owner-scoped; non-Safe clauses correctly flag completed document risks. | **PASS** | `backend/django-api/tests/test_e2e_30_to_31_dashboard_history.py:test_e2e_30_dashboard_summary_accurate_counts_and_tenant_isolation` |
+| **E2E-31** | History Paginated List Accuracy | `GET /api/documents/` | Paginated list containing owner's documents only; sorted by `uploaded_at` descending; computes `overall_risk`. | Returns paginated envelope; strictly owner-scoped; chronological order; computes `overall_risk` correctly for completed documents. | **PASS** | `backend/django-api/tests/test_e2e_30_to_31_dashboard_history.py:test_e2e_31_history_paginated_list_accuracy_and_ordering` |
+| **E2E-HIST-RULE**| History Rule Compliance | `GET /api/documents/` & Frontend History | Adheres to PRD v2.3 Chapter 59 History Rule: zero search, filter, or sort query parameters in v1. | Backend query parameters (`?search=`, `?status=`, `?ordering=`) have 0 filtering effect; no filter backends enabled; Frontend UI renders list without search/filter controls. | **PASS** | `backend/django-api/tests/test_e2e_30_to_31_dashboard_history.py:test_history_rule_no_search_filter_sort_contract_compliance`<br>`frontend/src/pages/History/__tests__/HistoryPage.test.tsx` |
+| **E2E-REOPEN**| Reopen Analysis | `GET /api/documents/{id}/` + summary/clauses | Reopening completed document restores full analysis view without reprocessing; incomplete documents return 422. | Returns full document metadata, summary, and clauses; timestamps preserved; in-progress document safely blocked with 422 `DOCUMENT_NOT_READY`. | **PASS** | `backend/django-api/tests/test_e2e_30_to_31_dashboard_history.py:test_e2e_30_31_reopen_action_restores_analysis_without_reprocessing` |
+| **E2E-DELETE**| Delete Document Action & Ripple | `DELETE /api/documents/{id}/` | Cascades deletion of document, clauses, summary, vector embeddings; immediately updates dashboard counts & history list; enforces 404 IDOR. | Cascades deletion cleanly; dashboard counts & history pagination decremented immediately; cross-tenant deletion attempts return 404. | **PASS** | `backend/django-api/tests/test_e2e_30_to_31_dashboard_history.py:test_e2e_30_31_delete_action_cascades_and_updates_dashboard_and_history` |
+
+---
+
+## 9. Deletion Cascade & Vector Purge Scenarios (E2E-32 – E2E-33)
+
+| Scenario ID | Test Name | Target Endpoint / Workflow | Expected Behavior | Actual Behavior | Result | Evidence Citation |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **E2E-32** | Complete Active-Data Deletion | `DELETE /api/documents/{id}/` | Removes or disassociates every item in PRD §26.5.1: document, stored file, clauses, summary, chat session, report, report PDF in storage. | Complete active data purge; document record, stored PDF, report PDF, clauses, summary deleted; chat session & report disassociated. | **PASS** | `backend/django-api/tests/test_e2e_32_to_33_deletion_qdrant.py:test_e2e_32_33_complete_active_data_deletion_cascade` |
+| **E2E-33** | Qdrant Vector Point Purge | `DELETE /api/v1/qdrant/delete-document` via Celery/Client | Purges all Qdrant vector points matching `(user_id, document_id)`; zero retrievable vectors remain. | Deletion endpoint triggered; hard filter on user_id and document_id purges all clause vector points; scroll queries return 0 points. | **PASS** | `backend/django-api/tests/test_e2e_32_to_33_deletion_qdrant.py:test_e2e_32_33_complete_active_data_deletion_cascade` |
+| **E2E-UNRETRIEV**| Full Surface Unretrievability | All API & RAG Surfaces | Deleted document is 100% unretrievable across Detail, Summary, Clauses, Chat, Reports, Comparisons, History, Dashboard. | Every endpoint returns HTTP 404 Not Found; History excludes doc; Dashboard counts decrement; zero data leakage. | **PASS** | `backend/django-api/tests/test_e2e_32_to_33_deletion_qdrant.py:test_e2e_32_33_unretrievability_across_all_surfaces_after_deletion` |
+| **E2E-DEL-IDOR**| Owner-Scoped Deletion Protection | `DELETE /api/documents/{id}/` | Secondary user attempting to delete another's document receives HTTP 404 (not 403 or 204); records remain intact. | IsOwner policy returns HTTP 404 Not Found; zero deletion effect; original files and database rows untouched. | **PASS** | `backend/django-api/tests/test_e2e_32_to_33_deletion_qdrant.py:test_e2e_32_33_owner_scoped_deletion_security_idor` |
+| **E2E-AUDIT-PRIV**| Audit Trail Privacy & Cleanliness | `AuditLog` table inspection | Records single `document_delete` event with approved metadata only; zero raw text or confidential contract content stored. | Audit log captures event with `document_id`, `ip_address`, `user_agent`; zero raw contract text, clause text, or sensitive data. | **PASS** | `backend/django-api/tests/test_e2e_32_to_33_deletion_qdrant.py:test_e2e_32_33_audit_trail_cleanliness_zero_raw_content` |
+
+---
+
+## 10. Test Suite Summary Matrix
 
 | Component | Test Suite Path | Tests Executed | Passed | Failed | Execution Time |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Django API** | `tests/test_e2e_32_to_33_deletion_qdrant.py` | 4 | 4 | 0 | 4.1s |
+| **Django API** | `tests/test_deletion_cascade.py` | 2 | 2 | 0 | 2.1s |
+| **Django API** | `tests/test_e2e_30_to_31_dashboard_history.py` | 5 | 5 | 0 | 5.5s |
+| **Django API** | `tests/test_dashboard_endpoints.py` | 4 | 4 | 0 | 4.1s |
 | **Django API** | `tests/test_e2e_27_to_29_reports.py` | 5 | 5 | 0 | 8.3s |
 | **Django API** | `tests/test_report_endpoints.py` | 6 | 6 | 0 | 17.2s |
 | **Django API** | `tests/test_e2e_25_to_26_translation.py` | 3 | 3 | 0 | 2.6s |
@@ -105,7 +135,7 @@
 | **Django API** | `tests/test_e2e_16_to_19_analysis_and_clauses.py` | 4 | 4 | 0 | 4.1s |
 | **Django API** | `tests/test_e2e_05_to_15_document_pipeline.py` | 11 | 11 | 0 | 5.8s |
 | **Django API** | `tests/test_auth.py` | 7 | 7 | 0 | 6.2s |
-| **Django API** | `tests/test_documents.py` | 8 | 8 | 0 | 5.5s |
+| **Django API** | `tests/test_documents.py` | 9 | 9 | 0 | 9.5s |
 | **Django API** | `tests/test_celery_tasks.py` | 6 | 6 | 0 | 6.8s |
 | **Django API** | `tests/test_real_ai_integration.py` | 5 | 5 | 0 | 4.3s |
 | **FastAPI AI** | `tests/test_translation.py` | 5 | 5 | 0 | 119.8s |
@@ -113,12 +143,16 @@
 | **FastAPI AI** | `tests/test_legal_bert.py` | 8 | 8 | 0 | 25.3s |
 | **FastAPI AI** | `tests/test_chatbot.py`, `test_rag.py`, `test_prompt_injection.py`, `test_qdrant_adversarial_isolation.py` | 26 | 26 | 0 | 41.4s |
 | **FastAPI AI** | `tests/test_ocr_pipeline.py` & `test_pdf_extraction.py` | 10 | 10 | 0 | 23.8s |
+| **Frontend** | `src/pages/History/__tests__/HistoryPage.test.tsx` | 8 | 8 | 0 | 2.5s |
+| **Frontend** | `src/pages/Dashboard/__tests__/DashboardPage.test.tsx` | 5 | 5 | 0 | 0.9s |
 | **Frontend** | `src/services/__tests__/comparisonService.test.ts` | 9 | 9 | 0 | 6.4s |
 | **Frontend** | `src/pages/Comparison/__tests__/ComparisonPages.test.tsx` | 8 | 8 | 0 | 60.2s |
 | **Frontend** | `src/services/__tests__/chatService.test.ts` | 8 | 8 | 0 | 34.2s |
 | **Frontend** | `src/pages/ClauseDetail/__tests__/ClauseDetailPage.test.tsx` | 6 | 6 | 0 | 2.2s |
 | **Frontend** | `src/pages/Auth/__tests__/LoginPage.test.tsx` | 13 | 13 | 0 | 1.8s |
-| **Total** | | **178** | **178** | **0** | |
+| **Total** | | **206** | **206** | **0** | |
+
+
 
 
 

@@ -5,6 +5,7 @@ Loads environment-driven settings using pydantic-settings.
 
 import os
 from typing import Optional
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -47,6 +48,15 @@ class Settings(BaseSettings):
     # Versioning Tags
     SCHEMA_VERSION: str = "1.0.0"
     PROMPT_VERSION: str = "1.0.0"
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        is_dev = self.ENVIRONMENT.lower() in ["development", "dev", "test", "testing", "local"]
+        if not is_dev and not self.INTERNAL_SERVICE_SECRET:
+            raise ValueError(
+                "INTERNAL_SERVICE_SECRET environment variable must be set in production."
+            )
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

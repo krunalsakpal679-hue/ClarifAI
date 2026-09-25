@@ -24,6 +24,11 @@ checkpoints/
 *.onnx
 *.safetensors
 
+# Raw uncompressed training datasets
+training/data/*_raw/
+**/training/data/*_raw/
+atticus_raw/
+
 # Node modules
 node_modules/
 .npm/

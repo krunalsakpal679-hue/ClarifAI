@@ -20,6 +20,19 @@ def get_reports_dir():
     return reports_dir
 
 
+def _safe_str(text: str, has_unicode: bool, fallback: str = "") -> str:
+    """Safeguards ReportLab against Latin-1 encoding crashes when no Unicode font is present."""
+    if not text:
+        return fallback or ""
+    if has_unicode:
+        return text
+    try:
+        text.encode('latin-1')
+        return text
+    except UnicodeEncodeError:
+        return fallback or ""
+
+
 def get_pdf_font(language='en'):
     """
     Resolves Unicode font for non-Latin languages (e.g. Hindi Devanagari)
@@ -31,7 +44,10 @@ def get_pdf_font(language='en'):
             ('Mangal', 'C:/Windows/Fonts/mangal.ttf', None),
             ('Arial', 'C:/Windows/Fonts/arial.ttf', None),
             ('NotoSansDevanagari', '/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf', None),
+            ('NotoSansDevanagari', '/usr/share/fonts/opentype/noto/NotoSansDevanagari-Regular.otf', None),
             ('FreeSans', '/usr/share/fonts/truetype/freefont/FreeSans.ttf', None),
+            ('LohitDevanagari', '/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf', None),
+            ('Gargi', '/usr/share/fonts/truetype/fonts-deva-extra/gargi.ttf', None),
         ]
         for font_name, font_path, sub_idx in candidate_fonts:
             if os.path.exists(font_path):
@@ -68,6 +84,7 @@ def generate_document_pdf(report, document, language='en'):
 
     font_family = get_pdf_font(language)
     font_bold = font_family if font_family != 'Helvetica' else 'Helvetica-Bold'
+    has_unicode = (font_family != 'Helvetica')
 
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -100,7 +117,7 @@ def generate_document_pdf(report, document, language='en'):
     )
 
     elements = []
-    doc_title = "ClarifAI Document Analysis Report" if language != 'hi' else "ClarifAI दस्तावेज़ विश्लेषण रिपोर्ट"
+    doc_title = "ClarifAI Document Analysis Report" if (language != 'hi' or not has_unicode) else "ClarifAI दस्तावेज़ विश्लेषण रिपोर्ट"
     elements.append(Paragraph(doc_title, title_style))
     elements.append(Paragraph(f"<b>Document:</b> {document.original_filename}", body_style))
     elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {(language or 'EN').upper()}", body_style))
@@ -128,32 +145,32 @@ def generate_document_pdf(report, document, language='en'):
                 key_terms = getattr(summary, 'key_terms_text_hi', key_terms)
                 key_risks = getattr(summary, 'key_risks_text_hi', key_risks)
 
-        title_header = "Executive Overview" if language != 'hi' else "कार्यकारी सारांश (Executive Overview)"
+        title_header = "Executive Overview" if (language != 'hi' or not has_unicode) else "कार्यकारी सारांश (Executive Overview)"
         elements.append(Paragraph(title_header, heading_style))
         if purpose:
-            label = "Purpose" if language != 'hi' else "उद्देश्य (Purpose)"
-            elements.append(Paragraph(f"<b>{label}:</b> {purpose}", body_style))
+            label = "Purpose" if (language != 'hi' or not has_unicode) else "उद्देश्य (Purpose)"
+            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(purpose, has_unicode, summary.purpose_text)}", body_style))
         if obligations:
-            label = "Obligations" if language != 'hi' else "दायित्व (Obligations)"
-            elements.append(Paragraph(f"<b>{label}:</b> {obligations}", body_style))
+            label = "Obligations" if (language != 'hi' or not has_unicode) else "दायित्व (Obligations)"
+            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(obligations, has_unicode, summary.obligations_text)}", body_style))
         if key_terms:
-            label = "Key Terms" if language != 'hi' else "प्रमुख शर्तें (Key Terms)"
-            elements.append(Paragraph(f"<b>{label}:</b> {key_terms}", body_style))
+            label = "Key Terms" if (language != 'hi' or not has_unicode) else "प्रमुख शर्तें (Key Terms)"
+            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(key_terms, has_unicode, summary.key_terms_text)}", body_style))
         if key_risks:
-            label = "Key Risks" if language != 'hi' else "प्रमुख जोखिम (Key Risks)"
-            elements.append(Paragraph(f"<b>{label}:</b> {key_risks}", body_style))
+            label = "Key Risks" if (language != 'hi' or not has_unicode) else "प्रमुख जोखिम (Key Risks)"
+            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(key_risks, has_unicode, summary.key_risks_text)}", body_style))
         elements.append(Spacer(1, 12))
 
     # Risk-Classified Clauses
     clauses = document.clauses.all().order_by('position')
     if clauses.exists():
-        header_text = "Risk-Classified Clauses" if language != 'hi' else "जोखिम-वर्गीकृत खंड (Risk-Classified Clauses)"
+        header_text = "Risk-Classified Clauses" if (language != 'hi' or not has_unicode) else "जोखिम-वर्गीकृत खंड (Risk-Classified Clauses)"
         elements.append(Paragraph(header_text, heading_style))
 
-        col_pos = "Pos" if language != 'hi' else "क्रमांक"
-        col_sev = "Severity" if language != 'hi' else "गंभीरता"
-        col_cat = "Category" if language != 'hi' else "श्रेणी"
-        col_text = "Original Text / Summary" if language != 'hi' else "मूल पाठ / सरलीकृत सारांश"
+        col_pos = "Pos" if (language != 'hi' or not has_unicode) else "क्रमांक"
+        col_sev = "Severity" if (language != 'hi' or not has_unicode) else "गंभीरता"
+        col_cat = "Category" if (language != 'hi' or not has_unicode) else "श्रेणी"
+        col_text = "Original Text / Summary" if (language != 'hi' or not has_unicode) else "मूल पाठ / सरलीकृत सारांश"
 
         table_data = [[col_pos, col_sev, col_cat, col_text]]
 
@@ -176,7 +193,7 @@ def generate_document_pdf(report, document, language='en'):
                 str(clause.position),
                 (clause.severity or "UNKNOWN").upper(),
                 clause.category or "General",
-                Paragraph(simplified or clause.original_text[:150], body_style)
+                Paragraph(_safe_str(simplified, has_unicode, clause.simplified_text or clause.original_text[:150]), body_style)
             ])
 
         t = Table(table_data, colWidths=[36, 64, 90, 350])
@@ -195,7 +212,7 @@ def generate_document_pdf(report, document, language='en'):
     elements.append(Spacer(1, 16))
     notice_text = (
         "<i>Notice: ClarifAI provides automated analysis for informational purposes only and does NOT constitute legal advice.</i>"
-        if language != 'hi' else
+        if (language != 'hi' or not has_unicode) else
         "<i>सूचना: ClarifAI केवल सूचनात्मक उद्देश्यों के लिए स्वचालित विश्लेषण प्रदान करता है और यह औपचारिक कानूनी सलाह नहीं है।</i>"
     )
     elements.append(Paragraph(notice_text, body_style))

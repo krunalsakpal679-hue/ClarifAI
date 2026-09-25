@@ -19,8 +19,8 @@ from app.services.output_validator_service import validate_and_resolve_clause_ri
 
 logger = logging.getLogger(__name__)
 
-# Default interim model checkpoint per PRD v2.3 instruction
-DEFAULT_LEGAL_BERT_MODEL: str = "nlpaueb/legal-bert-base-uncased"
+# Default model checkpoint (Phase 4/5 Selected Fine-Tuned Checkpoint)
+DEFAULT_LEGAL_BERT_MODEL: str = "backend/fastapi-ai/training/checkpoints/legal-bert/v2.0"
 
 # Strict 4-level severity label mapping per PRD Chapter 16.9
 APPROVED_SEVERITY_LABELS: Dict[int, str] = {
@@ -37,6 +37,35 @@ _tokenizer_instance: Optional[AutoTokenizer] = None
 _model_instance: Optional[AutoModelForSequenceClassification] = None
 
 
+def resolve_legal_bert_path(model_identifier: str) -> str:
+    """
+    Resolves local checkpoint path or returns HuggingFace identifier.
+    Supports directory aliases (legal-bert <-> legalbert).
+    """
+    from pathlib import Path
+    variants = [model_identifier]
+    if "legal-bert" in model_identifier:
+        variants.append(model_identifier.replace("legal-bert", "legalbert"))
+    elif "legalbert" in model_identifier:
+        variants.append(model_identifier.replace("legalbert", "legal-bert"))
+
+    for var in variants:
+        candidate = Path(var)
+        if candidate.exists():
+            return str(candidate.resolve())
+
+        for base in [Path(__file__).resolve().parent.parent.parent, Path.cwd()]:
+            candidate_sub = base / var
+            if candidate_sub.exists():
+                return str(candidate_sub.resolve())
+            if var.startswith("backend/fastapi-ai/"):
+                rel_trimmed = var[len("backend/fastapi-ai/"):]
+                candidate_trimmed = base / rel_trimmed
+                if candidate_trimmed.exists():
+                    return str(candidate_trimmed.resolve())
+    return model_identifier
+
+
 def get_legal_bert_model_name() -> str:
     """
     Returns configured Legal-BERT model name from LEGAL_BERT_MODEL_NAME env var.
@@ -47,16 +76,51 @@ def get_legal_bert_model_name() -> str:
 def load_legal_bert_model():
     """
     Lazy loads singleton tokenizer and classification model instances.
+    Supports fine-tuned PEFT/LoRA checkpoints (v2.0) and standard HuggingFace baselines.
     """
     global _tokenizer_instance, _model_instance
     if _tokenizer_instance is None or _model_instance is None:
-        model_name = get_legal_bert_model_name()
-        logger.info(f"Loading Legal-BERT model '{model_name}'...")
-        _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
-        _model_instance = AutoModelForSequenceClassification.from_pretrained(
-            model_name,
-            num_labels=len(APPROVED_SEVERITY_LABELS)
-        )
+        from pathlib import Path
+        raw_name = get_legal_bert_model_name()
+        model_name = resolve_legal_bert_path(raw_name)
+        logger.info(f"Loading Legal-BERT model '{raw_name}' (resolved: '{model_name}')...")
+
+        # Check if local path contains adapter_config.json (PEFT LoRA checkpoint)
+        is_peft = os.path.exists(model_name) and (Path(model_name) / "adapter_config.json").exists()
+
+        if is_peft:
+            from peft import PeftModel
+            from safetensors.torch import load_file
+
+            _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
+            base_model_id = "nlpaueb/legal-bert-base-uncased"
+            base_model = AutoModelForSequenceClassification.from_pretrained(
+                base_model_id,
+                num_labels=len(APPROVED_SEVERITY_LABELS)
+            )
+            model = PeftModel.from_pretrained(base_model, model_name)
+
+            # Map classifier head weights if present in adapter_model.safetensors
+            weights_file = Path(model_name) / "adapter_model.safetensors"
+            if weights_file.exists():
+                weights = load_file(str(weights_file))
+                for k, v in list(weights.items()):
+                    if "base_model.model.classifier.weight" in k:
+                        weights["base_model.model.classifier.modules_to_save.default.weight"] = v
+                        weights["base_model.model.classifier.original_module.weight"] = v
+                    elif "base_model.model.classifier.bias" in k:
+                        weights["base_model.model.classifier.modules_to_save.default.bias"] = v
+                        weights["base_model.model.classifier.original_module.bias"] = v
+                model.load_state_dict(weights, strict=False)
+
+            _model_instance = model
+        else:
+            _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
+            _model_instance = AutoModelForSequenceClassification.from_pretrained(
+                model_name,
+                num_labels=len(APPROVED_SEVERITY_LABELS)
+            )
+
         _model_instance.eval()
     return _tokenizer_instance, _model_instance
 
@@ -204,13 +268,14 @@ def get_legal_bert_status() -> Dict[str, Any]:
     model_name = get_legal_bert_model_name()
     try:
         _, model = load_legal_bert_model()
+        num_labels = getattr(model.config, "num_labels", len(APPROVED_SEVERITY_LABELS))
         return {
             "loaded": True,
             "model_name": model_name,
-            "num_labels": model.config.num_labels,
+            "num_labels": num_labels,
             "approved_severities": list(APPROVED_SEVERITY_LABELS.values()),
             "is_interim_placeholder": True,
-            "fine_tuned_status": "IMPLEMENTATION DECISION REQUIRED"
+            "fine_tuned_status": "FINE-TUNED (v2.0)" if "v2.0" in model_name else "BASE"
         }
     except Exception as e:
         logger.error(f"Legal-BERT status check failed: {e}")

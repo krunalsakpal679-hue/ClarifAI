@@ -15,8 +15,8 @@ from app.models.common import SCHEMA_VERSION
 
 logger = logging.getLogger(__name__)
 
-# Default interim model checkpoint per PRD instruction (Decision R-05)
-DEFAULT_EMBEDDING_MODEL_NAME: str = "intfloat/multilingual-e5-base"
+# Default model checkpoint (Phase 4/5 Selected Fine-Tuned Checkpoint)
+DEFAULT_EMBEDDING_MODEL_NAME: str = "backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1"
 
 # Documented chunking strategy constant:
 # Clauses are embedded directly without chunking because average clause length (50-300 tokens)
@@ -24,6 +24,35 @@ DEFAULT_EMBEDDING_MODEL_NAME: str = "intfloat/multilingual-e5-base"
 MAX_SEQUENCE_LENGTH: int = 512
 
 _model_instance: Optional[SentenceTransformer] = None
+
+
+def resolve_embedding_path(model_identifier: str) -> str:
+    """
+    Resolves local checkpoint path or returns HuggingFace identifier.
+    Supports directory aliases (multilingual-e5 <-> e5).
+    """
+    from pathlib import Path
+    variants = [model_identifier]
+    if "multilingual-e5" in model_identifier:
+        variants.append(model_identifier.replace("multilingual-e5", "e5"))
+    elif "/e5/" in model_identifier:
+        variants.append(model_identifier.replace("/e5/", "/multilingual-e5/"))
+
+    for var in variants:
+        candidate = Path(var)
+        if candidate.exists():
+            return str(candidate.resolve())
+
+        for base in [Path(__file__).resolve().parent.parent.parent, Path.cwd()]:
+            candidate_sub = base / var
+            if candidate_sub.exists():
+                return str(candidate_sub.resolve())
+            if var.startswith("backend/fastapi-ai/"):
+                rel_trimmed = var[len("backend/fastapi-ai/"):]
+                candidate_trimmed = base / rel_trimmed
+                if candidate_trimmed.exists():
+                    return str(candidate_trimmed.resolve())
+    return model_identifier
 
 
 def get_embedding_model_name() -> str:
@@ -39,8 +68,9 @@ def get_embedding_model() -> SentenceTransformer:
     """
     global _model_instance
     if _model_instance is None:
-        model_name = get_embedding_model_name()
-        logger.info(f"Loading embedding model '{model_name}'...")
+        raw_name = get_embedding_model_name()
+        model_name = resolve_embedding_path(raw_name)
+        logger.info(f"Loading embedding model '{raw_name}' (resolved: '{model_name}')...")
         _model_instance = SentenceTransformer(model_name)
     return _model_instance
 
@@ -155,7 +185,7 @@ def get_embedding_status() -> Dict[str, Any]:
             "loaded": True,
             "model_name": model_name,
             "is_interim_placeholder": True,
-            "fine_tuned_status": "IMPLEMENTATION DECISION REQUIRED",
+            "fine_tuned_status": "FINE-TUNED (v1.1)" if "v1.1" in model_name else "BASE",
             "vector_dimension": dim,
             "max_sequence_length": MAX_SEQUENCE_LENGTH,
             "chunking_strategy": "Direct clause-level embedding without chunking (<=512 tokens), prefixed with 'passage: '"

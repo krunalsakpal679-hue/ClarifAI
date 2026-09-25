@@ -1,0 +1,43 @@
+name: Frontend SPA CI
+
+on:
+  push:
+    branches: [ develop, main, "feature/*" ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  test-and-build:
+    name: Lint, Type-Check, Test & Build Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run TypeScript Check
+        working-directory: frontend
+        run: npm run type-check
+
+      - name: Run Vitest Suite
+        working-directory: frontend
+        run: npm run test
+
+      - name: Build Production Bundle
+        working-directory: frontend
+        run: npm run build

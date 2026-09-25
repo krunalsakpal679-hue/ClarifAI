@@ -1,0 +1,44 @@
+name: Full Stack Integration CI
+
+on:
+  push:
+    branches: [ develop, main, "feature/*" ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  full-system-e2e:
+    name: Full System E2E & Cross-Service Integration Suite
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install Django Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/django-api/requirements.txt
+
+      - name: Run Full E2E & Integration Regression Suite
+        working-directory: backend/django-api
+        env:
+          SECRET_KEY: "ci-insecure-test-key-never-use-in-production"
+          DEBUG: "True"
+          CELERY_BROKER_URL: "redis://localhost:6379/0"
+        run: |
+          python manage.py test tests.test_e2e_05_to_15_document_pipeline tests.test_e2e_16_to_19_analysis_and_clauses tests.test_e2e_20_to_22_chatbot tests.test_e2e_23_to_24_comparison tests.test_e2e_25_to_26_translation tests.test_e2e_27_to_29_reports tests.test_e2e_30_to_31_dashboard_history tests.test_e2e_32_to_33_deletion_qdrant tests.test_e2e_34_security_matrix tests.test_e2e_37_to_41_failure_recovery tests.test_e2e_ai_safety_and_guardrails tests.test_e2e_user_journey tests.test_correlation_id

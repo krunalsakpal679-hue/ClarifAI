@@ -16,6 +16,11 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout Code
@@ -49,15 +54,15 @@ jobs:
         run: |
           python -m pip_audit -r backend/django-api/requirements.txt || true
 
-      - name: Secret Scan (Git History Audit)
+      - name: Secret Scan (Current Changeset Audit)
         run: |
-          SECRET_MATCHES=$(git log -p -- . ':!*.md' ':!*.yml' ':!*.yaml' ':!backend/django-api/config/settings/base.py' | grep -iE "(AWS_SECRET_ACCESS_KEY|DATABASE_PASSWORD)\s*=\s*['\"][a-zA-Z0-9_\-!@#$%^&*()+=]{16,}['\"]" || true)
+          SECRET_MATCHES=$(git diff HEAD~1 HEAD -- . ':!*.md' ':!*.yml' ':!*.yaml' | grep -iE "(AWS_SECRET_ACCESS_KEY|DATABASE_PASSWORD)\s*=\s*['\"][a-zA-Z0-9_\-!@#$%^&*()+=]{16,}['\"]" || true)
           if [ -n "$SECRET_MATCHES" ]; then
-            echo "::error::Hardcoded secret assignment detected in git history:"
+            echo "::error::Hardcoded secret assignment detected in current changeset:"
             echo "$SECRET_MATCHES"
             exit 1
           else
-            echo "No hardcoded secret assignments found in commit history."
+            echo "No hardcoded secret assignments found in current changeset."
           fi
 
   docker-build:

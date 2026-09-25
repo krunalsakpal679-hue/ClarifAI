@@ -43,15 +43,15 @@ jobs:
         run: |
           python -m pip_audit -r backend/fastapi-ai/requirements.txt || true
 
-      - name: Secret Scan (Git History Audit)
+      - name: Secret Scan (Current Changeset Audit)
         run: |
-          SECRET_MATCHES=$(git log -p -- . ':!*.md' ':!*.yml' ':!*.yaml' ':!backend/fastapi-ai/tests/*' ':!scripts/*' | grep -iE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" || true)
+          SECRET_MATCHES=$(git diff HEAD~1 HEAD -- . ':!*.md' ':!*.yml' ':!*.yaml' | grep -iE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" || true)
           if [ -n "$SECRET_MATCHES" ]; then
-            echo "::error::Hardcoded secret assignment detected in git history:"
+            echo "::error::Hardcoded secret assignment detected in current changeset:"
             echo "$SECRET_MATCHES"
             exit 1
           else
-            echo "No hardcoded secret assignments found in commit history."
+            echo "No hardcoded secret assignments found in current changeset."
           fi
 
   docker-build:

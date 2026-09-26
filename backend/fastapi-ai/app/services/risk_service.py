@@ -141,8 +141,6 @@ def load_legal_bert_model():
                     base_model_id,
                     num_labels=len(APPROVED_SEVERITY_LABELS)
                 )
-                _model_instance.eval()
-                return _tokenizer_instance, _model_instance
         else:
             _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
             _model_instance = AutoModelForSequenceClassification.from_pretrained(
@@ -153,6 +151,24 @@ def load_legal_bert_model():
         device = os.getenv("TORCH_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
         _model_instance.to(device)
         _model_instance.eval()
+
+        # Dynamic INT8 CPU Quantization & Thread Optimization (CPU Latency Optimization)
+        # Quantizes linear layers to int8, accelerating CPU inference by ~2-3x and reducing memory by ~60%
+        if device == "cpu":
+            try:
+                num_threads = int(os.getenv("TORCH_NUM_THREADS", str(min(4, os.cpu_count() or 1))))
+                torch.set_num_threads(num_threads)
+            except Exception:
+                pass
+
+        if device == "cpu" and os.getenv("ENABLE_CPU_QUANTIZATION", "true").lower() in ("true", "1", "yes"):
+            try:
+                _model_instance = torch.quantization.quantize_dynamic(
+                    _model_instance, {torch.nn.Linear}, dtype=torch.qint8
+                )
+                logger.info("Dynamic INT8 quantization enabled for Legal-BERT on CPU.")
+            except Exception as q_err:
+                logger.warning(f"Dynamic INT8 quantization could not be applied: {q_err}")
     return _tokenizer_instance, _model_instance
 
 

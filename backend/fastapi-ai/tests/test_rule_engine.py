@@ -1,6 +1,6 @@
 """
 ClarifAI Legal Risk Rule Engine Unit Tests (AI-PHASE-RULE-ENGINE-01)
-Verifies exact 14 rules (R001–R014), rule_version v1.0 tagging, evidence span extraction,
+Verifies exact 15 rules (R001–R015), rule_version v1.1 tagging, evidence span extraction,
 prohibition of severity field per Chapter 16.10, and multi-signal fixture documents.
 """
 
@@ -112,6 +112,13 @@ RULE_TEST_CASES = [
         "negative": "Employee is free to engage in independent consulting post-employment.",
         "edge": "Participant shall not engage in competing business activities."
     },
+    {
+        "rule_id": "R015",
+        "risk_signal": "Uncapped Liability Carve-Out",
+        "positive": "Except for breaches of confidentiality, neither party's aggregate liability shall not exceed $100,000.",
+        "negative": "In no event shall either party's aggregate monetary liability under this agreement exceed $50,000.",
+        "edge": "Other than monetary liability under Section 5, liability is capped at total fees paid."
+    },
 ]
 
 
@@ -127,12 +134,12 @@ def test_rule_finding_schema_has_no_severity_field():
     dumped = finding.model_dump()
     assert "severity" not in dumped
     assert "risk_level" not in dumped
-    assert dumped["rule_version"] == "v1.0"
+    assert dumped["rule_version"] == RULE_SET_VERSION
     assert dumped["match_status"] == "MATCH"
 
 
 @pytest.mark.parametrize("tc", RULE_TEST_CASES)
-def test_all_14_rules_positive_negative_edge_cases(tc):
+def test_all_15_rules_positive_negative_edge_cases(tc):
     rule_id = tc["rule_id"]
 
     # Positive match test
@@ -150,6 +157,72 @@ def test_all_14_rules_positive_negative_edge_cases(tc):
     edge_res = evaluate_rules(text=tc["edge"])
     edge_matches = [f for f in edge_res["findings"] if f["rule_id"] == rule_id]
     assert len(edge_matches) >= 1, f"Rule {rule_id} failed edge case match on: {tc['edge']}"
+
+
+ADVERSARIAL_TEST_CASES = [
+    # R004 (Late-Payment Penalty)
+    ("R004", "Delinquent invoices shall bear interest at a rate of 1.5% per month until settled in full.", True),
+    ("R004", "Unpaid balances will accrue interest at the rate of two percent (2.0%) per month compounding monthly.", True),
+    ("R004", "All overdue fees shall incur a late payment penalty of 5% plus interest at a rate of 1% per month.", True),
+    # R006 (Broad Indemnification)
+    ("R006", "The Service Provider agrees to defend, indemnify and hold harmless the Client against any third party losses.", True),
+    ("R006", "Licensee shall defend and indemnify Licensor from any third-party intellectual property claims.", True),
+    ("R006", "Consultant shall indemnify, hold harmless, and defend Client and its agents against all claims.", True),
+    # R011 (Broad IP Transfer)
+    ("R011", "All deliverables created under this Statement of Work shall be deemed works made for hire under the US Copyright Act.", True),
+    ("R011", "Developer expressly agrees that all software created hereunder is a work made for hire.", True),
+    ("R011", "Service Provider hereby assigns all right, title, and interest in and to all inventions to the Company.", True),
+    # R012 (Arbitration/Dispute Restriction)
+    ("R012", "The parties submit to the exclusive jurisdiction of the state courts located in Cook County, Illinois.", True),
+    ("R012", "Any legal action arising under this contract shall be brought in the exclusive jurisdiction in Travis County, Texas.", True),
+    ("R012", "Each party irrevocably agrees that disputes will be settled via binding arbitration under AAA rules.", True),
+    # R015 (Uncapped Liability Carve-Out)
+    ("R015", "Except for breaches of confidentiality obligations, each party's aggregate liability under this agreement shall not exceed $100,000.", True),
+    ("R015", "Excluding liability for gross negligence or willful misconduct, total monetary liability shall not exceed the fees paid hereunder.", True),
+    ("R015", "Other than liabilities resulting from Section 8 (Indemnity), neither party's aggregate liability is capped at $50,000.", True),
+    ("R015", "In no event shall either party's aggregate monetary liability under this agreement exceed the total fees paid in the prior six months.", False),
+]
+
+
+@pytest.mark.parametrize("rule_id, text, should_match", ADVERSARIAL_TEST_CASES)
+def test_adversarial_rule_variants(rule_id, text, should_match):
+    res = evaluate_rules(text=text)
+    matched = any(f["rule_id"] == rule_id for f in res["findings"])
+    if should_match:
+        assert matched, f"Adversarial variant for {rule_id} expected to match but did not: '{text}'"
+    else:
+        assert not matched, f"Adversarial variant for {rule_id} expected NOT to match but did: '{text}'"
+
+
+def test_real_msa_regression_sentences_fire():
+    """Asserts R004, R006, R011, R012 all fire on verbatim sentences from real MSA."""
+    s_r004 = "Any late payments shall accrue interest at a rate of one percent (1.0%) per month or the highest legal permissible limit, whichever is lower."
+    s_r006 = "Vendor agrees to defend, indemnify, and hold harmless Customer, its officers, affiliates, and employees from and against any third-party claims..."
+    s_r011 = "All deliverables, documentation, custom scripts, and code developed exclusively for Customer pursuant to this Agreement shall constitute 'works made for hire'..."
+    s_r012 = "Any dispute arising hereunder shall be subject to the exclusive jurisdiction of the state and federal courts located in New Castle County, Delaware."
+
+    res_r004 = evaluate_rules(text=s_r004)
+    assert any(f["rule_id"] == "R004" for f in res_r004["findings"]), "R004 failed to fire on verbatim MSA sentence"
+
+    res_r006 = evaluate_rules(text=s_r006)
+    assert any(f["rule_id"] == "R006" for f in res_r006["findings"]), "R006 failed to fire on verbatim MSA sentence"
+
+    res_r011 = evaluate_rules(text=s_r011)
+    assert any(f["rule_id"] == "R011" for f in res_r011["findings"]), "R011 failed to fire on verbatim MSA sentence"
+
+    res_r012 = evaluate_rules(text=s_r012)
+    assert any(f["rule_id"] == "R012" for f in res_r012["findings"]), "R012 failed to fire on verbatim MSA sentence"
+
+
+def test_real_msa_r015_uncapped_liability_carveout():
+    """Asserts R015 fires on Section 6 carve-out from real MSA."""
+    s_r015 = (
+        "Except for liabilities arising under Section 3 (Confidentiality) or Section 5 (Indemnification), "
+        "neither party's aggregate monetary liability under this Agreement shall exceed the total amount actually "
+        "paid by Customer to Vendor in the twelve (12) months preceding the event giving rise to liability."
+    )
+    res_r015 = evaluate_rules(text=s_r015)
+    assert any(f["rule_id"] == "R015" for f in res_r015["findings"]), "R015 failed to fire on Section 6 carve-out sentence"
 
 
 def test_multi_signal_fixture_document():

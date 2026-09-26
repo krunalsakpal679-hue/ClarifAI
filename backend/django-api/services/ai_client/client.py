@@ -493,7 +493,7 @@ class RealAIClient:
 
         # Step 4: Categorize Clauses
         categorize_res = self.categorize_clauses(segmented_clauses)
-        categorized_clauses = categorize_res.get('categorized_clauses', segmented_clauses)
+        categorized_clauses = categorize_res.get('clauses') or categorize_res.get('categorized_clauses', segmented_clauses)
 
         # Step 5: Evaluate Rules
         rule_res = self.evaluate_rules(clauses=categorized_clauses, text=cleaned_text)
@@ -501,20 +501,20 @@ class RealAIClient:
 
         # Step 6: Classify Risk
         risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings)
-        classified_clauses = risk_res.get('classified_clauses', categorized_clauses)
+        classified_clauses = risk_res.get('clauses') or risk_res.get('classified_clauses', categorized_clauses)
 
         # Step 7: Simplify Clauses
         simplify_res = self.simplify_clauses(classified_clauses, rule_findings=rule_findings)
-        simplified_clauses = simplify_res.get('simplified_clauses', classified_clauses)
+        simplified_clauses = simplify_res.get('clauses') or simplify_res.get('simplified_clauses', classified_clauses)
 
         # Step 8: Summarize Document
         summary_res = self.summarize_document(classified_clauses, rule_findings=rule_findings)
-        summary_payload = summary_res.get('summary', {})
+        summary_payload = summary_res.get('summary') or summary_res
 
         # Step 9: Generate Embeddings & Index in Qdrant Vector DB
         try:
             embed_res = self.generate_embeddings(classified_clauses)
-            embedded_clauses = embed_res.get('embedded_clauses', classified_clauses)
+            embedded_clauses = embed_res.get('embedded_clauses') or embed_res.get('clauses', classified_clauses)
             self.index_document_qdrant(
                 user_id=user_id,
                 document_id=document_id,
@@ -535,12 +535,16 @@ class RealAIClient:
             pos = cl.get('position', idx)
             simp = simp_map.get(pos, {})
             
-            raw_sev = str(cl.get('severity', 'safe')).lower()
+            raw_sev = str(cl.get('severity') or cl.get('final_severity') or 'safe').lower()
             if raw_sev not in ('high', 'moderate', 'low', 'safe'):
                 raw_sev = 'safe'
 
-            raw_cat = cl.get('category', 'General')
-            if raw_cat not in {
+            # Extract category from direct field, categories list, or fallback
+            raw_cat = cl.get('category')
+            if not raw_cat and cl.get('categories'):
+                cats = cl.get('categories')
+                raw_cat = cats[0] if isinstance(cats, list) and len(cats) > 0 else str(cats)
+            if not raw_cat or raw_cat not in {
                 'Payment', 'Termination', 'Renewal', 'Confidentiality',
                 'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
             }:

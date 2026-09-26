@@ -13,6 +13,8 @@ volumes:
     name: clarifai_postgres_data
   qdrant_data:
     name: clarifai_qdrant_data
+  media_data:
+    name: clarifai_media_data
 
 services:
   # ----------------------------------------------------------------------------
@@ -133,7 +135,7 @@ services:
       AI_SERVICE_BASE_URL: http://fastapi-ai:8000
       AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
       AI_SERVICE_USE_MOCK: "false"
-      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-30}
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-120}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
       JWT_ACCESS_TOKEN_LIFETIME_MINUTES: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
       JWT_REFRESH_TOKEN_DAYS: ${JWT_REFRESH_TOKEN_DAYS:-7}
@@ -148,6 +150,8 @@ services:
         condition: service_healthy
     networks:
       - clarifai_network
+    volumes:
+      - media_data:/app/media
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
       interval: 10s
@@ -175,7 +179,7 @@ services:
       AI_SERVICE_BASE_URL: http://fastapi-ai:8000
       AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
       AI_SERVICE_USE_MOCK: "false"
-      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-30}
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-120}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
     depends_on:
       postgres:
@@ -186,6 +190,8 @@ services:
         condition: service_healthy
     networks:
       - clarifai_network
+    volumes:
+      - media_data:/app/media
 
   # ----------------------------------------------------------------------------
   # 7. React + Vite + Nginx Frontend SPA (Public Host Port 5173)

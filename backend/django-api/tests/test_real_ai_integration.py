@@ -178,9 +178,9 @@ class RealAIClientIntegrationTestCase(TestCase):
         mock_cat.return_value = {
             "success": True,
             "total_clauses": 2,
-            "categorized_clauses": [
-                {"id": 1, "position": 1, "text": "Payment is due within 30 days.", "category": "Payment"},
-                {"id": 2, "position": 2, "text": "Either party may terminate with 15 days notice.", "category": "Termination"}
+            "clauses": [
+                {"id": 1, "position": 1, "text": "Payment is due within 30 days.", "category": "Payment", "categories": ["Payment"]},
+                {"id": 2, "position": 2, "text": "Either party may terminate with 15 days notice.", "category": "Termination", "categories": ["Termination"]}
             ]
         }
         # 4. Mock Evaluate Rules
@@ -193,7 +193,7 @@ class RealAIClientIntegrationTestCase(TestCase):
         mock_risk.return_value = {
             "success": True,
             "total_clauses": 2,
-            "classified_clauses": [
+            "clauses": [
                 {"id": 1, "position": 1, "text": "Payment is due within 30 days.", "category": "Payment", "severity": "safe"},
                 {"id": 2, "position": 2, "text": "Either party may terminate with 15 days notice.", "category": "Termination", "severity": "moderate"}
             ]
@@ -201,7 +201,8 @@ class RealAIClientIntegrationTestCase(TestCase):
         # 6. Mock Simplify Clauses
         mock_simp.return_value = {
             "success": True,
-            "simplified_clauses": [
+            "total_clauses": 2,
+            "clauses": [
                 {"id": 1, "position": 1, "simplified_text": "You must pay within 30 days.", "why_flagged": "Standard terms."},
                 {"id": 2, "position": 2, "simplified_text": "Contract can end on 15 days notice.", "why_flagged": "Notice period is short."}
             ]

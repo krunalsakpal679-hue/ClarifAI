@@ -38,3 +38,7 @@ node_modules/
 Thumbs.db
 .vscode/
 .idea/
+
+# Scratch & temporary test scripts
+scratch/
+

@@ -84,19 +84,24 @@ def process_document(document_id):
         # 4. Persist Document Summary
         summary_payload = ai_response.get('summary', {})
         if isinstance(summary_payload, dict):
-            overview = summary_payload.get('overview', '')
-            key_points = summary_payload.get('key_points', [])
-            key_risks_text = "\n".join(key_points) if isinstance(key_points, list) else str(key_points)
+            purpose_text = summary_payload.get('purpose_text') or summary_payload.get('overview', '')
+            key_risks_text = summary_payload.get('key_risks_text') or (
+                "\n".join(summary_payload.get('key_points', [])) if isinstance(summary_payload.get('key_points'), list) else str(summary_payload.get('key_points', ''))
+            )
+            key_terms_text = summary_payload.get('key_terms_text', '')
+            obligations_text = summary_payload.get('obligations_text', '')
         else:
-            overview = str(summary_payload)
+            purpose_text = str(summary_payload)
             key_risks_text = ""
+            key_terms_text = ""
+            obligations_text = ""
 
         DocumentSummary.objects.create(
             document=document,
-            purpose_text=overview,
+            purpose_text=purpose_text,
             key_risks_text=key_risks_text,
-            key_terms_text="",
-            obligations_text=""
+            key_terms_text=key_terms_text,
+            obligations_text=obligations_text
         )
 
         # 5. Indexing & Clause Persistence with Per-Clause Failure Isolation & Conflict Policy

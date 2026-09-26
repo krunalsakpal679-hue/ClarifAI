@@ -402,7 +402,8 @@ class RealAIClient:
         fields: list = None,
         summary: dict = None,
         clauses: list = None,
-        user_id: str = "default-user"
+        user_id: str = "default-user",
+        **kwargs
     ) -> dict:
         """
         Invokes POST /api/v1/translation/translate-document on internal FastAPI microservice.

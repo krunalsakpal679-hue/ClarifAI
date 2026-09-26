@@ -10,6 +10,7 @@ Phase 9 Risk Classification API, Clause Analysis & Summary Endpoints Tests:
 import uuid
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from unittest.mock import patch
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -196,8 +197,10 @@ class AnalysisEndpointsTestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_multilingual_fallback_flag(self):
+    @patch("apps.documents.views.ai_client.translate")
+    def test_multilingual_fallback_flag(self, mock_translate):
         """GET /api/documents/{id}/clauses/?lang=hi returns translation_available: False when fallback text is returned."""
+        mock_translate.return_value = {"translation_status": "TRANSLATION_UNAVAILABLE", "clauses_hi": []}
         self.client.force_authenticate(user=self.owner)
         url = reverse('document_clause_list', kwargs={'pk': self.completed_doc.id}) + '?lang=hi'
         response = self.client.get(url)

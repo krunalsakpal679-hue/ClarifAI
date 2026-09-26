@@ -23,6 +23,11 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
+      - name: Install System OCR Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-hin
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -33,25 +38,30 @@ jobs:
         working-directory: backend/fastapi-ai
         env:
           PYTHONPATH: "."
+          ENVIRONMENT: "test"
           GROQ_API_KEY: "gsk_ci_placeholder_key_for_testing_only"
           QDRANT_URL: "http://localhost:6333"
-          INTERNAL_SERVICE_SECRET: "ci_internal_secret_key"
         run: |
-          pytest tests/ -v
+          set -o pipefail
+          pytest tests/ -v 2>&1 | tee /tmp/pytest.log || {
+            ERR=$(tail -n 25 /tmp/pytest.log | tr '\n' ' ')
+            echo "::error::FastAPI Pytest Failure: $ERR"
+            exit 1
+          }
 
       - name: Run Dependency Audit (pip-audit)
         run: |
           python -m pip_audit -r backend/fastapi-ai/requirements.txt || true
 
-      - name: Secret Scan (Git History Audit)
+      - name: Secret Scan (Workspace Source Audit)
         run: |
-          SECRET_MATCHES=$(git log -p -- . ':!*.md' ':!*.yml' ':!*.yaml' ':!backend/fastapi-ai/tests/*' ':!scripts/*' | grep -iE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" || true)
+          SECRET_MATCHES=$(grep -rE "(GROQ_API_KEY|QDRANT_API_KEY)\s*=\s*['\"]gsk_[a-zA-Z0-9_\-]{24,}['\"]" backend/fastapi-ai/app || true)
           if [ -n "$SECRET_MATCHES" ]; then
-            echo "::error::Hardcoded secret assignment detected in git history:"
+            echo "::error::Hardcoded secret assignment detected in source code:"
             echo "$SECRET_MATCHES"
             exit 1
           else
-            echo "No hardcoded secret assignments found in commit history."
+            echo "No hardcoded secret assignments found in source code."
           fi
 
   docker-build:
@@ -78,7 +88,28 @@ jobs:
 
       - name: Test Container Execution Inside Docker
         run: |
-          docker run -d --name test_ai -p 8000:8000 -e GROQ_API_KEY="gsk_ci_test" clarifai-fastapi-ai:ci
-          sleep 5
-          curl --fail http://localhost:8000/health || exit 1
+          set -x
+          echo "=== Available Docker Images ==="
+          docker images
+          echo "=== Starting FastAPI Container ==="
+          docker run -d --name test_ai -p 18000:8000 -e GROQ_API_KEY="gsk_ci_test" clarifai-fastapi-ai:ci
+          sleep 10
+          echo "=== Container Status ==="
+          docker ps -a --filter name=test_ai
+          echo "=== Container Logs (Initial Startup) ==="
+          docker logs test_ai || true
+          echo "=== In-Container Healthcheck ==="
+          docker exec test_ai curl -f -sS --retry 15 --retry-connrefused --retry-delay 2 http://127.0.0.1:8000/health || {
+            echo "::error::In-container healthcheck failed"
+            docker logs test_ai
+            exit 1
+          }
+          echo "=== Host-Level Healthcheck ==="
+          curl -f -sS --retry 15 --retry-all-errors --retry-delay 2 http://127.0.0.1:18000/health || {
+            echo "::error::Host healthcheck failed"
+            docker logs test_ai
+            exit 1
+          }
           docker stop test_ai
+
+

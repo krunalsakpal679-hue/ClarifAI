@@ -23,6 +23,17 @@ describe('ChatbotPage (PRD Ch. 17, 22.9 & Section 8.4)', () => {
     __resetMockChat();
     useAuthStore.getState().setAuth(mockUser, 'valid_token');
     useDocumentStore.getState().reset();
+    useDocumentStore.getState().setActiveDocument({
+      id: 'doc-msa-001',
+      original_filename: 'Master_Services_Agreement_Enterprise_2026.pdf',
+      file_reference: 'uploads/documents/doc-msa-001_Master_Services_Agreement_Enterprise_2026.pdf',
+      document_type: 'Master Services Agreement',
+      status: 'complete',
+      failure_reason: null,
+      overall_risk: 'high',
+      uploaded_at: '2026-09-12T14:30:00.000Z',
+      updated_at: '2026-09-12T14:35:00.000Z',
+    });
     useChatStore.getState().reset();
   });
 

@@ -105,19 +105,19 @@ jobs:
           docker images
           echo "=== Starting Django Container ==="
           docker run -d --name test_api -p 18000:8000 -e SECRET_KEY="ci-test-key" clarifai-django-api:ci
-          sleep 5
+          sleep 10
           echo "=== Container Status ==="
           docker ps -a --filter name=test_api
           echo "=== Container Logs (Initial Startup) ==="
           docker logs test_api || true
           echo "=== In-Container Healthcheck ==="
-          docker exec test_api curl -f -sS http://127.0.0.1:8000/api/health/ || {
+          docker exec test_api curl -f -sS --retry 15 --retry-connrefused --retry-delay 2 http://127.0.0.1:8000/api/health/ || {
             echo "::error::In-container healthcheck failed"
             docker logs test_api
             exit 1
           }
           echo "=== Host-Level Healthcheck ==="
-          curl -f -sS --retry 10 --retry-all-errors --retry-delay 2 http://127.0.0.1:18000/api/health/ || {
+          curl -f -sS --retry 15 --retry-all-errors --retry-delay 2 http://127.0.0.1:18000/api/health/ || {
             echo "::error::Host healthcheck failed"
             docker logs test_api
             exit 1

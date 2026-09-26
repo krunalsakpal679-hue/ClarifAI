@@ -88,6 +88,27 @@ jobs:
 
       - name: Test Container Execution Inside Docker
         run: |
-          docker run -d --name test_ai -p 8000:8000 -e GROQ_API_KEY="gsk_ci_test" clarifai-fastapi-ai:ci
-          curl --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/health || exit 1
+          set -x
+          echo "=== Available Docker Images ==="
+          docker images
+          echo "=== Starting FastAPI Container ==="
+          docker run -d --name test_ai -p 18000:8000 -e GROQ_API_KEY="gsk_ci_test" clarifai-fastapi-ai:ci
+          sleep 5
+          echo "=== Container Status ==="
+          docker ps -a --filter name=test_ai
+          echo "=== Container Logs (Initial Startup) ==="
+          docker logs test_ai || true
+          echo "=== In-Container Healthcheck ==="
+          docker exec test_ai curl -f -sS http://127.0.0.1:8000/health || {
+            echo "::error::In-container healthcheck failed"
+            docker logs test_ai
+            exit 1
+          }
+          echo "=== Host-Level Healthcheck ==="
+          curl -f -sS --retry 10 --retry-all-errors --retry-delay 2 http://127.0.0.1:18000/health || {
+            echo "::error::Host healthcheck failed"
+            docker logs test_ai
+            exit 1
+          }
           docker stop test_ai
+

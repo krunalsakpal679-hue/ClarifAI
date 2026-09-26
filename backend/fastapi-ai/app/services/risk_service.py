@@ -63,6 +63,8 @@ def resolve_legal_bert_path(model_identifier: str) -> str:
                 candidate_trimmed = base / rel_trimmed
                 if candidate_trimmed.exists():
                     return str(candidate_trimmed.resolve())
+    if "checkpoints" in model_identifier or "/" in model_identifier:
+        return "nlpaueb/legal-bert-base-uncased"
     return model_identifier
 
 

@@ -49,10 +49,10 @@ def compare(document_a_id: str, document_b_id: str, user_id: str = "default-user
     return client.compare(document_a_id, document_b_id, user_id=user_id, **kwargs)
 
 
-def translate(document_id: str, target_lang: str, fields: list = None) -> dict:
+def translate(document_id: str, target_lang: str = "hi", fields: list = None, **kwargs) -> dict:
     """Wrapper function delegating to active AI Client."""
     client = get_ai_client()
-    return client.translate(document_id, target_lang, fields=fields)
+    return client.translate(document_id, target_lang=target_lang, fields=fields, **kwargs)
 
 
 def delete_document_embeddings(document_id: str, user_id: str = None, **kwargs) -> dict:

@@ -52,6 +52,8 @@ def resolve_embedding_path(model_identifier: str) -> str:
                 candidate_trimmed = base / rel_trimmed
                 if candidate_trimmed.exists():
                     return str(candidate_trimmed.resolve())
+    if "checkpoints" in model_identifier or "/" in model_identifier:
+        return "intfloat/multilingual-e5-base"
     return model_identifier
 
 

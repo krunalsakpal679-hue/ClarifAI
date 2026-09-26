@@ -38,9 +38,9 @@ jobs:
         working-directory: backend/fastapi-ai
         env:
           PYTHONPATH: "."
+          ENVIRONMENT: "test"
           GROQ_API_KEY: "gsk_ci_placeholder_key_for_testing_only"
           QDRANT_URL: "http://localhost:6333"
-          INTERNAL_SERVICE_SECRET: "ci_internal_secret_key"
         run: |
           set -o pipefail
           pytest tests/ -v 2>&1 | tee /tmp/pytest.log || {

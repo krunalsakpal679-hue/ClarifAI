@@ -115,12 +115,21 @@ def generate_document_pdf(report, document, language='en'):
         textColor=colors.HexColor('#334155'),
         spaceAfter=6
     )
+    meta_style = ParagraphStyle(
+        'DocMeta',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#334155'),
+        spaceAfter=6
+    )
 
     elements = []
     doc_title = "ClarifAI Document Analysis Report" if (language != 'hi' or not has_unicode) else "ClarifAI दस्तावेज़ विश्लेषण रिपोर्ट"
     elements.append(Paragraph(doc_title, title_style))
-    elements.append(Paragraph(f"<b>Document:</b> {document.original_filename}", body_style))
-    elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {(language or 'EN').upper()}", body_style))
+    elements.append(Paragraph(f"<b>Document:</b> {document.original_filename}", meta_style))
+    elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {(language or 'EN').upper()}", meta_style))
     elements.append(Spacer(1, 12))
 
     # Summary Section

@@ -37,10 +37,10 @@ def process_document(document_id: str, file_reference: str, user_id: str = None,
     return client.process_document(document_id, file_reference, user_id=user_id, **kwargs)
 
 
-def chat(document_id: str, message: str, history: list = None) -> dict:
+def chat(document_id: str, message: str, history: list = None, user_id: str = None, session_id: str = None, **kwargs) -> dict:
     """Wrapper function delegating to active AI Client."""
     client = get_ai_client()
-    return client.chat(document_id, message, history=history)
+    return client.chat(document_id, message, history=history, user_id=user_id, session_id=session_id, **kwargs)
 
 
 def compare(document_a_id: str, document_b_id: str, user_id: str = "default-user", **kwargs) -> dict:

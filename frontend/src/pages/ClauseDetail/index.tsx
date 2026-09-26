@@ -356,15 +356,17 @@ export const ClauseDetailPage: React.FC = () => {
             {/* What This Means */}
             <div className="p-4 bg-primary-50/40 rounded-lg border border-primary-200/70">
               <p className="font-semibold text-xs text-primary-900 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <span>What This Means</span>
+                <span>{analysisLanguage === 'hi' ? 'इसका क्या अर्थ है' : 'What This Means'}</span>
                 {analysisLanguage === 'hi' && (
-                  <span className="text-[10px] font-normal normal-case px-1.5 py-0.2 rounded bg-primary-100 text-primary-800">
+                  <span className="text-[10px] font-medium normal-case px-2 py-0.5 rounded bg-primary-100 text-primary-800">
                     हिंदी
                   </span>
                 )}
               </p>
-              <p className="text-sm leading-relaxed text-primary-950">
-                {clause.simplified_text}
+              <p className="text-sm leading-relaxed text-primary-950 font-sans">
+                {analysisLanguage === 'hi'
+                  ? (clause.simplified_text_hi || clause.simplified_text)
+                  : clause.simplified_text}
               </p>
             </div>
 
@@ -372,10 +374,12 @@ export const ClauseDetailPage: React.FC = () => {
             <div className="p-4 bg-secondary-50 rounded-lg border border-secondary-200">
               <p className="font-semibold text-xs text-secondary-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <ShieldAlert className="w-3.5 h-3.5 text-secondary-600" aria-hidden="true" />
-                <span>Risk Severity Rationale</span>
+                <span>{analysisLanguage === 'hi' ? 'जोखिम गंभीरता का कारण' : 'Risk Severity Rationale'}</span>
               </p>
               <p className="text-xs sm:text-sm leading-relaxed text-secondary-700">
-                {clause.explanation}
+                {analysisLanguage === 'hi'
+                  ? (clause.why_flagged_hi || clause.explanation)
+                  : clause.explanation}
               </p>
             </div>
 

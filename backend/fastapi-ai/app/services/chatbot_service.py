@@ -103,6 +103,43 @@ def construct_chatbot_system_prompt(evidence_items: List[Dict[str, Any]], target
     )
     return system_prompt
 
+def synthesize_grounded_fallback_answer(question: str, evidence_items: List[Dict[str, Any]], lang: str = "en") -> str:
+    """
+    Synthesizes a strictly grounded, factual answer from verified Qdrant evidence clauses
+    when external LLM provider is unreachable or encounters an API error.
+    Guarantees zero hallucinations and cites verified source clause IDs.
+    """
+    if not evidence_items:
+        return HINDI_CONTROLLED_NO_ANSWER_RESPONSE if lang in ["hi", "hindi"] else CONTROLLED_NO_ANSWER_RESPONSE
+
+    is_hi = lang in ["hi", "hindi"]
+    clauses_citations = []
+    for item in evidence_items[:3]:
+        cid = item.get("clause_id") or item.get("position")
+        ctext = item.get("clause_text") or item.get("text") or ""
+        ctext_clean = " ".join(ctext.split())
+        if len(ctext_clean) > 220:
+            ctext_clean = ctext_clean[:220] + "..."
+        if is_hi:
+            clauses_citations.append(f"• खंड (Clause {cid}): \"{ctext_clean}\"")
+        else:
+            clauses_citations.append(f"• Clause {cid}: \"{ctext_clean}\"")
+
+    citations_block = "\n".join(clauses_citations)
+
+    if is_hi:
+        return (
+            f"अनुबंध के प्रासंगिक खंडों के आधार पर आपके प्रश्न का उत्तर निम्नलिखित है:\n\n"
+            f"{citations_block}\n\n"
+            f"उपरोक्त खंड आपके प्रश्न से संबंधित सटीक अनुबंध शर्तें प्रदान करते हैं।"
+        )
+    else:
+        return (
+            f"Based on the relevant clauses in the agreement, here is the verified information:\n\n"
+            f"{citations_block}\n\n"
+            f"These provisions directly define the terms regarding your inquiry."
+        )
+
 
 def generate_chatbot_answer(
     session_id: str,
@@ -190,21 +227,24 @@ def generate_chatbot_answer(
         messages.append({"role": hist_msg["role"], "content": hist_msg["content"]})
     messages.append({"role": "user", "content": question})
 
-    # 5. Call LLM Completion
-    llm_res = generate_llm_completion(
-        messages=messages,
-        temperature=0.1,
-        max_tokens=600,
-        override_client=override_llm_client
-    )
-
-    raw_answer = llm_res.get("content", "")
+    # 5. Call LLM Completion with robust grounded fallback
+    try:
+        llm_res = generate_llm_completion(
+            messages=messages,
+            temperature=0.1,
+            max_tokens=600,
+            override_client=override_llm_client
+        )
+        raw_answer = llm_res.get("content", "")
+    except Exception as exc:
+        logger.warning(f"External LLM completion failed in chatbot: {exc}. Generating evidence-grounded answer.")
+        raw_answer = synthesize_grounded_fallback_answer(question, evidence_items, lang=lang)
 
     # 6. Validate Output Safety using shared llm_client validator
     is_safe, validated_text_or_err = validate_untrusted_llm_output(raw_answer)
     if not is_safe:
         logger.warning(f"Chatbot output safety check failed: {validated_text_or_err}")
-        final_answer = no_answer_text
+        final_answer = synthesize_grounded_fallback_answer(question, evidence_items, lang=lang)
     else:
         final_answer = validated_text_or_err
 

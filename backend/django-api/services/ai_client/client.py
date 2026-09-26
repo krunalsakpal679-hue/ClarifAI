@@ -525,32 +525,67 @@ class RealAIClient:
 
         # Step 10: Assemble Complete Normalized Payload
         assembled_clauses = []
-        # Index simplifications by position/id
+        # Index simplifications and categorized clauses by position/id
         simp_map = {
             sc.get('position', idx): sc
             for idx, sc in enumerate(simplified_clauses, start=1)
+        }
+        cat_map = {
+            cc.get('position', idx): cc
+            for idx, cc in enumerate(categorized_clauses, start=1)
+        }
+
+        APPROVED_CATEGORIES = {
+            'Payment', 'Termination', 'Renewal', 'Confidentiality',
+            'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
         }
 
         for idx, cl in enumerate(classified_clauses, start=1):
             pos = cl.get('position', idx)
             simp = simp_map.get(pos, {})
+            cat_info = cat_map.get(pos, {})
             
             raw_sev = str(cl.get('severity') or cl.get('final_severity') or 'safe').lower()
             if raw_sev not in ('high', 'moderate', 'low', 'safe'):
                 raw_sev = 'safe'
 
-            # Extract category from direct field, categories list, or fallback
-            raw_cat = cl.get('category')
-            if not raw_cat and cl.get('categories'):
-                cats = cl.get('categories')
-                raw_cat = cats[0] if isinstance(cats, list) and len(cats) > 0 else str(cats)
-            if not raw_cat or raw_cat not in {
-                'Payment', 'Termination', 'Renewal', 'Confidentiality',
-                'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
-            }:
-                raw_cat = 'Dispute Resolution'  # Canonical fallback category
-
             orig_text = cl.get('text') or cl.get('original_text') or f"Clause {pos}"
+
+            # Extract category from direct field, categories list, or categorized_clauses map
+            raw_cat = cl.get('category') or cat_info.get('category')
+            if not raw_cat:
+                cats = cl.get('categories') or cat_info.get('categories') or []
+                if isinstance(cats, list) and len(cats) > 0:
+                    raw_cat = str(cats[0])
+                elif cats:
+                    raw_cat = str(cats)
+
+            # Standardize string formatting
+            if raw_cat:
+                matched_approved = next((ac for ac in APPROVED_CATEGORIES if ac.lower() == str(raw_cat).lower()), None)
+                raw_cat = matched_approved
+
+            # If still missing or unrecognized, detect from clause heading and content patterns
+            if not raw_cat:
+                lower_text = orig_text.lower()
+                if any(w in lower_text for w in ['invoic', 'payment', 'fee', 'charge', 'billing', 'remit', 'price', 'interest']):
+                    raw_cat = 'Payment'
+                elif any(w in lower_text for w in ['terminat', 'cancell', 'expire', 'expiration']):
+                    raw_cat = 'Termination'
+                elif any(w in lower_text for w in ['renew', 'extension', 'auto-renew']):
+                    raw_cat = 'Renewal'
+                elif any(w in lower_text for w in ['confidential', 'proprietary', 'secret', 'non-disclosure', 'nda']):
+                    raw_cat = 'Confidentiality'
+                elif any(w in lower_text for w in ['liab', 'indemn', 'damages', 'hold harmless', 'limitation of liability']):
+                    raw_cat = 'Liability'
+                elif any(w in lower_text for w in ['intellectual property', 'copyright', 'trademark', 'patent', 'license', 'work product']):
+                    raw_cat = 'Intellectual Property'
+                elif any(w in lower_text for w in ['privacy', 'personal data', 'gdpr', 'data protection', 'pii']):
+                    raw_cat = 'Privacy'
+                elif any(w in lower_text for w in ['dispute', 'arbitrat', 'governing law', 'jurisdiction', 'court', 'venue']):
+                    raw_cat = 'Dispute Resolution'
+                else:
+                    raw_cat = 'Dispute Resolution'
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
 

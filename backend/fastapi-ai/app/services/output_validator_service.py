@@ -79,12 +79,17 @@ def validate_and_resolve_clause_risk(
         ]
 
     # Validate Raw Classification Output
+    category = clause.get("category")
+    categories = clause.get("categories", [])
+
     if not raw_classification or not isinstance(raw_classification, dict):
         logger.error(f"Clause {clause_id} output validation REJECTED: missing or malformed classifier dict.")
         return {
             "position": position,
             "clause_id": clause_id,
             "text": text,
+            "category": category,
+            "categories": categories,
             "final_severity": None,
             "validation_status": "FAILED_VALIDATION",
             "error_reason": MALFORMED_OUTPUT_REJECTED,
@@ -103,6 +108,8 @@ def validate_and_resolve_clause_risk(
             "position": position,
             "clause_id": clause_id,
             "text": text,
+            "category": category,
+            "categories": categories,
             "final_severity": None,
             "validation_status": "FAILED_VALIDATION",
             "error_reason": error_code,
@@ -116,6 +123,8 @@ def validate_and_resolve_clause_risk(
             "position": position,
             "clause_id": clause_id,
             "text": text,
+            "category": category,
+            "categories": categories,
             "final_severity": validated_severity,
             "validation_status": "VALIDATED",
             "error_reason": None,
@@ -128,6 +137,8 @@ def validate_and_resolve_clause_risk(
             "position": position,
             "clause_id": clause_id,
             "text": text,
+            "category": category,
+            "categories": categories,
             "final_severity": None,
             "validation_status": "FAILED_VALIDATION",
             "error_reason": e.code,

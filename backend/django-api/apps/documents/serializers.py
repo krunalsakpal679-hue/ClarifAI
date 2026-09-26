@@ -186,7 +186,11 @@ class ClauseSerializer(serializers.ModelSerializer):
         if lang == 'hi':
             if getattr(instance, 'simplified_text_hi', None):
                 data['simplified_text'] = instance.simplified_text_hi
+                data['simplified_text_hi'] = instance.simplified_text_hi
                 data['translation_available'] = True
+            if getattr(instance, 'why_flagged_hi', None):
+                data['explanation'] = instance.why_flagged_hi
+                data['why_flagged_hi'] = instance.why_flagged_hi
             elif getattr(instance, 'translation_available', False) is True:
                 data['translation_available'] = True
             else:

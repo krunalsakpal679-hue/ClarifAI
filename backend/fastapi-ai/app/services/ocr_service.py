@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 # Default page-render resolution (DPI) for converting PDF pages to images for OCR
 DEFAULT_OCR_DPI: int = 300
 
-# Default languages for OCR (English + Hindi per PRD Section 19)
-DEFAULT_OCR_LANG: str = "eng+hin"
+# Default languages for OCR (English + Hindi per PRD Section 19; extensible via OCR_LANGUAGES env var)
+DEFAULT_OCR_LANG: str = os.getenv("OCR_LANGUAGES", "eng+hin")
 
 
 def configure_tesseract_path() -> Optional[str]:

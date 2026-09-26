@@ -152,8 +152,15 @@ def load_legal_bert_model():
         _model_instance.to(device)
         _model_instance.eval()
 
-        # Dynamic INT8 CPU Quantization (CPU Latency Optimization)
+        # Dynamic INT8 CPU Quantization & Thread Optimization (CPU Latency Optimization)
         # Quantizes linear layers to int8, accelerating CPU inference by ~2-3x and reducing memory by ~60%
+        if device == "cpu":
+            try:
+                num_threads = int(os.getenv("TORCH_NUM_THREADS", str(min(4, os.cpu_count() or 1))))
+                torch.set_num_threads(num_threads)
+            except Exception:
+                pass
+
         if device == "cpu" and os.getenv("ENABLE_CPU_QUANTIZATION", "true").lower() in ("true", "1", "yes"):
             try:
                 _model_instance = torch.quantization.quantize_dynamic(

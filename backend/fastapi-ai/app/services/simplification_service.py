@@ -154,8 +154,16 @@ Rule Signals: {signals_summary}
         else:
             fallback_why = "Standard clause with balanced commercial terms. No high-risk signals detected."
 
-        if any(k in text_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement"]):
+        if any(k in text_lower for k in ["disclaimer of liability", "disclaims all liability", "no liability whatsoever", "assumes all risk", "shall vendor be liable", "shall company be liable", "shall provider be liable"]):
+            plain_summary = "Completely disclaims the vendor's legal liability for damages, transferring all operational and financial risks entirely onto the customer."
+        elif any(k in text_lower for k in ["unilateral modification", "modify, change, and revise", "modify at any time", "without prior notice", "sole discretion"]):
+            plain_summary = "Allows the vendor to unilaterally change contract terms and pricing at any time without advance customer notice or consent."
+        elif any(k in text_lower for k in ["terminate at any time without cause", "immediate termination without notice", "early cancellation penalty", "prior to term completion"]):
+            plain_summary = "Grants the vendor the right to terminate immediately without cause or notice, while imposing penalties if the customer cancels early."
+        elif any(k in text_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement", "consequential damages"]):
             plain_summary = "Places a legal cap on the maximum financial damages either party can recover if a contract dispute or breach occurs."
+        elif any(k in text_lower for k in ["as is", "without warranty of any kind", "disclaims all warranties", "merchantability", "fitness for a particular purpose"]):
+            plain_summary = "Disclaims all express and implied warranties, providing software or deliverables 'as is' with no performance guarantees."
         elif any(k in text_lower for k in ["indemnif", "hold harmless", "defend and indemnify", "third-party claims, damages"]):
             plain_summary = "Specifies who is responsible for paying legal fees, damages, and settlements if a third party files a lawsuit."
         elif any(k in text_lower for k in ["intellectual property", "work made for hire", "all right, title and interest in and to such deliverables"]):
@@ -181,8 +189,19 @@ Rule Signals: {signals_summary}
         elif any(k in text_lower for k in ["entered into as of", "by and between", "preamble", "effective date", "consulting and license services agreement"]):
             plain_summary = "Identifies the contracting parties, business entities, and establishes the official starting date of the agreement."
         else:
-            first_sentence = text.strip().split(". ")[0].strip()
-            plain_summary = f"Summary: {first_sentence}."
+            # Strip leading section numbering (e.g. "3. ", "Section 3. ", "3.1 ", "(a) ")
+            clean_text = re.sub(r'^(?:section\s+)?(?:\d+(?:\.\d+)*|[A-Z]\.|\([a-z0-9]+\))\s*[:.-]?\s*', '', text.strip(), flags=re.IGNORECASE)
+            # Strip leading all-caps headers if followed by mixed-case text
+            clean_text = re.sub(r'^[A-Z0-9\s]{3,}\n+', '', clean_text).strip()
+            clean_text = re.sub(r'^[A-Z\s]{4,}(?=[A-Z][a-z])', '', clean_text).strip()
+            # Extract first sentence using sentence boundary regex
+            sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', clean_text) if len(s.strip()) > 15]
+            if sentences:
+                plain_summary = sentences[0]
+            elif clean_text:
+                plain_summary = clean_text[:200].strip() + ("..." if len(clean_text) > 200 else "")
+            else:
+                plain_summary = "Contractual provision defining standard legal rights and obligations of the parties."
 
         return {
             "position": position,

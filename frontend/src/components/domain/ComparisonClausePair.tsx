@@ -81,16 +81,6 @@ export const ComparisonClausePair: React.FC<ComparisonClausePairProps> = ({
             </span>
           )}
         </div>
-
-        <div className="flex items-center gap-2 text-xs text-secondary-500 font-mono">
-          {item.base_clause_id && (
-            <span>Base: #{item.base_clause_id.replace('clause-', '')}</span>
-          )}
-          {item.base_clause_id && item.target_clause_id && <span>&harr;</span>}
-          {item.target_clause_id && (
-            <span>Target: #{item.target_clause_id.replace('clause-', '')}</span>
-          )}
-        </div>
       </CardHeader>
 
       {/* Difference Explanation Banner (if changed or explanation present) */}

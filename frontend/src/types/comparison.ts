@@ -26,6 +26,8 @@ export interface ComparisonDetail {
   id: string;
   base_document_id: string;
   target_document_id: string;
+  base_document_name?: string;
+  target_document_name?: string;
   status: ComparisonStatus;
   results: ComparisonClauseItem[];
   created_at: string;

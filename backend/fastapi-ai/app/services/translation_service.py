@@ -200,15 +200,30 @@ def translate_text_to_hindi(text: str, override_client: Optional[Any] = None) ->
 def translate_document_summary(summary_dict: Dict[str, Any], override_client: Optional[Any] = None) -> Dict[str, Any]:
     """
     Translates document summary fields (purpose, obligations, key_terms, key_risks) to Hindi.
+    Supports both '_text' suffixed keys and short keys.
     """
     if not summary_dict:
         return {}
 
+    pur = summary_dict.get("purpose_text") or summary_dict.get("purpose", "")
+    obl = summary_dict.get("obligations_text") or summary_dict.get("obligations", "")
+    kt = summary_dict.get("key_terms_text") or summary_dict.get("key_terms", "")
+    kr = summary_dict.get("key_risks_text") or summary_dict.get("key_risks", "")
+
+    pur_hi = translate_text_to_hindi(pur, override_client=override_client) if pur else ""
+    obl_hi = translate_text_to_hindi(obl, override_client=override_client) if obl else ""
+    kt_hi = translate_text_to_hindi(kt, override_client=override_client) if kt else ""
+    kr_hi = translate_text_to_hindi(kr, override_client=override_client) if kr else ""
+
     return {
-        "purpose": translate_text_to_hindi(summary_dict.get("purpose", ""), override_client=override_client),
-        "obligations": translate_text_to_hindi(summary_dict.get("obligations", ""), override_client=override_client),
-        "key_terms": translate_text_to_hindi(summary_dict.get("key_terms", ""), override_client=override_client),
-        "key_risks": translate_text_to_hindi(summary_dict.get("key_risks", ""), override_client=override_client),
+        "purpose": pur_hi,
+        "obligations": obl_hi,
+        "key_terms": kt_hi,
+        "key_risks": kr_hi,
+        "purpose_text": pur_hi,
+        "obligations_text": obl_hi,
+        "key_terms_text": kt_hi,
+        "key_risks_text": kr_hi,
         "language": "hi",
         "schema_version": summary_dict.get("schema_version", SCHEMA_VERSION)
     }

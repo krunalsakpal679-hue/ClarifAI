@@ -184,10 +184,10 @@ Rule Signals: {signals_summary}
             plain_summary = "Obligates both parties to protect business secrets, technical data, and non-public information from unauthorized disclosure."
         elif any(k in text_lower for k in ["fees and payment", "payment", "invoice", "remit payment", "net 30", "interest at the rate of"]):
             plain_summary = "Defines pricing, invoicing schedules, payment due dates, and interest rates for late payments."
-        elif any(k in text_lower for k in ["services", "technical advisory services", "software architecture consulting", "statement of work"]):
-            plain_summary = "Outlines the specific professional services, technical deliverables, and project duties to be performed."
-        elif any(k in text_lower for k in ["entered into as of", "by and between", "preamble", "effective date", "consulting and license services agreement"]):
+        elif any(k in text_lower for k in ["entered into as of", "by and between", "preamble", "effective date", "this agreement is entered into", "consulting and license services agreement"]):
             plain_summary = "Identifies the contracting parties, business entities, and establishes the official starting date of the agreement."
+        elif any(k in text_lower for k in ["consultant shall provide", "contractor shall provide", "vendor shall provide", "technical advisory services", "software architecture consulting", "statement of work", "scope of services", "1. services"]):
+            plain_summary = "Outlines the specific professional services, technical deliverables, and project duties to be performed."
         else:
             # Strip leading section numbering (e.g. "3. ", "Section 3. ", "3.1 ", "(a) ")
             clean_text = re.sub(r'^(?:section\s+)?(?:\d+(?:\.\d+)*|[A-Z]\.|\([a-z0-9]+\))\s*[:.-]?\s*', '', text.strip(), flags=re.IGNORECASE)

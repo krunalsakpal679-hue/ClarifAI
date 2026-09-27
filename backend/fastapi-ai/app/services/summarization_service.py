@@ -8,6 +8,7 @@ NOTE: Uses base 'facebook/bart-base' as an interim placeholder.
 """
 
 import os
+import re
 import time
 import logging
 from typing import Dict, Any, Optional, List
@@ -216,12 +217,22 @@ def generate_document_summary(
         
         # Extract title and parties for executive synthesis
         p_text_raw = purpose_clauses[0] if purpose_clauses else ""
-        title_match = re.search(r'([A-Za-z\s]+(?:Agreement|Contract|Lease|Terms of Service|Addendum|Statement of Work))', p_text_raw, re.IGNORECASE)
+        title_match = re.search(r'([A-Za-z\s]{3,60}?(?:Agreement|Contract|Lease|Terms of Service|Addendum|Statement of Work))', p_text_raw, re.IGNORECASE)
         doc_title = title_match.group(1).strip() if title_match else "Commercial Agreement"
-        doc_title = re.sub(r'^(?:this\s+)', '', doc_title, flags=re.IGNORECASE).title()
+        doc_title = re.sub(r'^(?:this|the)\s+', '', doc_title, flags=re.IGNORECASE).strip()
+        doc_title = re.sub(r'\s+', ' ', doc_title).title()
 
-        parties_match = re.search(r'by and between\s+([^,]+(?:Inc\.|LLC|Corp\.|Corporation|Company)?)[^a-zA-Z0-9]+and\s+([^,\(]+(?:Inc\.|LLC|Corp\.|Corporation|Company)?)', p_text_raw, re.IGNORECASE)
-        party_str = f"between {parties_match.group(1).strip()} and {parties_match.group(2).strip()}" if parties_match else "between the contracting parties"
+        parties_match = re.search(
+            r'by and between\s+([^,]+?)(?:\s*\([^)]*\))?(?:,\s*(?:a\s+)?[^,]+?)?\s+(?:and|&)\s+([^,]+?)(?:\s*\([^)]*\))?(?:,\s*(?:a\s+)?[^,]+?)?(?:\.|\s+collectively|\s+referred|$)',
+            p_text_raw,
+            re.IGNORECASE
+        )
+        if parties_match and len(parties_match.group(1).strip()) > 1 and len(parties_match.group(2).strip()) > 1:
+            p1 = re.sub(r'\s+', ' ', parties_match.group(1).strip())
+            p2 = re.sub(r'\s+', ' ', parties_match.group(2).strip())
+            party_str = f"between {p1} and {p2}"
+        else:
+            party_str = "between the contracting parties"
 
         services_clause = next((c.get("text", "") for c in clauses[1:4] if any(k in c.get("text", "").lower() for k in ["services", "shall provide", "deliverables", "premises", "leased"])), "")
         if "software" in services_clause.lower() or "consulting" in services_clause.lower() or "architecture" in services_clause.lower():

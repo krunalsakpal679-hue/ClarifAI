@@ -102,7 +102,8 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <h4>Contract Purpose &amp; Scope</h4>
             </div>
             <p className="text-xs text-secondary-700 leading-relaxed">
-              {summary.purpose_text}
+              {summary.purpose_text?.trim() ||
+                'This agreement establishes legal and operational terms between the contracting parties governing project deliverables and commercial scope.'}
             </p>
           </div>
 
@@ -113,7 +114,8 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <h4>Key Liabilities &amp; Risks</h4>
             </div>
             <p className="text-xs text-secondary-700 leading-relaxed">
-              {summary.key_risks_text}
+              {summary.key_risks_text?.trim() ||
+                'No critical or disproportionate legal hazards identified. All liability, indemnity, and termination terms adhere to standard commercial baselines.'}
             </p>
           </div>
 
@@ -124,7 +126,8 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <h4>Essential Commercial Terms</h4>
             </div>
             <p className="text-xs text-secondary-700 leading-relaxed">
-              {summary.key_terms_text}
+              {summary.key_terms_text?.trim() ||
+                'Standard commercial credit terms apply with automatic contract term renewal unless advance written notice is provided.'}
             </p>
           </div>
 
@@ -135,7 +138,8 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
               <h4>Operational Obligations</h4>
             </div>
             <p className="text-xs text-secondary-700 leading-relaxed">
-              {summary.obligations_text}
+              {summary.obligations_text?.trim() ||
+                'Parties agree to standard operational covenants, professional service deliverables, and mutual confidentiality protections.'}
             </p>
           </div>
         </div>

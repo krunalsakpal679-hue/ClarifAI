@@ -96,8 +96,12 @@ def categorize_clause_records(clauses_input: List[Dict[str, Any]]) -> Dict[str, 
 
         assigned_categories: List[ClauseCategoryEnum] = []
 
+        # Strip corporate entity suffixes (e.g. 'limited liability company', 'LLC', 'limited liability partnership')
+        # so business entity designations in preambles do not falsely trigger substantive Liability categorization
+        content_for_matching = re.sub(r'\blimited\s+liability\s+(?:company|partnership|llc|llp)\b', '', combined_content, flags=re.IGNORECASE)
+
         for category_enum, pattern in CATEGORY_PATTERNS.items():
-            if pattern.search(combined_content):
+            if pattern.search(content_for_matching):
                 # Validate before appending
                 validated_cat = validate_category_value(category_enum.value)
                 assigned_categories.append(validated_cat)

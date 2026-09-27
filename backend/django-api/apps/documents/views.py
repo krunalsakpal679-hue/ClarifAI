@@ -288,12 +288,14 @@ class ClauseListView(generics.ListAPIView):
                         for item in clauses_hi:
                             c_id = str(item.get("id") or item.get("clause_id", ""))
                             trans_map[c_id] = {
-                                "simplified_text_hi": item.get("simplified_text_hi") or item.get("simplified_text")
+                                "simplified_text_hi": item.get("simplified_text_hi") or item.get("simplified_text"),
+                                "why_flagged_hi": item.get("why_flagged_hi") or item.get("why_flagged"),
                             }
                         for c in clauses:
                             c.translation_available = True
                             if str(c.id) in trans_map:
                                 c.simplified_text_hi = trans_map[str(c.id)].get("simplified_text_hi")
+                                c.why_flagged_hi = trans_map[str(c.id)].get("why_flagged_hi")
                         cache.set(cache_key, {
                             "translation_available": True,
                             "clauses_map": trans_map
@@ -340,6 +342,7 @@ class ClauseDetailView(generics.RetrieveAPIView):
                 trans_map = cached_trans.get('clauses_map', {})
                 if str(clause.id) in trans_map:
                     clause.simplified_text_hi = trans_map[str(clause.id)].get('simplified_text_hi')
+                    clause.why_flagged_hi = trans_map[str(clause.id)].get('why_flagged_hi')
                     clause.translation_available = True
                 else:
                     clause.translation_available = False
@@ -362,6 +365,7 @@ class ClauseDetailView(generics.RetrieveAPIView):
                     clauses_hi = ai_res.get("clauses_hi") or (ai_res.get("translated_content", {}).get("clauses")) or []
                     if status_flag == "SUCCESS" and clauses_hi:
                         clause.simplified_text_hi = clauses_hi[0].get("simplified_text_hi") or clauses_hi[0].get("simplified_text")
+                        clause.why_flagged_hi = clauses_hi[0].get("why_flagged_hi") or clauses_hi[0].get("why_flagged")
                         clause.translation_available = True
                     else:
                         clause.translation_available = False

@@ -5,6 +5,11 @@
 @tailwind utilities;
 
 @layer base {
+  ::selection {
+    background-color: #2E5AAC;
+    color: #FFFFFF;
+  }
+
   html {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     color: var(--color-primary);

@@ -39,6 +39,8 @@ export interface ClauseItem {
   rule_findings: RuleFinding[];
   created_at: string;
   translation_available: boolean;
+  simplified_text_hi?: string;
+  why_flagged_hi?: string;
 }
 
 export interface PaginatedClauseResponse {

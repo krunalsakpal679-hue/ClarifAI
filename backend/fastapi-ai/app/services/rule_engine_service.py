@@ -1,6 +1,6 @@
 """
 ClarifAI Legal Risk Rule Engine Service Module
-Implements all 14 approved rules (R001–R014) per Chapter 16.7.
+Implements all 15 approved rules (R001–R015) per Chapter 16.7.
 Produces structured evidence findings without assigning any final severity value per Chapter 16.10.
 """
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
-# Definitions for exactly 14 approved rules R001-R014 (Chapter 16.7)
+# Definitions for approved rules R001-R015 (Chapter 16.7)
 RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     "R001": {
         "risk_signal": "Auto-Renewal",
@@ -29,7 +29,10 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
     "R004": {
         "risk_signal": "Late-Payment Penalty",
-        "pattern": re.compile(r"\b(?:late\s+payment\s+(?:fee|penalty|interest)|interest\s+rate\s+of\s+[0-9]+(?:\.[0-9]+)?%\s*per\s+month|late\s+charge)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:late\s+payment\s+(?:fee|penalty|interest)|interest\s+(?:at\s+(?:a|the)?\s*rate\s+of|rate\s+of).{0,25}?[0-9]+(?:\.[0-9]+)?%\)?\s*per\s+month|late\s+charge)\b",
+            re.IGNORECASE
+        )
     },
     "R005": {
         "risk_signal": "Excessive Liability Transfer",
@@ -37,7 +40,10 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
     "R006": {
         "risk_signal": "Broad Indemnification",
-        "pattern": re.compile(r"\b(?:indemnify\s+and\s+hold\s+harmless|defend\s+and\s+indemnify|indemnify\s+against\s+any\s+and\s+all\s+claims)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:defend,?\s*(?:and\s+)?indemnify|indemnify,?\s*(?:and\s+)?hold\s+harmless|indemnify\s+against\s+any\s+and\s+all\s+claims)\b",
+            re.IGNORECASE
+        )
     },
     "R007": {
         "risk_signal": "Unilateral Modification",
@@ -57,11 +63,17 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
     "R011": {
         "risk_signal": "Broad IP Transfer",
-        "pattern": re.compile(r"\b(?:assigns\s+all\s+right,\s+title,\s+and\s+interest|work\s+made\s+for\s+hire|transfer\s+all\s+intellectual\s+property|irrevocable\s+assignment)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:assigns\s+all\s+right,\s+title,\s+and\s+interest|works?\s+made\s+for\s+hire|transfer\s+all\s+intellectual\s+property|irrevocable\s+assignment)\b",
+            re.IGNORECASE
+        )
     },
     "R012": {
         "risk_signal": "Arbitration/Dispute Restriction",
-        "pattern": re.compile(r"\b(?:binding\s+arbitration|waive\s+(?:the\s+)?right\s+to\s+a\s+jury\s+trial|class\s+action\s+waiver|exclusive\s+jurisdiction\s+in)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:binding\s+arbitration|waive\s+(?:the\s+)?right\s+to\s+a\s+jury\s+trial|class\s+action\s+waiver|exclusive\s+jurisdiction\s+(?:in|of))\b",
+            re.IGNORECASE
+        )
     },
     "R013": {
         "risk_signal": "Data/Privacy Obligation",
@@ -70,6 +82,13 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     "R014": {
         "risk_signal": "Restrictive Employment/Business Obligation",
         "pattern": re.compile(r"\b(?:non-compete|non-solicitation|shall\s+not\s+engage\s+in\s+competing\s+business|restrictive\s+covenant)\b", re.IGNORECASE)
+    },
+    "R015": {
+        "risk_signal": "Uncapped Liability Carve-Out",
+        "pattern": re.compile(
+            r"\b(?:except|excluding|other\s+than)\b.{0,80}\b(?:liabilit(?:y|ies)|aggregate\s+liability|monetary\s+liability)\b.{0,150}\b(?:shall\s+(?:not\s+)?exceed|is\s+capped\s+at|limited\s+to)\b",
+            re.IGNORECASE | re.DOTALL
+        )
     },
 }
 
@@ -90,7 +109,7 @@ def evaluate_rules(
     text: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Evaluates all 14 rules (R001-R014) against input clauses or text.
+    Evaluates all 15 rules (R001-R015) against input clauses or text.
     Produces structured evidence findings without assigning any final severity value per Chapter 16.10.
 
     Args:

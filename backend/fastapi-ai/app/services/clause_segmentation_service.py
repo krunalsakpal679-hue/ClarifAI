@@ -61,7 +61,17 @@ def segment_document_clauses(
             }
         )
 
-    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    # Normalize section boundaries: ensure paragraph break before explicit section/heading markers
+    lines = text.split("\n")
+    normalized_lines: List[str] = []
+    for l in lines:
+        stripped = l.strip()
+        if REGEX_SECTION_MARKER.match(stripped) or REGEX_LEGAL_HEADING.match(stripped):
+            normalized_lines.append("")
+        normalized_lines.append(l)
+    normalized_text = "\n".join(normalized_lines)
+
+    paragraphs = [p.strip() for p in normalized_text.split("\n\n") if p.strip()]
     if not paragraphs:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

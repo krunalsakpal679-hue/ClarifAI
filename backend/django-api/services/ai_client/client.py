@@ -493,7 +493,7 @@ class RealAIClient:
 
         # Step 4: Categorize Clauses
         categorize_res = self.categorize_clauses(segmented_clauses)
-        categorized_clauses = categorize_res.get('categorized_clauses', segmented_clauses)
+        categorized_clauses = categorize_res.get('clauses') or categorize_res.get('categorized_clauses', segmented_clauses)
 
         # Step 5: Evaluate Rules
         rule_res = self.evaluate_rules(clauses=categorized_clauses, text=cleaned_text)
@@ -501,20 +501,20 @@ class RealAIClient:
 
         # Step 6: Classify Risk
         risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings)
-        classified_clauses = risk_res.get('classified_clauses', categorized_clauses)
+        classified_clauses = risk_res.get('clauses') or risk_res.get('classified_clauses', categorized_clauses)
 
         # Step 7: Simplify Clauses
         simplify_res = self.simplify_clauses(classified_clauses, rule_findings=rule_findings)
-        simplified_clauses = simplify_res.get('simplified_clauses', classified_clauses)
+        simplified_clauses = simplify_res.get('clauses') or simplify_res.get('simplified_clauses', classified_clauses)
 
         # Step 8: Summarize Document
         summary_res = self.summarize_document(classified_clauses, rule_findings=rule_findings)
-        summary_payload = summary_res.get('summary', {})
+        summary_payload = summary_res.get('summary') or summary_res
 
         # Step 9: Generate Embeddings & Index in Qdrant Vector DB
         try:
             embed_res = self.generate_embeddings(classified_clauses)
-            embedded_clauses = embed_res.get('embedded_clauses', classified_clauses)
+            embedded_clauses = embed_res.get('embedded_clauses') or embed_res.get('clauses', classified_clauses)
             self.index_document_qdrant(
                 user_id=user_id,
                 document_id=document_id,
@@ -525,28 +525,72 @@ class RealAIClient:
 
         # Step 10: Assemble Complete Normalized Payload
         assembled_clauses = []
-        # Index simplifications by position/id
+        # Index simplifications and categorized clauses by position/id
         simp_map = {
             sc.get('position', idx): sc
             for idx, sc in enumerate(simplified_clauses, start=1)
+        }
+        cat_map = {
+            cc.get('position', idx): cc
+            for idx, cc in enumerate(categorized_clauses, start=1)
+        }
+
+        APPROVED_CATEGORIES = {
+            'Payment', 'Termination', 'Renewal', 'Confidentiality',
+            'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
         }
 
         for idx, cl in enumerate(classified_clauses, start=1):
             pos = cl.get('position', idx)
             simp = simp_map.get(pos, {})
+            cat_info = cat_map.get(pos, {})
             
-            raw_sev = str(cl.get('severity', 'safe')).lower()
+            raw_sev = str(cl.get('severity') or cl.get('final_severity') or 'safe').lower()
             if raw_sev not in ('high', 'moderate', 'low', 'safe'):
                 raw_sev = 'safe'
 
-            raw_cat = cl.get('category', 'General')
-            if raw_cat not in {
-                'Payment', 'Termination', 'Renewal', 'Confidentiality',
-                'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
-            }:
-                raw_cat = 'Dispute Resolution'  # Canonical fallback category
-
             orig_text = cl.get('text') or cl.get('original_text') or f"Clause {pos}"
+
+            # Extract category from direct field, categories list, or categorized_clauses map
+            raw_cat = cl.get('category') or cat_info.get('category')
+            if not raw_cat:
+                cats = cl.get('categories') or cat_info.get('categories') or []
+                if isinstance(cats, list) and len(cats) > 0:
+                    raw_cat = str(cats[0])
+                elif cats:
+                    raw_cat = str(cats)
+
+            # Standardize string formatting
+            if raw_cat:
+                matched_approved = next((ac for ac in APPROVED_CATEGORIES if ac.lower() == str(raw_cat).lower()), None)
+                raw_cat = matched_approved
+
+            # If still missing or unrecognized, detect from clause heading and content patterns
+            if not raw_cat:
+                lower_text = orig_text.lower()
+                first_line = lower_text.split('\n')[0].strip()
+                if any(w in first_line for w in ['limitation of liability', 'liability cap', 'aggregate liability']) or any(w in lower_text for w in ['total liability under this agreement', 'limitation of liability', 'liability shall not exceed']):
+                    raw_cat = 'Liability'
+                elif any(w in first_line for w in ['indemnif', 'hold harmless', 'defend']) or any(w in lower_text for w in ['defend, indemnify', 'hold harmless']):
+                    raw_cat = 'Liability'
+                elif any(w in first_line for w in ['intellectual property', 'copyright', 'patent', 'work made for hire']) or any(w in lower_text for w in ['work made for hire', 'copyright law, and client shall own']):
+                    raw_cat = 'Intellectual Property'
+                elif any(w in first_line for w in ['fees', 'payment', 'invoic']) or any(w in lower_text for w in ['undisputed invoices', 'remit payment', 'net 30', 'accrue interest at the rate of']):
+                    raw_cat = 'Payment'
+                elif any(w in first_line for w in ['term and renewal', 'renewal']) or any(w in lower_text for w in ['automatically renew', 'successive one-year periods', 'notice of non-renewal']):
+                    raw_cat = 'Renewal'
+                elif any(w in first_line for w in ['terminat']) or any(w in lower_text for w in ['terminate this agreement', 'convenience upon']):
+                    raw_cat = 'Termination'
+                elif any(w in first_line for w in ['confidential']) or any(w in lower_text for w in ['confidential and proprietary information', 'non-disclosure']):
+                    raw_cat = 'Confidentiality'
+                elif any(w in first_line for w in ['privacy', 'data protection', 'gdpr', 'personal data']):
+                    raw_cat = 'Privacy'
+                elif any(w in first_line for w in ['dispute', 'arbitrat', 'governing law', 'non-solicit', 'entire agreement']) or any(w in lower_text for w in ['binding arbitration', 'american arbitration association', 'conflict of laws', 'supersedes all prior']):
+                    raw_cat = 'Dispute Resolution'
+                elif any(w in lower_text for w in ['invoic', 'payment', 'fee', 'charge', 'billing', 'remit', 'price', 'interest']):
+                    raw_cat = 'Payment'
+                else:
+                    raw_cat = 'Dispute Resolution'
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
 

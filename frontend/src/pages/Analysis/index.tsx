@@ -23,7 +23,7 @@ import { documentService } from '../../services/api';
 import { useDocumentStore } from '../../store/documentStore';
 import { useUiStore } from '../../store/uiStore';
 import { toast } from '../../components/ui/Toast';
-import { isRiskySeverity } from '../../constants/severityLevels';
+import { isRiskySeverity, isSafeSeverity, normalizeSeverity } from '../../constants/severityLevels';
 import type { ClauseFilterOption } from '../../types';
 
 export const AnalysisResultsPage: React.FC = () => {
@@ -103,11 +103,11 @@ export const AnalysisResultsPage: React.FC = () => {
     [clauses]
   );
   const highSeverityCount = useMemo(
-    () => clauses.filter((c) => c.severity === 'High').length,
+    () => clauses.filter((c) => normalizeSeverity(c.severity) === 'High').length,
     [clauses]
   );
   const safeClausesCount = useMemo(
-    () => clauses.filter((c) => c.severity === 'Safe').length,
+    () => clauses.filter((c) => isSafeSeverity(c.severity)).length,
     [clauses]
   );
 
@@ -117,14 +117,15 @@ export const AnalysisResultsPage: React.FC = () => {
       return clauses.filter((c) => isRiskySeverity(c.severity));
     }
     if (clauseFilter === 'SAFE') {
-      return clauses.filter((c) => c.severity === 'Safe');
+      return clauses.filter((c) => isSafeSeverity(c.severity));
     }
     return clauses;
   }, [clauses, clauseFilter]);
 
   // Check positive empty state (PRD Ch. 16):
   // Document has clauses and ALL of them are Safe (zero risky clauses)
-  const isAllSafeDocument = totalClausesCount > 0 && flaggedClausesCount === 0;
+  const isAllSafeDocument =
+    totalClausesCount > 0 && flaggedClausesCount === 0 && safeClausesCount === totalClausesCount;
 
   // 404 / Document Fetch Error State
   if (documentError && !documentLoading) {
@@ -432,6 +433,30 @@ export const AnalysisResultsPage: React.FC = () => {
                   View All Safe Clauses ({safeClausesCount})
                 </Button>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty State: No Safe Clauses when filtered by Safe */}
+        {!clausesLoading && !clausesError && clauseFilter === 'SAFE' && filteredClauses.length === 0 && (
+          <Card
+            elevation="sm"
+            className="border-secondary-200 bg-secondary-50/50"
+            data-testid="empty-safe-clauses-state"
+          >
+            <CardContent className="p-8 text-center space-y-2">
+              <p className="text-sm font-semibold text-secondary-800">No Safe Clauses Detected</p>
+              <p className="text-xs text-secondary-600 max-w-md mx-auto">
+                All extracted clauses in this contract have identified legal or operational risk factors.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setClauseFilter('ALL')}
+                className="mt-2 text-xs"
+              >
+                View All Clauses ({totalClausesCount})
+              </Button>
             </CardContent>
           </Card>
         )}

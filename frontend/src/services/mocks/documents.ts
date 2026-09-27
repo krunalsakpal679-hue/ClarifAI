@@ -14,6 +14,7 @@ import type {
   PaginatedDocumentListResponse,
 } from '../../types';
 import { MockApiError } from '../../utils/errors';
+import { isRiskySeverity, isSafeSeverity } from '../../constants/severityLevels';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -320,11 +321,9 @@ export const mockDocumentService: IDocumentService = {
     if (severity) {
       const filterLower = severity.toLowerCase();
       if (filterLower === 'risky') {
-        clauses = clauses.filter(
-          (c) => c.severity === 'High' || c.severity === 'Moderate' || c.severity === 'Low'
-        );
+        clauses = clauses.filter((c) => isRiskySeverity(c.severity));
       } else if (filterLower === 'safe') {
-        clauses = clauses.filter((c) => c.severity === 'Safe');
+        clauses = clauses.filter((c) => isSafeSeverity(c.severity));
       } else {
         clauses = clauses.filter((c) => c.severity?.toLowerCase() === filterLower);
       }

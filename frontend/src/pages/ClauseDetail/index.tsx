@@ -20,6 +20,7 @@ import { useDocumentStore } from '../../store/documentStore';
 import { useClauseNavStore } from '../../store/clauseNavStore';
 import { useUIStore } from '../../store/uiStore';
 import { documentService } from '../../services/api';
+import { isSafeSeverity } from '../../constants/severityLevels';
 import type { ClauseItem } from '../../types';
 
 export const ClauseDetailPage: React.FC = () => {
@@ -38,7 +39,7 @@ export const ClauseDetailPage: React.FC = () => {
 
   // Suggested negotiation redlines mapped by category or heuristic
   const getSuggestedRedline = (targetClause: ClauseItem): string | null => {
-    if (targetClause.severity === 'Safe') return null;
+    if (isSafeSeverity(targetClause.severity)) return null;
 
     if (targetClause.category === 'Liability') {
       return 'Each party shall defend, indemnify, and hold harmless the other party solely against direct third-party damages arising out of gross negligence or willful misconduct, subject always to an aggregate liability cap not to exceed total fees paid under this Agreement in the preceding 12 months.';

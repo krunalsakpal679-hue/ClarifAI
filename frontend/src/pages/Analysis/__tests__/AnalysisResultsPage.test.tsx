@@ -160,4 +160,58 @@ describe('AnalysisResultsPage (PRD Ch. 16, 22.7 & Section 8.3)', () => {
     expect(screen.getByText('Document Not Found')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Return to Dashboard/i })).toBeInTheDocument();
   });
+
+  it('correctly handles lowercase severities from backend API (e.g. high, moderate, low, safe)', async () => {
+    const mockClauses = [
+      { id: 'c1', document_id: 'doc-mixed', position: 1, original_text: 'Text 1', simplified_text: 'Simp 1', severity: 'high' as any, category: 'Liability' as any, explanation: 'Exp 1', status: 'analyzed' as any, rule_findings: [], created_at: '', translation_available: false },
+      { id: 'c2', document_id: 'doc-mixed', position: 2, original_text: 'Text 2', simplified_text: 'Simp 2', severity: 'high' as any, category: 'Liability' as any, explanation: 'Exp 2', status: 'analyzed' as any, rule_findings: [], created_at: '', translation_available: false },
+      { id: 'c3', document_id: 'doc-mixed', position: 3, original_text: 'Text 3', simplified_text: 'Simp 3', severity: 'high' as any, category: 'Liability' as any, explanation: 'Exp 3', status: 'analyzed' as any, rule_findings: [], created_at: '', translation_available: false },
+      { id: 'c4', document_id: 'doc-mixed', position: 4, original_text: 'Text 4', simplified_text: 'Simp 4', severity: 'moderate' as any, category: 'Payment' as any, explanation: 'Exp 4', status: 'analyzed' as any, rule_findings: [], created_at: '', translation_available: false },
+      { id: 'c5', document_id: 'doc-mixed', position: 5, original_text: 'Text 5', simplified_text: 'Simp 5', severity: 'low' as any, category: 'Renewal' as any, explanation: 'Exp 5', status: 'analyzed' as any, rule_findings: [], created_at: '', translation_available: false },
+      { id: 'c6', document_id: 'doc-mixed', position: 6, original_text: 'Text 6', simplified_text: 'Simp 6', severity: 'safe' as any, category: 'Confidentiality' as any, explanation: 'Exp 6', status: 'analyzed' as any, rule_findings: [], created_at: '', translation_available: false },
+    ];
+    vi.spyOn(documentService, 'getById').mockResolvedValueOnce({
+      id: 'doc-mixed',
+      original_filename: 'test.pdf',
+      file_reference: 'test.pdf',
+      document_type: 'Master Services Agreement',
+      status: 'complete',
+      failure_reason: null,
+      overall_risk: 'high',
+      uploaded_at: '',
+      updated_at: '',
+    });
+    vi.spyOn(documentService, 'getClauses').mockResolvedValueOnce({
+      count: 6,
+      next: null,
+      previous: null,
+      results: mockClauses,
+    });
+
+    renderAnalysisPage('doc-mixed');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('clause-list')).toBeInTheDocument();
+    });
+
+    // Check counts: Total 6, Flagged 5 (3 high + 1 mod + 1 low), High 3
+    expect(screen.getByText('Total Clauses').parentElement).toHaveTextContent('6');
+    expect(screen.getByText('Flagged Clauses').parentElement).toHaveTextContent('5');
+    expect(screen.getByText('High Severity Count').parentElement).toHaveTextContent('3');
+
+    // Check filter buttons
+    const riskyBtn = screen.getByRole('button', { name: /Risky \(5\)/i });
+    const safeBtn = screen.getByRole('button', { name: /Safe \(1\)/i });
+    expect(riskyBtn).toBeInTheDocument();
+    expect(safeBtn).toBeInTheDocument();
+
+    // Positive empty state must NOT be rendered
+    expect(screen.queryByTestId('positive-empty-state')).not.toBeInTheDocument();
+    expect(screen.queryByText('All Analyzed Clauses Classified as Safe')).not.toBeInTheDocument();
+
+    // Clicking Safe shows only safe clause
+    fireEvent.click(safeBtn);
+    expect(screen.getByText('Clause #6')).toBeInTheDocument();
+    expect(screen.queryByText('Clause #1')).not.toBeInTheDocument();
+  });
 });

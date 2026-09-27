@@ -31,20 +31,48 @@ LEGAL_HINDI_EXACT_MAP: Dict[str, str] = {
         "मूल्य निर्धारण, चालान अनुसूचियों, भुगतान देय तिथियों और विलंबित भुगतानों के लिए ब्याज दरों को परिभाषित करता है।",
     "Permits either party to terminate the agreement under specified conditions and notice periods.":
         "निर्दिष्ट शर्तों और नोटिस अवधि के तहत किसी भी पक्ष को समझौते को समाप्त करने की अनुमति देता है।",
+    "Explains the conditions, required notice periods, and penalties for ending or canceling the contract.":
+        "अनुबंध को समाप्त या रद्द करने की शर्तों, आवश्यक नोटिस अवधि और प्रावधानों की व्याख्या करता है।",
     "Restricts either party from disclosing confidential or proprietary business information to third parties.":
         "किसी भी पक्ष द्वारा तीसरे पक्ष को गोपनीय या मालिकाना व्यावसायिक जानकारी का खुलासा करने पर रोक लगाता है।",
+    "Obligates both parties to protect business secrets, technical data, and non-public information from unauthorized disclosure.":
+        "दोनों पक्षों को व्यापार रहस्य, तकनीकी डेटा और गैर-सार्वजनिक जानकारी को अनधिकृत प्रकटीकरण से सुरक्षित रखने के लिए बाध्य करता है।",
     "Limits the financial liability and damages recoverable by either party under the agreement.":
         "समझौते के तहत किसी भी पक्ष द्वारा देय वित्तीय दायित्व और हर्जाने को सीमित करता है।",
+    "Places a legal cap on the maximum financial damages either party can recover if a contract dispute or breach occurs.":
+        "अनुबंध विवाद या उल्लंघन होने पर किसी भी पक्ष द्वारा वसूले जा सकने वाले अधिकतम वित्तीय नुकसान पर कानूनी सीमा तय करता है।",
+    "Specifies who is responsible for paying legal fees, damages, and settlements if a third party files a lawsuit.":
+        "यह निर्दिष्ट करता है कि यदि कोई तीसरा पक्ष मुकदमा दायर करता है तो कानूनी फीस, हर्जाने और समझौते की राशि का भुगतान करने के लिए कौन जिम्मेदार है।",
     "Establishes intellectual property ownership, copyright, and licensing rights between the parties.":
         "पक्षों के बीच बौद्धिक संपदा स्वामित्व, कॉपीराइट और लाइसेंसिंग अधिकार स्थापित करता है।",
+    "Clarifies who owns the custom software, deliverables, and copyrights produced under this contract upon payment.":
+        "यह स्पष्ट करता है कि भुगतान होने पर इस अनुबंध के तहत निर्मित कस्टम सॉफ्टवेयर, डिलिवरेबल्स और कॉपीराइट का स्वामित्व किसके पास होगा।",
     "Requires mandatory binding arbitration and waives the right to a jury trial or class action litigation.":
         "अनिवार्य बाध्यकारी मध्यस्थता की आवश्यकता होती है और जूरी सुनवाई या सामूहिक वाद के अधिकार का त्याग करता है।",
+    "Requires mandatory binding arbitration and waives the right to a jury trial for dispute resolution.":
+        "विवाद समाधान के लिए अनिवार्य बाध्यकारी मध्यस्थता की आवश्यकता होती है और जूरी ट्रायल के अधिकार को त्यागता है।",
     "Outlines procedures for automatic renewal and extension of the contract term.":
         "अनुबंध की अवधि के स्वचालित नवीनीकरण और विस्तार की प्रक्रियाओं की रूपरेखा तैयार करता है।",
+    "Outlines procedures for automatic renewal, contract duration, and non-renewal notice requirements.":
+        "स्वचालित नवीनीकरण, अनुबंध अवधि और गैर-नवीनीकरण नोटिस आवश्यकताओं की प्रक्रियाओं की रूपरेखा तैयार करता है।",
+    "Restricts parties from hiring each other's staff or engaging in competing business activities.":
+        "पक्षों को एक-दूसरे के कर्मचारियों को काम पर रखने या प्रतिस्पर्धी व्यावसायिक गतिविधियों में शामिल होने से रोकता है।",
+    "Designates which state's legal framework and courts have exclusive jurisdiction to decide any legal dispute.":
+        "यह निर्धारित करता है कि किस राज्य का कानूनी ढांचा और न्यायालय किसी भी कानूनी विवाद को तय करने का विशेष क्षेत्राधिकार रखते हैं।",
+    "Confirms that this written agreement supersedes all prior discussions, understandings, and oral agreements.":
+        "यह पुष्टि करता है कि यह लिखित समझौता सभी पूर्व चर्चाओं, समझ और मौखिक समझौतों का स्थान लेता है।",
+    "Outlines the specific professional services, technical deliverables, and project duties to be performed.":
+        "किए जाने वाले विशिष्ट पेशेवर सेवाओं, तकनीकी डिलिवरेबल्स और परियोजना कर्तव्यों की रूपरेखा प्रस्तुत करता है।",
+    "Identifies the contracting parties, business entities, and establishes the official starting date of the agreement.":
+        "अनुबंध करने वाले पक्षों, व्यावसायिक संस्थाओं की पहचान करता है और समझौते की आधिकारिक शुरुआत की तारीख तय करता है।",
     "Governs the collection, processing, and protection of personal data and privacy.":
         "व्यक्तिगत डेटा और गोपनीयता के संग्रह, प्रसंस्करण और सुरक्षा को नियंत्रित करता है।",
     "Standard clause analysis.":
         "मानक खंड विश्लेषण।",
+    "Standard clause with balanced commercial terms. No high-risk signals detected.":
+        "संतुलित व्यावसायिक शर्तों के साथ मानक खंड। कोई उच्च-जोखिम संकेत नहीं पाया गया।",
+    "No risk signals flagged for this clause.":
+        "इस खंड के लिए कोई जोखिम संकेत नहीं मिला।",
 }
 
 LEGAL_TERM_SUBSTITUTIONS = [
@@ -79,6 +107,13 @@ WORD_REPLACEMENTS = [
     ("Payment Terms", "भुगतान शर्तें"),
     ("Liability", "दायित्व"),
     ("Indemnification", "क्षतिपूर्ति"),
+    ("Broad Indemnification", "व्यापक क्षतिपूर्ति दायित्व"),
+    ("Uncapped Liability Carve-Out", "असीमित दायित्व अपवाद"),
+    ("Auto-Renewal", "स्वचालित नवीनीकरण"),
+    ("Arbitration/Dispute Restriction", "मध्यस्थता / कानूनी विवाद प्रतिबंध"),
+    ("Restrictive Employment/Business Obligation", "प्रतिबंधित रोजगार / व्यावसायिक दायित्व"),
+    ("Broad IP Transfer", "व्यापक बौद्धिक संपदा हस्तांतरण"),
+    ("Broad IP Rights Assignment", "व्यापक बौद्धिक संपदा अधिकार हस्तांतरण"),
     ("Obligations:", "दायित्व:"),
     ("Key Terms:", "मुख्य शर्तें:"),
     ("Key Risks:", "प्रमुख जोखिम:"),

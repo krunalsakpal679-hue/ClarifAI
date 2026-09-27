@@ -154,26 +154,32 @@ Rule Signals: {signals_summary}
         else:
             fallback_why = "Standard clause with balanced commercial terms. No high-risk signals detected."
 
-        if any(k in text_lower for k in ["entered into as of", "by and between", "preamble", "master services agreement"]):
-            plain_summary = "Identifies the contracting parties, business entities, and establishes the official starting date of the agreement."
-        elif any(k in text_lower for k in ["scope of services", "statement of work"]):
-            plain_summary = "Outlines the specific professional services, technical deliverables, and project duties to be performed."
-        elif any(k in text_lower for k in ["payment", "invoice", "remit payment", "net 30"]):
-            plain_summary = "Defines pricing, invoicing schedules, payment due dates, and interest rates for late payments."
-        elif any(k in text_lower for k in ["confidential", "proprietary information", "trade secret"]):
-            plain_summary = "Obligates both parties to protect business secrets, technical data, and non-public information from unauthorized disclosure."
-        elif any(k in text_lower for k in ["intellectual property", "work made for hire", "deliverables"]):
-            plain_summary = "Clarifies who owns the custom software, deliverables, and copyrights produced under this contract upon payment."
-        elif any(k in text_lower for k in ["indemnif", "hold harmless", "defend"]):
-            plain_summary = "Specifies who is responsible for paying legal fees, damages, and settlements if a third party files a lawsuit."
-        elif any(k in text_lower for k in ["limitation of liability", "consequential damages", "liability cap"]):
+        if any(k in text_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement"]):
             plain_summary = "Places a legal cap on the maximum financial damages either party can recover if a contract dispute or breach occurs."
-        elif any(k in text_lower for k in ["terminat", "cancellation", "notice of at least"]):
+        elif any(k in text_lower for k in ["indemnif", "hold harmless", "defend and indemnify", "third-party claims, damages"]):
+            plain_summary = "Specifies who is responsible for paying legal fees, damages, and settlements if a third party files a lawsuit."
+        elif any(k in text_lower for k in ["intellectual property", "work made for hire", "all right, title and interest in and to such deliverables"]):
+            plain_summary = "Clarifies who owns the custom software, deliverables, and copyrights produced under this contract upon payment."
+        elif any(k in text_lower for k in ["term and renewal", "automatic renewal", "successive one-year periods", "notice of non-renewal"]):
+            plain_summary = "Outlines procedures for automatic renewal, contract duration, and non-renewal notice requirements."
+        elif any(k in text_lower for k in ["terminat", "cancellation", "convenience upon", "materially breaches this agreement"]):
             plain_summary = "Explains the conditions, required notice periods, and penalties for ending or canceling the contract."
-        elif any(k in text_lower for k in ["governing law", "jurisdiction", "exclusive venue"]):
-            plain_summary = "Designates which state's legal framework and courts have exclusive jurisdiction to decide any legal dispute."
-        elif any(k in text_lower for k in ["non-compete", "non-solicit", "competing business"]):
+        elif any(k in text_lower for k in ["dispute resolution", "binding arbitration", "american arbitration association", "waives its right to a jury trial"]):
+            plain_summary = "Requires mandatory binding arbitration and waives the right to a jury trial for dispute resolution."
+        elif any(k in text_lower for k in ["non-solicit", "non-compete", "solicit for employment", "competing business"]):
             plain_summary = "Restricts parties from hiring each other's staff or engaging in competing business activities."
+        elif any(k in text_lower for k in ["governing law", "conflict of laws", "jurisdiction"]):
+            plain_summary = "Designates which state's legal framework and courts have exclusive jurisdiction to decide any legal dispute."
+        elif any(k in text_lower for k in ["entire agreement", "supersedes all prior", "merger clause", "contemporaneous understandings"]):
+            plain_summary = "Confirms that this written agreement supersedes all prior discussions, understandings, and oral agreements."
+        elif any(k in text_lower for k in ["confidential", "proprietary information", "trade secret", "non-disclosure"]):
+            plain_summary = "Obligates both parties to protect business secrets, technical data, and non-public information from unauthorized disclosure."
+        elif any(k in text_lower for k in ["fees and payment", "payment", "invoice", "remit payment", "net 30", "interest at the rate of"]):
+            plain_summary = "Defines pricing, invoicing schedules, payment due dates, and interest rates for late payments."
+        elif any(k in text_lower for k in ["services", "technical advisory services", "software architecture consulting", "statement of work"]):
+            plain_summary = "Outlines the specific professional services, technical deliverables, and project duties to be performed."
+        elif any(k in text_lower for k in ["entered into as of", "by and between", "preamble", "effective date", "consulting and license services agreement"]):
+            plain_summary = "Identifies the contracting parties, business entities, and establishes the official starting date of the agreement."
         else:
             first_sentence = text.strip().split(". ")[0].strip()
             plain_summary = f"Summary: {first_sentence}."

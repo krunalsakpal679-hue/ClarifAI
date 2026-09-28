@@ -111,15 +111,15 @@ export const AnalysisResultsPage: React.FC = () => {
     [clauses]
   );
 
-  // Filter clauses by PRD Ch. 16.3 exact 3 options: All / Risky / Safe
+  // Filter clauses by PRD Ch. 16.3 exact 3 options: All / Risky / Safe, sorted by position
   const filteredClauses = useMemo(() => {
+    let list = clauses;
     if (clauseFilter === 'RISKY') {
-      return clauses.filter((c) => isRiskySeverity(c.severity));
+      list = clauses.filter((c) => isRiskySeverity(c.severity));
+    } else if (clauseFilter === 'SAFE') {
+      list = clauses.filter((c) => isSafeSeverity(c.severity));
     }
-    if (clauseFilter === 'SAFE') {
-      return clauses.filter((c) => isSafeSeverity(c.severity));
-    }
-    return clauses;
+    return [...list].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   }, [clauses, clauseFilter]);
 
   // Check positive empty state (PRD Ch. 16):
@@ -167,22 +167,22 @@ export const AnalysisResultsPage: React.FC = () => {
       {/* 1. Header & Persistent Entry Points */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-secondary-200">
         <div className="space-y-2">
+          {/* Main Title: The uploaded contract/document name */}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-primary-950 tracking-tight">
+            {activeDocument?.original_filename || 'Contract_Document.pdf'}
+          </h1>
+
           <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-secondary-600 bg-secondary-100 px-2.5 py-1 rounded">
+              {documentTitle}
+            </span>
             <span className="text-xs text-secondary-500 font-mono bg-secondary-100 px-2 py-0.5 rounded">
               ID: {id}
             </span>
             {activeDocument?.overall_risk && (
               <RiskBadge severity={activeDocument.overall_risk} size="sm" />
             )}
-            <span className="text-xs text-secondary-400">&bull;</span>
-            <span className="text-xs text-secondary-600 font-medium">
-              {activeDocument?.original_filename || 'Contract_Document.pdf'}
-            </span>
           </div>
-
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-primary-950">
-            {documentTitle}
-          </h1>
         </div>
 
         {/* Action Buttons: Language toggle + Persistent entry points */}
@@ -463,9 +463,14 @@ export const AnalysisResultsPage: React.FC = () => {
 
         {/* Clause Cards Rendering */}
         {!clausesLoading && !clausesError && filteredClauses.length > 0 && (
-          <div className="space-y-4" data-testid="clause-list">
+          <div className="space-y-8" data-testid="clause-list">
             {filteredClauses.map((clause) => (
-              <ClauseCard key={clause.id} clause={clause} documentId={id!} />
+              <ClauseCard
+                key={clause.id}
+                clause={clause}
+                documentId={id!}
+                lang={analysisLanguage}
+              />
             ))}
           </div>
         )}

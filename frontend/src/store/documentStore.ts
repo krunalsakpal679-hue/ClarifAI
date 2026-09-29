@@ -32,7 +32,7 @@ export interface DocumentState {
   reset: () => void;
 }
 
-export const useDocumentStore = create<DocumentState>((set) => ({
+export const useDocumentStore = create<DocumentState>((set, get) => ({
   documents: [],
   totalCount: 0,
   isLoading: false,
@@ -80,11 +80,17 @@ export const useDocumentStore = create<DocumentState>((set) => ({
     set({ summaryLoading: true, summaryError: null });
     try {
       const summary = await documentService.getSummary(id, lang);
-      set({ summary, summaryLoading: false, summaryError: null });
+      const activeId = get().activeDocument?.id;
+      if (!activeId || activeId === id) {
+        set({ summary, summaryLoading: false, summaryError: null });
+      }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to load document summary.';
-      set({ summaryLoading: false, summaryError: errorMessage });
+      const activeId = get().activeDocument?.id;
+      if (!activeId || activeId === id) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to load document summary.';
+        set({ summaryLoading: false, summaryError: errorMessage });
+      }
     }
   },
 
@@ -94,11 +100,17 @@ export const useDocumentStore = create<DocumentState>((set) => ({
       const response = severity
         ? await documentService.getClauses(id, lang, severity)
         : await documentService.getClauses(id, lang);
-      set({ clauses: response.results, clausesLoading: false, clausesError: null });
+      const activeId = get().activeDocument?.id;
+      if (!activeId || activeId === id) {
+        set({ clauses: response.results, clausesLoading: false, clausesError: null });
+      }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to load document clauses.';
-      set({ clausesLoading: false, clausesError: errorMessage });
+      const activeId = get().activeDocument?.id;
+      if (!activeId || activeId === id) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to load document clauses.';
+        set({ clausesLoading: false, clausesError: errorMessage });
+      }
     }
   },
 

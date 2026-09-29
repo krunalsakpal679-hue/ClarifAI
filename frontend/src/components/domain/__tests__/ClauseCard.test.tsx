@@ -53,17 +53,17 @@ describe('ClauseCard Component (components/domain/ClauseCard)', () => {
     expect(screen.getByText('High Risk')).toBeInTheDocument();
     expect(screen.getByText('Liability')).toBeInTheDocument();
 
-    expect(screen.getByText('Plain-English Summary')).toBeInTheDocument();
+    expect(screen.getByText('WHAT THIS MEANS')).toBeInTheDocument();
     expect(screen.getByText('You must pay all legal costs without limit if the vendor is sued.')).toBeInTheDocument();
 
-    expect(screen.getByText('Risk Driver & Legal Context')).toBeInTheDocument();
+    expect(screen.getByText('RISK SEVERITY RATIONALE')).toBeInTheDocument();
     expect(screen.getByText('Uncapped unilateral indemnity creates severe exposure.')).toBeInTheDocument();
 
     expect(screen.getByText('Original Contract Text')).toBeInTheDocument();
     expect(screen.getByText(/Customer shall defend and indemnify Vendor without limitation/)).toBeInTheDocument();
 
-    // Link to Clause Detail page (Phase 09)
-    const detailLink = screen.getByRole('link', { name: /Inspect Clause Details/i });
+    // Link to Clause Detail page (Inspect Analysis)
+    const detailLink = screen.getByRole('link', { name: /Inspect Analysis/i });
     expect(detailLink).toHaveAttribute('href', '/documents/doc-msa-001/clauses/clause-101');
   });
 

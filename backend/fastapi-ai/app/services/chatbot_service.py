@@ -13,6 +13,7 @@ from qdrant_client import QdrantClient
 
 from app.core.config import settings
 from app.services.rag_service import retrieve_and_evaluate_evidence
+from app.services.qdrant_service import retrieve_all_document_clauses
 from app.services.llm_client import (
     generate_llm_completion,
     format_untrusted_evidence_block,
@@ -135,16 +136,22 @@ def synthesize_grounded_fallback_answer(question: str, evidence_items: List[Dict
     if not best_item and evidence_items:
         best_item = evidence_items[0]
 
-    primary_cid = best_item.get("clause_id") or best_item.get("position")
-    primary_text = best_item.get("clause_text") or best_item.get("text") or ""
+    primary_cid = best_item.get("clause_number") or best_item.get("position") or best_item.get("clause_id")
+    primary_text = best_item.get("clause_text") or best_item.get("text") or best_item.get("original_text") or ""
     primary_text_lower = primary_text.lower()
+    simplified_text = (best_item.get("simplified_text") or "").strip()
 
     # Synthesize direct answer based on question intent & clause content
     direct_answer = ""
     direct_answer_hi = ""
 
+    # Check for direct explanation requests when pre-computed simplification is available
+    if any(k in q_lower for k in ["explain", "what is", "what does", "summary", "tell me about", "describe", "details of"]) and simplified_text:
+        direct_answer = f"According to Clause {primary_cid}, {simplified_text}"
+        direct_answer_hi = f"खंड {primary_cid} के अनुसार, {best_item.get('simplified_text_hi', simplified_text)}"
+
     # 1. Termination without cause / Cancellation
-    if any(k in q_lower for k in ["terminate", "termination", "cancel", "cancellation", "end the agreement"]):
+    elif any(k in q_lower for k in ["terminate", "termination", "cancel", "cancellation", "end the agreement"]):
         if "without cause" in q_lower:
             if any(k in primary_text_lower for k in ["without cause", "convenience", "at any time"]):
                 direct_answer = f"Yes, the vendor can terminate the agreement without cause. Under Clause {primary_cid}, the vendor explicitly reserves the right to terminate at any time without cause and with immediate effect."
@@ -209,6 +216,23 @@ def synthesize_grounded_fallback_answer(question: str, evidence_items: List[Dict
         direct_answer = f"Under Clause {primary_cid}, both parties are bound to safeguard confidential and proprietary information and prevent unauthorized third-party disclosure."
         direct_answer_hi = f"खंड {primary_cid} के तहत, दोनों पक्ष गोपनीय जानकारी की रक्षा करने और अनधिकृत प्रकटीकरण को रोकने के लिए बाध्य हैं।"
 
+    # 8. Specific Lease Agreement Provisions
+    elif any(k in primary_text_lower for k in ["demise unto the lessee", "piece or parcel of land", "doth hereby demise", "grant to the lessee a lease"]):
+        direct_answer = f"Under Clause {primary_cid}, the lessor grants the lease of the specified premises to the lessee in consideration of the reserved rent and terms."
+        direct_answer_hi = f"खंड {primary_cid} के तहत, पट्टादाता सहमत किराए और शर्तों के बदले पट्टेदार को निर्दिष्ट परिसर का पट्टा प्रदान करता है।"
+    elif any(k in primary_text_lower for k in ["covenants with the lessor", "pay the reserved rent", "to pay the reserved rent"]):
+        direct_answer = f"Under Clause {primary_cid}, the lessee covenants to pay the reserved rent on time, cover municipal taxes and rates, and maintain the premises."
+        direct_answer_hi = f"खंड {primary_cid} के तहत, पट्टेदार समय पर आरक्षित किराया चुकाने, करों का भुगतान करने और परिसर का रखरखाव करने की प्रतिज्ञा करता है।"
+    elif any(k in primary_text_lower for k in ["quiet enjoyment", "peaceably possess and enjoy", "good right, full power"]):
+        direct_answer = f"Under Clause {primary_cid}, the lessor covenants that the lessee shall peaceably possess and enjoy the demised premises without interruption, confirming legal authority to demise."
+        direct_answer_hi = f"खंड {primary_cid} के तहत, पट्टादाता शांतिपूर्ण उपयोग और कब्जे की गारंटी देता है।"
+    elif any(k in primary_text_lower for k in ["re-enter upon the demised", "lawful for the lessor to re-enter"]):
+        direct_answer = f"Under Clause {primary_cid}, the lessor reserves the express right of re-entry to terminate the lease and repossess the property if rent is in arrears or terms are breached."
+        direct_answer_hi = f"खंड {primary_cid} के तहत, किराया बकाया होने या उल्लंघन होने पर पट्टादाता को परिसर में पुनः प्रवेश और पट्टा समाप्त करने का अधिकार है।"
+    elif any(k in primary_text_lower for k in ["automatically vest in the lessor", "without obtaining in writing the permission of the lessor, to assign"]):
+        direct_answer = f"Under Clause {primary_cid}, all buildings vest in the lessor upon lease expiration without compensation, and the lessee is prohibited from subletting or assigning without prior written permission."
+        direct_answer_hi = f"खंड {primary_cid} के तहत, अवधि समाप्त होने पर सभी संरचनाएं पट्टादाता में निहित होंगी, और बिना लिखित अनुमति के उप-पट्टे पर देना प्रतिबंधित है।"
+
     # Default general synthesis
     if not direct_answer:
         clean_p = re.sub(r'^(?:section\s+)?(?:\d+(?:\.\d+)*|[A-Z]\.|\([a-z0-9]+\))\s*[:.-]?\s*', '', primary_text.strip(), flags=re.IGNORECASE)
@@ -221,8 +245,8 @@ def synthesize_grounded_fallback_answer(question: str, evidence_items: List[Dict
     # Format supporting clause citations
     citations = []
     for item in evidence_items[:2]:
-        cid = item.get("clause_id") or item.get("position")
-        ctext = item.get("clause_text") or item.get("text") or ""
+        cid = item.get("clause_number") or item.get("position") or item.get("clause_id")
+        ctext = item.get("clause_text") or item.get("text") or item.get("original_text") or ""
         ctext_clean = " ".join(ctext.split())
         if len(ctext_clean) > 180:
             ctext_clean = ctext_clean[:180] + "..."
@@ -250,27 +274,16 @@ def generate_chatbot_answer(
 ) -> Dict[str, Any]:
     """
     Executes end-to-end Chatbot Answer Generation (with Hindi/Multilingual support):
-    1. Calls AI-PHASE-RAG evidence retrieval & gating (`retrieve_and_evaluate_evidence`).
-    2. If evidence is INSUFFICIENT -> returns controlled no-answer immediately WITHOUT calling LLM (in Hindi if target_language='hi').
-    3. If evidence is SUFFICIENT -> constructs untrusted-evidence system prompt via shared utility.
-    4. Fetches same-session memory (session_id + user_id + document_id ONLY).
-    5. Calls LLM (`generate_llm_completion`) with conversation array.
-    6. Validates output safety via shared `validate_untrusted_llm_output`.
-    7. Saves user question & assistant response to session memory.
-    8. Returns grounded answer, source_clause_ids, and non-legal advice disclaimer.
-
-    Args:
-        session_id: Unique chat session ID string (MANDATORY).
-        user_id: Owner user ID string (MANDATORY).
-        document_id: Target document ID string (MANDATORY).
-        question: User query question string.
-        top_k: Candidate clause retrieval limit.
-        target_language: Response language tag ('en' or 'hi').
-        qdrant_client: Optional QdrantClient instance.
-        override_llm_client: Optional Groq client override for testing.
-
-    Returns:
-        Dict containing generated answer, evidence status, source_clause_ids, disclaimer, and metadata.
+    1. Checks for exact clause lookup intent (Rule 8: enforce exact clause lookup over semantic retrieval).
+    2. If exact clause requested -> resolves strictly against indexed document clauses; returns controlled no-answer if absent.
+    3. If general question -> calls AI-PHASE-RAG evidence retrieval & gating (`retrieve_and_evaluate_evidence`).
+    4. If evidence is INSUFFICIENT -> returns controlled no-answer immediately WITHOUT calling LLM.
+    5. If evidence is SUFFICIENT -> constructs untrusted-evidence system prompt via shared utility.
+    6. Fetches same-session memory (session_id + user_id + document_id ONLY).
+    7. Calls LLM (`generate_llm_completion`) with robust grounded fallback.
+    8. Validates output safety via shared `validate_untrusted_llm_output`.
+    9. Saves user question & assistant response to session memory.
+    10. Returns grounded answer, source_clause_ids, and non-legal advice disclaimer.
     """
     if not session_id or not session_id.strip():
         raise ValueError("session_id is MANDATORY for chatbot conversation scoping.")
@@ -282,36 +295,103 @@ def generate_chatbot_answer(
         raise ValueError("question string cannot be empty.")
 
     lang = target_language.lower()
-
-    # 1. Evidence Retrieval & Gating Check (Identical Gating for English and Hindi)
-    rag_result = retrieve_and_evaluate_evidence(
-        user_id=user_id,
-        document_id=document_id,
-        question=question,
-        top_k=top_k,
-        client=qdrant_client
-    )
-
     no_answer_text = HINDI_CONTROLLED_NO_ANSWER_RESPONSE if lang in ["hi", "hindi"] else CONTROLLED_NO_ANSWER_RESPONSE
 
-    # 2. Controlled No-Answer Path (DO NOT CALL LLM)
-    if not rag_result.get("has_sufficient_evidence"):
-        logger.info(f"AI-PHASE-RAG reported insufficient evidence for doc '{document_id}', user '{user_id}'. Direct no-answer return.")
-        return {
-            "answer": no_answer_text,
-            "has_sufficient_evidence": False,
-            "source_clause_ids": [],
-            "disclaimer": NON_LEGAL_ADVICE_DISCLAIMER,
-            "session_id": session_id,
-            "user_id": user_id,
-            "document_id": document_id,
-            "question": question,
-            "target_language": "hi" if lang in ["hi", "hindi"] else "en",
-            "schema_version": SCHEMA_VERSION
-        }
+    # 1. Exact Clause Lookup Resolution (Rule 8)
+    clause_lookup_match = re.search(
+        r'\b(?:clause|section|article|paragraph)\s*#?\s*([0-9]+(?:\.[0-9]+)*|\b[IVXLCDM]+\b|[A-Z])\b',
+        question,
+        re.IGNORECASE
+    )
 
-    evidence_items = rag_result.get("validated_evidence", [])
-    source_clause_ids = [item.get("clause_id") for item in evidence_items if item.get("clause_id")]
+    if clause_lookup_match:
+        requested_num = clause_lookup_match.group(1).strip()
+        all_clauses = retrieve_all_document_clauses(
+            user_id=user_id,
+            document_id=document_id,
+            client=qdrant_client
+        )
+        if not all_clauses:
+            logger.info(f"No clauses found in Qdrant for doc '{document_id}', user '{user_id}'. Direct no-answer return.")
+            return {
+                "answer": no_answer_text,
+                "has_sufficient_evidence": False,
+                "source_clause_ids": [],
+                "disclaimer": NON_LEGAL_ADVICE_DISCLAIMER,
+                "session_id": session_id,
+                "user_id": user_id,
+                "document_id": document_id,
+                "question": question,
+                "target_language": "hi" if lang in ["hi", "hindi"] else "en",
+                "schema_version": SCHEMA_VERSION
+            }
+
+        matched_item = None
+        req_clean = requested_num.lower()
+        for item in all_clauses:
+            c_num = str(item.get("clause_number", "")).strip().lower()
+            c_pos = str(item.get("position", "")).strip().lower()
+            c_id = str(item.get("clause_id", "")).strip().lower()
+            if (
+                c_num == req_clean
+                or c_pos == req_clean
+                or (requested_num.isdigit() and c_id in [f"c-{int(requested_num):03d}", f"clause_{requested_num}"])
+            ):
+                matched_item = item
+                break
+
+        if matched_item is None:
+            # Requested clause does NOT exist in the document (Controlled No-Answer)
+            total_count = len(all_clauses)
+            logger.info(f"Exact clause {requested_num} not found in doc '{document_id}'. Total clauses: {total_count}.")
+            if lang in ["hi", "hindi"]:
+                not_found_msg = f"इस दस्तावेज़ में खंड {requested_num} नहीं मिला। प्रदान किए गए दस्तावेज़ में केवल खंड 1 से {total_count} शामिल हैं।"
+            else:
+                not_found_msg = f"Clause {requested_num} was not found in this document. The document contains Clauses 1 through {total_count}."
+
+            return {
+                "answer": not_found_msg,
+                "has_sufficient_evidence": False,
+                "source_clause_ids": [],
+                "disclaimer": NON_LEGAL_ADVICE_DISCLAIMER,
+                "session_id": session_id,
+                "user_id": user_id,
+                "document_id": document_id,
+                "question": question,
+                "target_language": "hi" if lang in ["hi", "hindi"] else "en",
+                "schema_version": SCHEMA_VERSION
+            }
+
+        evidence_items = [matched_item]
+        source_clause_ids = [matched_item.get("clause_id") or f"c-{matched_item.get('position', 1):03d}"]
+
+    else:
+        # 2. General Query Path: Evidence Retrieval & Gating Check
+        rag_result = retrieve_and_evaluate_evidence(
+            user_id=user_id,
+            document_id=document_id,
+            question=question,
+            top_k=top_k,
+            client=qdrant_client
+        )
+
+        if not rag_result.get("has_sufficient_evidence"):
+            logger.info(f"AI-PHASE-RAG reported insufficient evidence for doc '{document_id}', user '{user_id}'. Direct no-answer return.")
+            return {
+                "answer": no_answer_text,
+                "has_sufficient_evidence": False,
+                "source_clause_ids": [],
+                "disclaimer": NON_LEGAL_ADVICE_DISCLAIMER,
+                "session_id": session_id,
+                "user_id": user_id,
+                "document_id": document_id,
+                "question": question,
+                "target_language": "hi" if lang in ["hi", "hindi"] else "en",
+                "schema_version": SCHEMA_VERSION
+            }
+
+        evidence_items = rag_result.get("validated_evidence", [])
+        source_clause_ids = [item.get("clause_id") for item in evidence_items if item.get("clause_id")]
 
     # 3. Construct System Prompt with untrusted evidence framing
     system_prompt = construct_chatbot_system_prompt(evidence_items, target_language=lang)

@@ -109,9 +109,9 @@ def process_document(document_id):
             else:
                 key_risks_text = "No high-severity legal risks were identified in this document. All analyzed clauses satisfy standard commercial legal baselines."
         if not key_terms_text:
-            key_terms_text = "Invoices are payable within standard commercial credit terms, and the agreement duration renews automatically unless advance written notice is provided."
+            key_terms_text = "Contract terms, payment schedules, and operational conditions are governed by the provisions set forth across the operative clauses."
         if not obligations_text:
-            obligations_text = "Parties are obligated to provide professional deliverables under agreed specifications and maintain strict confidentiality over proprietary information."
+            obligations_text = "The contracting parties are obligated to perform their respective covenants, duties, and compliance requirements as defined in the agreement."
 
         DocumentSummary.objects.create(
             document=document,

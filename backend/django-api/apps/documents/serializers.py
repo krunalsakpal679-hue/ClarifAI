@@ -184,17 +184,21 @@ class ClauseSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         lang = request.query_params.get('lang', 'en').lower() if request else 'en'
         if lang == 'hi':
-            if getattr(instance, 'simplified_text_hi', None):
+            has_hi_sim = bool(getattr(instance, 'simplified_text_hi', None))
+            has_hi_why = bool(getattr(instance, 'why_flagged_hi', None))
+
+            if has_hi_sim:
                 data['simplified_text'] = instance.simplified_text_hi
                 data['simplified_text_hi'] = instance.simplified_text_hi
-                data['translation_available'] = True
-            if getattr(instance, 'why_flagged_hi', None):
+            if has_hi_why:
                 data['explanation'] = instance.why_flagged_hi
                 data['why_flagged_hi'] = instance.why_flagged_hi
-            elif getattr(instance, 'translation_available', False) is True:
+
+            if has_hi_sim or has_hi_why or getattr(instance, 'translation_available', False) is True:
                 data['translation_available'] = True
             else:
                 data['translation_available'] = False
+
             # PROVABLY UNALTERED: original_text ALWAYS returns instance.original_text verbatim
             data['original_text'] = instance.original_text
         return data

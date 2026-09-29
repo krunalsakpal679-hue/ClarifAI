@@ -14,25 +14,69 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
-# Regex for explicit legal section markers (e.g. "Section 1.", "Clause 4.2", "Article III", "1.1 ", "1) ")
+# Regex for explicit legal section markers (e.g. "Section 1.", "Clause 4.2", "Article III", "1.1 ", "1) ", "I. ", "A. ", "(a) ")
 REGEX_SECTION_MARKER = re.compile(
     r"^(?:\s*)(?:"
-    r"(?:Section|Clause|Article|Paragraph)\s+([0-9]+(?:\.[0-9]+)*|[A-Z]+)"
+    r"(?:Section|Clause|Article|Paragraph)\s+([0-9]+(?:\.[0-9]+)*|[A-Z]+|\b[IVXLCDM]+\b)"
     r"|([0-9]+(?:\.[0-9]+){1,3})"
-    r"|([0-9]{1,2}\.|\([0-9a-zA-Z]{1,2}\))"
-    r")(?:\s*[\:\.\-\–\—]\s*|\s+)(.*)$",
+    r"|([0-9]{1,3}\.)"
+    r"|(\b[IVXLCDM]+\b\.)"
+    r"|([A-Z]\.)"
+    r"|(\([0-9a-zA-Z]{1,3}\))"
+    r")(?:\s*[\:\.\-\–\—]\s*|\s+|$)(.*)$",
     re.IGNORECASE
 )
 
-# Regex for common legal headings (e.g. "INDEMNIFICATION", "GOVERNING LAW", "LIMITATION OF LIABILITY")
+# Regex for common legal headings across all contract and agreement types
 REGEX_LEGAL_HEADING = re.compile(
     r"^(?:\s*)(?:"
-    r"INDEMNIFICATION|CONFIDENTIALITY|TERMINATION|LIMITATION OF LIABILITY|"
-    r"GOVERNING LAW|JURISDICTION|PAYMENT TERMS|INTELLECTUAL PROPERTY|"
-    r"WARRANTIES|DISCLAIMER|SEVERABILITY|ENTIRE AGREEMENT|NOTICES|"
-    r"FORCE MAJEURE|NON-COMPETE|NON-SOLICITATION|ASSIGNMENT|DEFINITIONS|"
-    r"SCOPE OF SERVICES|DATA PROTECTION|FEES AND PAYMENT"
+    r"PAYMENT\s+TERMS|PAYMENT|FEES\s+AND\s+PAYMENT|FEES\s+AND\s+EXPENSES|FEES|COMPENSATION|"
+    r"TERMINATION|TERM\s+AND\s+TERMINATION|CANCELLATION|EXPIRATION|"
+    r"CONFIDENTIALITY|NON-DISCLOSURE|CONFIDENTIAL\s+INFORMATION|PROPRIETARY\s+RIGHTS|PROPRIETARY\s+INFORMATION|"
+    r"LIMITATION\s+OF\s+LIABILITY|LIABILITY|DAMAGES\s+CAP|"
+    r"INDEMNIFICATION|INDEMNITY|DEFENSE\s+AND\s+INDEMNIFICATION|HOLD\s+HARMLESS|"
+    r"INTELLECTUAL\s+PROPERTY|INTELLECTUAL\s+PROPERTY\s+RIGHTS|IP\s+RIGHTS|WORK\s+MADE\s+FOR\s+HIRE|OWNERSHIP|"
+    r"GOVERNING\s+LAW|JURISDICTION|GOVERNING\s+LAW\s+AND\s+JURISDICTION|GOVERNING\s+LAW\s+AND\s+VENUE|VENUE|"
+    r"DISPUTE\s+RESOLUTION|ARBITRATION|BINDING\s+ARBITRATION|"
+    r"RENEWAL|TERM\s+AND\s+RENEWAL|EXTENSION|"
+    r"PRIVACY|DATA\s+PROTECTION|DATA\s+PROTECTION\s+AND\s+PRIVACY|DATA\s+PROCESSING|SECURITY|INFORMATION\s+SECURITY|"
+    r"WARRANTIES|REPRESENTATIONS\s+AND\s+WARRANTIES|DISCLAIMER\s+OF\s+WARRANTIES|DISCLAIMER|LIMITED\s+WARRANTY|"
+    r"SEVERABILITY|ENTIRE\s+AGREEMENT|INTEGRATION|NOTICES|AMENDMENTS|MODIFICATIONS|"
+    r"FORCE\s+MAJEURE|NON-COMPETE|NON-SOLICITATION|RESTRICTIVE\s+COVENANTS|"
+    r"ASSIGNMENT|SUCCESSORS\s+AND\s+ASSIGNS|SUBCONTRACTING|"
+    r"DEFINITIONS|DEFINED\s+TERMS|INTERPRETATION|"
+    r"SCOPE\s+OF\s+SERVICES|SCOPE\s+OF\s+WORK|SERVICES|STATEMENT\s+OF\s+WORK|DELIVERABLES|DUTIES|"
+    r"INSURANCE|AUDIT\s+RIGHTS|AUDIT|TAXES|RELATIONSHIP\s+OF\s+PARTIES|MISCELLANEOUS|GENERAL\s+PROVISIONS"
     r")(?:\s*[\:\.\-\–\—]\s*|\s*$)",
+    re.IGNORECASE
+)
+
+# Regex for formal document titles (to prevent title headers from masquerading as clauses)
+REGEX_DOC_TITLE = re.compile(
+    r"^(?:\s*)(?:"
+    r"MASTER\s+SERVICES\s+AGREEMENT|SERVICES\s+AGREEMENT|NON-DISCLOSURE\s+AGREEMENT|"
+    r"EMPLOYMENT\s+AGREEMENT|LEASE\s+AGREEMENT|RESIDENTIAL\s+LEASE\s+AGREEMENT|"
+    r"COMMERCIAL\s+LEASE\s+AGREEMENT|INDENTURE\s+OF\s+LEASE|CONSULTING\s+AGREEMENT|"
+    r"VENDOR\s+AGREEMENT|PURCHASE\s+AGREEMENT|LOAN\s+AGREEMENT|PARTNERSHIP\s+AGREEMENT|"
+    r"TERMS\s+OF\s+SERVICE|TERMS\s+AND\s+CONDITIONS|PRIVACY\s+POLICY|DATA\s+PROCESSING\s+AGREEMENT"
+    r")(?:\s*[\:\.\-\–\—]\s*|\s*$)",
+    re.IGNORECASE
+)
+
+# Regex for closing / execution / signature / schedule markers
+REGEX_CLOSING_MARKER = re.compile(
+    r"^(?:\s*)(?:"
+    r"IN\s+WITNESS\s+WHEREOF|"
+    r"AS\s+WITNESS(?:\s+THE\s+HANDS)?|"
+    r"SIGNED\s+AND\s+DELIVERED|"
+    r"SIGNED,\s*SEALED\s*AND\s*DELIVERED|"
+    r"EXECUTED\s+(?:AS\s+A\s+DEED|BY)|"
+    r"THE\s+SCHEDULE(?:\s+ABOVE|\s+HEREUNDER)?\s+REFERRED\s+TO|"
+    r"SCHEDULE\s+[A-Z0-9]+|"
+    r"ANNEXURE\s+[A-Z0-9]+|"
+    r"EXHIBIT\s+[A-Z0-9]+|"
+    r"APPENDIX\s+[A-Z0-9]+"
+    r")\b",
     re.IGNORECASE
 )
 
@@ -43,13 +87,15 @@ def segment_document_clauses(
 ) -> Dict[str, Any]:
     """
     Segments cleaned legal document text into an ordered list of verbatim clause records.
+    Distinguishes titles, preambles/recitals, table-of-contents, and signature blocks
+    from operative legal clauses across all supported contract structures.
 
     Args:
         text: Cleaned document text string.
         pages: Optional list of per-page text items for page-number mapping.
 
     Returns:
-        Dict containing total_clauses, clauses list, and schema_version.
+        Dict containing total_clauses, clauses list, preamble, signature_block, and schema_version.
     """
     if not text or not text.strip():
         logger.warning("Clause segmentation rejected: Empty text provided.")
@@ -61,12 +107,16 @@ def segment_document_clauses(
             }
         )
 
-    # Normalize section boundaries: ensure paragraph break before explicit section/heading markers
+    # Normalize section boundaries: ensure paragraph break before explicit section/heading/closing markers
     lines = text.split("\n")
     normalized_lines: List[str] = []
     for l in lines:
         stripped = l.strip()
-        if REGEX_SECTION_MARKER.match(stripped) or REGEX_LEGAL_HEADING.match(stripped):
+        if (
+            REGEX_SECTION_MARKER.match(stripped)
+            or REGEX_LEGAL_HEADING.match(stripped)
+            or REGEX_CLOSING_MARKER.match(stripped)
+        ):
             normalized_lines.append("")
         normalized_lines.append(l)
     normalized_text = "\n".join(normalized_lines)
@@ -81,57 +131,106 @@ def segment_document_clauses(
             }
         )
 
+    # Check if document contains explicit operative section markers or legal headings
+    has_operative_markers = any(
+        bool(
+            (REGEX_SECTION_MARKER.match(p.split("\n")[0].strip()) or REGEX_LEGAL_HEADING.match(p.split("\n")[0].strip()))
+            and not REGEX_DOC_TITLE.match(p.split("\n")[0].strip())
+        )
+        for p in paragraphs
+    )
+
     clause_blocks: List[Dict[str, Any]] = []
+    preamble_lines: List[str] = []
+    signature_lines: List[str] = []
     current_block: Optional[Dict[str, Any]] = None
+    in_closing = False
+    seen_first_clause = False
 
-    for para in paragraphs:
-        lines = para.split("\n")
-        first_line = lines[0].strip()
+    if has_operative_markers:
+        for para in paragraphs:
+            lines = para.split("\n")
+            first_line = lines[0].strip()
 
-        section_match = REGEX_SECTION_MARKER.match(first_line)
-        heading_match = REGEX_LEGAL_HEADING.match(first_line)
+            closing_match = REGEX_CLOSING_MARKER.match(first_line)
+            title_match = REGEX_DOC_TITLE.match(first_line)
+            section_match = REGEX_SECTION_MARKER.match(first_line)
+            heading_match = REGEX_LEGAL_HEADING.match(first_line)
 
-        is_new_clause_boundary = bool(section_match or heading_match)
+            # If document title appears before first clause, assign to preamble
+            if title_match and not seen_first_clause:
+                preamble_lines.append(para)
+                continue
 
-        if is_new_clause_boundary or current_block is None:
-            # Finalize previous clause block
-            if current_block is not None and current_block["lines"]:
-                clause_text = "\n".join(current_block["lines"]).strip()
-                if len("".join(clause_text.split())) >= 15:
-                    current_block["text"] = clause_text
-                    clause_blocks.append(current_block)
+            if in_closing or closing_match:
+                if not in_closing:
+                    in_closing = True
+                    # Finalize last operative clause
+                    if current_block is not None and current_block["lines"]:
+                        clause_text = "\n".join(current_block["lines"]).strip()
+                        if len("".join(clause_text.split())) >= 15:
+                            current_block["text"] = clause_text
+                            clause_blocks.append(current_block)
+                        current_block = None
+                signature_lines.append(para)
+                continue
 
-            # Start new clause block
-            clause_num: Optional[str] = None
-            clause_title: Optional[str] = None
+            if section_match or heading_match:
+                seen_first_clause = True
+                # Finalize previous operative clause block
+                if current_block is not None and current_block["lines"]:
+                    clause_text = "\n".join(current_block["lines"]).strip()
+                    if len("".join(clause_text.split())) >= 15:
+                        current_block["text"] = clause_text
+                        clause_blocks.append(current_block)
 
-            if section_match:
-                # Extract number group
-                groups = section_match.groups()
-                clause_num = groups[0] or groups[1] or groups[2]
-                if clause_num:
-                    clause_num = clause_num.strip(".)")
-                remaining_text = groups[3] or ""
-                if remaining_text:
-                    clause_title = remaining_text.split(".")[0].strip()
-            elif heading_match:
-                clause_title = first_line.strip(":-.")
+                clause_num: Optional[str] = None
+                clause_title: Optional[str] = None
 
-            current_block = {
-                "clause_number": clause_num,
-                "title": clause_title,
+                if section_match:
+                    groups = section_match.groups()
+                    raw_num = next((g for g in groups[:6] if g is not None), None)
+                    if raw_num:
+                        clause_num = raw_num.strip(".)(")
+                    remaining_text = groups[6] if len(groups) > 6 and groups[6] else ""
+                    if remaining_text:
+                        raw_title = remaining_text.split(".")[0].strip()
+                        if len(raw_title) <= 80:
+                            clause_title = raw_title
+                        else:
+                            clause_title = raw_title[:77].strip() + "..."
+                elif heading_match:
+                    clause_title = first_line.strip(":-.")
+
+                current_block = {
+                    "clause_number": clause_num,
+                    "title": clause_title,
+                    "lines": [para]
+                }
+            else:
+                if not seen_first_clause:
+                    # Collect into preamble / recitals
+                    preamble_lines.append(para)
+                else:
+                    if current_block is not None:
+                        current_block["lines"].append(para)
+
+        # Finalize final block if not in closing
+        if current_block is not None and current_block["lines"]:
+            clause_text = "\n".join(current_block["lines"]).strip()
+            if len("".join(clause_text.split())) >= 15:
+                current_block["text"] = clause_text
+                clause_blocks.append(current_block)
+
+    else:
+        # Fallback for documents without explicit numbering or headings
+        for para in paragraphs:
+            clause_blocks.append({
+                "clause_number": None,
+                "title": None,
+                "text": para,
                 "lines": [para]
-            }
-        else:
-            # Append paragraph to ongoing clause block
-            current_block["lines"].append(para)
-
-    # Append final block
-    if current_block is not None and current_block["lines"]:
-        clause_text = "\n".join(current_block["lines"]).strip()
-        if len("".join(clause_text.split())) >= 15:
-            current_block["text"] = clause_text
-            clause_blocks.append(current_block)
+            })
 
     # Validate output: raise structured failure on zero clauses
     if not clause_blocks:
@@ -159,10 +258,13 @@ def segment_document_clauses(
                     page_num = page_item.get("page_number")
                     break
 
+        src_clause_num = block.get("clause_number")
+        src_title = block.get("title")
+
         clauses.append({
             "position": idx,
-            "clause_number": block["clause_number"],
-            "title": block["title"],
+            "clause_number": src_clause_num if src_clause_num is not None else None,
+            "title": src_title or (f"Clause {src_clause_num}" if src_clause_num else f"Section {idx}"),
             "text": verbatim_text,
             "character_count": char_count,
             "page_number": page_num
@@ -170,9 +272,14 @@ def segment_document_clauses(
 
     logger.info(f"Clause Segmentation Complete: {len(clauses)} clauses segmented successfully.")
 
+    preamble_text = "\n\n".join(preamble_lines).strip() if preamble_lines else None
+    signature_text = "\n\n".join(signature_lines).strip() if signature_lines else None
+
     return {
         "success": True,
         "total_clauses": len(clauses),
         "clauses": clauses,
+        "preamble": preamble_text,
+        "signature_block": signature_text,
         "schema_version": SCHEMA_VERSION
     }

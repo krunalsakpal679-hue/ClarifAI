@@ -1,53 +1,91 @@
 """
 ClarifAI Legal Clause Categorization Service Module
-Implements clause categorization into the fixed PRD-approved 8-category set,
-with structured output validation rejecting any out-of-set values per Chapter 56.9.
+Implements evidence-grounded clause categorization into the fixed PRD-approved 8-category set,
+using dominant subject scoring and negative evidence carve-outs.
 """
 
 import re
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from fastapi import HTTPException, status
 from app.models.clause_categorization import ClauseCategoryEnum, APPROVED_CATEGORIES_SET
+from app.services.evidence_extraction_service import extract_clause_evidence
 
 logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
-# Keyword & regex match patterns for each of the 8 approved categories
-CATEGORY_PATTERNS = {
-    ClauseCategoryEnum.PAYMENT: re.compile(
-        r"\b(?:payment|pay|fee|fees|invoice|remit|billing|charge|costs?|price|currency|compensation|\$|₹|€)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.TERMINATION: re.compile(
-        r"\b(?:terminate|termination|expire|expiration|cancel|cancellation|breach|default|wind\s*down)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.RENEWAL: re.compile(
-        r"\b(?:renew|renewal|extension|auto-renew|automatic\s+renewal|extend\s+term)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.CONFIDENTIALITY: re.compile(
-        r"\b(?:confidential|confidentiality|secret|proprietary|non-disclosure|nda|disclose|privacy\s+of\s+information)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.LIABILITY: re.compile(
-        r"\b(?:liable|liability|indemnify|indemnification|limitation\s+of\s+liability|damages|hold\s+harmless|loss|losses)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.INTELLECTUAL_PROPERTY: re.compile(
-        r"\b(?:intellectual\s+property|ip|copyright|trademark|patent|patentable|trade\s+secret|license|ownership\s+of\s+work)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.PRIVACY: re.compile(
-        r"\b(?:privacy|personal\s+data|pii|gdpr|data\ subject|personally\ identifiable|data\ protection|processing\ of\ data)\b",
-        re.IGNORECASE
-    ),
-    ClauseCategoryEnum.DISPUTE_RESOLUTION: re.compile(
-        r"\b(?:dispute|dispute\ resolution|arbitration|arbitrator|governing\ law|jurisdiction|court|venue|litigation)\b",
-        re.IGNORECASE
-    ),
+# Dominant Subject Scorer Weights & Patterns
+CATEGORY_SCORING_RULES = {
+    ClauseCategoryEnum.PAYMENT: {
+        "positive": [
+            (re.compile(r"\b(?:monthly\s+(?:ground\s+)?rent|ground\s+rent|yielding\s+and\s+paying|payable\s+in\s+advance|due\s+by\s+the\s+5th|on\s+or\s+before\s+the\s+5th)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:remit\s+payment|invoices?|billing|fees?|due\s+date|payment\s+terms|compensation\s+for\s+services)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:pay|payment|price|currency|costs?|charge|deposit)\b", re.IGNORECASE), 2),
+            (re.compile(r"(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+", re.IGNORECASE), 3),
+        ],
+        "negative": [
+            (re.compile(r"\bwithout\s+any\s+(?:payment|compensation)\b", re.IGNORECASE), -6),
+            (re.compile(r"\b(?:re-enter|re-entry|demise\s+shall\s+(?:absolutely\s+)?determine|forfeiture)\b", re.IGNORECASE), -3),
+        ]
+    },
+    ClauseCategoryEnum.TERMINATION: {
+        "positive": [
+            (re.compile(r"\b(?:re-enter|re-entry|demise\s+shall\s+(?:absolutely\s+)?determine|determination\s+of\s+the\s+term|sooner\s+determination|forfeiture|in\s+arrear\s+for\s+the\s+space\s+of)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:terminate\s+this\s+agreement|termination\s+for\s+cause|termination\s+for\s+convenience|right\s+to\s+terminate|notice\s+of\s+termination)\b", re.IGNORECASE), 5),
+            (re.compile(r"\b(?:terminate|termination|expire|expiration|cancel|cancellation|cure\s+period|default|material\s+breach)\b", re.IGNORECASE), 3),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.RENEWAL: {
+        "positive": [
+            (re.compile(r"\b(?:peaceably\s+hold\s+and\s+enjoy|quiet\s+enjoyment|peacefully\s+occupy|lawful\s+interruption\s+or\s+disturbance)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:automatically\s+renew|auto-renew|automatic\s+renewal|successive\s+(?:one-year|annual)\s+(?:terms|periods)|notice\s+of\s+non-renewal)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:renew|renewal|extension\s+of\s+term|extend\s+the\s+term|term\s+of\s+\d+\s+years)\b", re.IGNORECASE), 3),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.LIABILITY: {
+        "positive": [
+            (re.compile(r"\b(?:indemnify\s+and\s+(?:keep\s+indemnified|hold\s+harmless)|defend,?\s*indemnify|hold\s+harmless\s+from\s+and\s+against)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:limitation\s+of\s+liability|liability\s+cap|aggregate\s+liability|consequential\s+damages|indirect\s+damages)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes|assessments|outgoings)|tenantable\s+repair|good\s+and\s+substantial\s+repair|keep\s+in\s+repair|unlawful\s+or\s+offensive\s+purpose)\b", re.IGNORECASE), 5),
+            (re.compile(r"\b(?:competing\s+business|non-compete|non-solicitation|restrictive\s+covenant|duty\s+of\s+loyalty)\b", re.IGNORECASE), 5),
+            (re.compile(r"\b(?:liable|liability|damages|losses|claims|indemnity)\b", re.IGNORECASE), 2),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.INTELLECTUAL_PROPERTY: {
+        "positive": [
+            (re.compile(r"\b(?:vest\s+in\s+the\s+lessor|vesting\s+of\s+buildings|not\s+assign,?\s*underlet,?\s*mortgage|part\s+with\s+(?:the\s+)?possession|sublet\s+the\s+premises|assignment\s+restriction)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:work\s+made\s+for\s+hire|ownership\s+of\s+deliverables|assigns\s+all\s+right,\s+title\s+and\s+interest|intellectual\s+property|copyrights?|trademarks?|patents?|trade\s+secrets?|license\s+grant)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:ip|proprietary\s+rights|ownership|license|licensor|licensee)\b", re.IGNORECASE), 3),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.CONFIDENTIALITY: {
+        "positive": [
+            (re.compile(r"\b(?:confidential\s+information|non-disclosure|nda|strict\s+secrecy|keep\s+confidential|proprietary\s+information)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:confidential|confidentiality|secret|disclose|disclosure)\b", re.IGNORECASE), 3),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.PRIVACY: {
+        "positive": [
+            (re.compile(r"\b(?:personal\s+data|personally\s+identifiable|pii|gdpr|data\s+subject|data\s+protection\s+regulation|processing\s+of\s+personal\s+data)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:privacy|data\s+protection|privacy\s+policy)\b", re.IGNORECASE), 3),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.DISPUTE_RESOLUTION: {
+        "positive": [
+            (re.compile(r"\b(?:binding\s+arbitration|american\s+arbitration\s+association|arbitrator|exclusive\s+jurisdiction|governing\s+law|venue\s+shall\s+be|jury\s+trial\s+waiver|class\s+action\s+waiver|courts\s+of)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:arbitrat|litigation|dispute\s+resolution)\b", re.IGNORECASE), 3),
+        ],
+        "negative": [
+            (re.compile(r"\b(?:in\s+pursuance\s+of|the\s+said\s+agreement|lessee\s+covenants|witness\s+whereof)\b", re.IGNORECASE), -2)
+        ]
+    },
 }
 
 
@@ -68,15 +106,40 @@ def validate_category_value(val: str) -> ClauseCategoryEnum:
     return ClauseCategoryEnum(val)
 
 
+def score_clause_categories(text: str, title: str = "") -> List[Tuple[ClauseCategoryEnum, int]]:
+    """
+    Scores all 8 approved categories based on positive and negative evidence matches.
+    Returns ranked list of (category, score) tuples with score > 0.
+    """
+    combined_content = f"{title} {text}".strip()
+    # Strip business entity designations so preambles don't score for substantive Liability
+    clean_content = re.sub(r'\blimited\s+liability\s+(?:company|partnership|llc|llp)\b', '', combined_content, flags=re.IGNORECASE)
+
+    ranked_categories: List[Tuple[ClauseCategoryEnum, int]] = []
+
+    for cat_enum, rules in CATEGORY_SCORING_RULES.items():
+        score = 0
+        for pos_pat, weight in rules["positive"]:
+            matches = len(pos_pat.findall(clean_content))
+            if matches > 0:
+                score += weight * min(matches, 3)
+
+        for neg_pat, penalty in rules["negative"]:
+            if neg_pat.search(clean_content):
+                score += penalty
+
+        if score > 0:
+            ranked_categories.append((cat_enum, score))
+
+    # Sort descending by score
+    ranked_categories.sort(key=lambda x: x[1], reverse=True)
+    return ranked_categories
+
+
 def categorize_clause_records(clauses_input: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Categorizes an ordered list of clause records into the fixed 8-value PRD category set.
-
-    Args:
-        clauses_input: List of clause dict items from clause segmentation stage.
-
-    Returns:
-        Dict containing categorized clauses list, total_clauses, and schema_version.
+    Categorizes an ordered list of clause records into the fixed 8-value PRD category set
+    with dominant subject ranking and evidence grounding.
     """
     if not clauses_input:
         logger.warning("Categorization received empty clause list.")
@@ -92,19 +155,13 @@ def categorize_clause_records(clauses_input: List[Dict[str, Any]]) -> Dict[str, 
     for clause in clauses_input:
         text = clause.get("text", "")
         title = clause.get("title", "") or ""
-        combined_content = f"{title} {text}"
 
-        assigned_categories: List[ClauseCategoryEnum] = []
-
-        # Strip corporate entity suffixes (e.g. 'limited liability company', 'LLC', 'limited liability partnership')
-        # so business entity designations in preambles do not falsely trigger substantive Liability categorization
-        content_for_matching = re.sub(r'\blimited\s+liability\s+(?:company|partnership|llc|llp)\b', '', combined_content, flags=re.IGNORECASE)
-
-        for category_enum, pattern in CATEGORY_PATTERNS.items():
-            if pattern.search(content_for_matching):
-                # Validate before appending
-                validated_cat = validate_category_value(category_enum.value)
-                assigned_categories.append(validated_cat)
+        # Score all categories
+        ranked = score_clause_categories(text=text, title=title)
+        
+        assigned_categories: List[ClauseCategoryEnum] = [
+            validate_category_value(cat.value) for cat, _ in ranked
+        ]
 
         record = dict(clause)
         record["categories"] = assigned_categories

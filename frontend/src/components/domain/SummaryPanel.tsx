@@ -94,50 +94,50 @@ export const SummaryPanel: React.FC<SummaryPanelProps> = ({
         )}
 
         {!isLoading && !error && summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* 1. Purpose & Scope */}
-          <div className="p-4 rounded-lg bg-secondary-50/70 border border-secondary-200/80 space-y-1.5">
-            <div className="flex items-center gap-2 text-primary-900 font-semibold text-sm">
+          <div className="p-5 rounded-xl bg-white border border-secondary-200 space-y-2 shadow-2xs">
+            <div className="flex items-center gap-2 text-primary-950 font-semibold text-sm">
               <FileText className="w-4 h-4 text-primary-700" aria-hidden="true" />
               <h4>Contract Purpose &amp; Scope</h4>
             </div>
-            <p className="text-xs text-secondary-700 leading-relaxed">
+            <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans">
               {summary.purpose_text?.trim() ||
                 'This agreement establishes legal and operational terms between the contracting parties governing project deliverables and commercial scope.'}
             </p>
           </div>
 
           {/* 2. Key Liabilities & Risks */}
-          <div className="p-4 rounded-lg bg-risk-high-bg/60 border border-risk-high-border/70 space-y-1.5">
-            <div className="flex items-center gap-2 text-risk-high-text font-semibold text-sm">
-              <AlertTriangle className="w-4 h-4 text-risk-high" aria-hidden="true" />
+          <div className="p-5 rounded-xl bg-red-50/40 border border-red-200 space-y-2 shadow-2xs">
+            <div className="flex items-center gap-2 text-red-900 font-semibold text-sm">
+              <AlertTriangle className="w-4 h-4 text-red-600" aria-hidden="true" />
               <h4>Key Liabilities &amp; Risks</h4>
             </div>
-            <p className="text-xs text-secondary-700 leading-relaxed">
+            <p className="text-xs sm:text-sm text-red-950/90 leading-relaxed font-sans">
               {summary.key_risks_text?.trim() ||
                 'No critical or disproportionate legal hazards identified. All liability, indemnity, and termination terms adhere to standard commercial baselines.'}
             </p>
           </div>
 
           {/* 3. Essential Terms */}
-          <div className="p-4 rounded-lg bg-secondary-50/70 border border-secondary-200/80 space-y-1.5">
-            <div className="flex items-center gap-2 text-primary-900 font-semibold text-sm">
+          <div className="p-5 rounded-xl bg-white border border-secondary-200 space-y-2 shadow-2xs">
+            <div className="flex items-center gap-2 text-primary-950 font-semibold text-sm">
               <Scale className="w-4 h-4 text-primary-700" aria-hidden="true" />
               <h4>Essential Commercial Terms</h4>
             </div>
-            <p className="text-xs text-secondary-700 leading-relaxed">
+            <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans">
               {summary.key_terms_text?.trim() ||
                 'Standard commercial credit terms apply with automatic contract term renewal unless advance written notice is provided.'}
             </p>
           </div>
 
           {/* 4. Obligations */}
-          <div className="p-4 rounded-lg bg-risk-safe-bg/60 border border-risk-safe-border/70 space-y-1.5">
-            <div className="flex items-center gap-2 text-risk-safe-text font-semibold text-sm">
-              <ShieldCheck className="w-4 h-4 text-risk-safe" aria-hidden="true" />
+          <div className="p-5 rounded-xl bg-emerald-50/40 border border-emerald-200 space-y-2 shadow-2xs">
+            <div className="flex items-center gap-2 text-emerald-900 font-semibold text-sm">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" aria-hidden="true" />
               <h4>Operational Obligations</h4>
             </div>
-            <p className="text-xs text-secondary-700 leading-relaxed">
+            <p className="text-xs sm:text-sm text-emerald-950/90 leading-relaxed font-sans">
               {summary.obligations_text?.trim() ||
                 'Parties agree to standard operational covenants, professional service deliverables, and mutual confidentiality protections.'}
             </p>

@@ -3,6 +3,8 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AnalysisResultsPage } from '../index';
 import { documentService } from '../../../services/api';
+import useDocumentStore from '../../../store/documentStore';
+import useUiStore from '../../../store/uiStore';
 import { toast } from '../../../components/ui/Toast';
 import '../../../app/i18n';
 
@@ -22,6 +24,8 @@ vi.mock('react-router-dom', async () => {
 describe('AnalysisResultsPage (PRD Ch. 16, 22.7 & Section 8.3)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useDocumentStore.getState().reset();
+    useUiStore.setState({ analysisLanguage: 'en', uiLanguage: 'en' });
   });
 
   const renderAnalysisPage = (docId = 'doc-msa-001') => {
@@ -181,7 +185,7 @@ describe('AnalysisResultsPage (PRD Ch. 16, 22.7 & Section 8.3)', () => {
       uploaded_at: '',
       updated_at: '',
     });
-    vi.spyOn(documentService, 'getClauses').mockResolvedValueOnce({
+    vi.spyOn(documentService, 'getClauses').mockResolvedValue({
       count: 6,
       next: null,
       previous: null,

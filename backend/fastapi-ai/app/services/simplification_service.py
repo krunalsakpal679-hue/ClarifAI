@@ -11,7 +11,7 @@ Consolidated under AI-PHASE-LLM-INTEGRATION to use shared llm_client utilities.
 import json
 import logging
 import re
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from app.models.simplification import SimplificationLLMOutput, SimplificationResult
 from app.services.llm_client import (
     generate_llm_completion,
@@ -49,6 +49,121 @@ JSON Output Format:
 }"""
 
 
+def extract_category_evidence_span(text: str, category: Optional[str]) -> Tuple[str, str]:
+    """
+    Extracts an exact verbatim substring span from the clause text justifying the category.
+    Returns (reason, evidence_span).
+    """
+    if not text or not text.strip():
+        return "No text provided.", ""
+
+    t_lower = text.lower()
+    cat_lower = (category or "").lower()
+
+    if cat_lower == "payment" or any(k in t_lower for k in ["monthly ground rent", "ground rent", "payable in advance", "due by the 5th", "remit payment", "invoices", "fees", "rent of"]):
+        m = re.search(r'(?:monthly\s+(?:ground\s+)?rent[^\n.,;]*|yielding\s+and\s+paying[^\n.,;]*|payable\s+in\s+advance[^\n.,;]*|remit\s+payment[^\n.,;]*|invoices?\s+(?:within|due)[^\n.,;]*|fees?\s+(?:within|due)[^\n.,;]*|(?:₹|Rs\.?|\$)\s*[\d,]+[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Establishes financial consideration, payment timing, rates, and invoicing obligations."
+        return reason, span
+
+    elif cat_lower == "termination" or any(k in t_lower for k in ["re-enter", "determination of the term", "demise shall absolutely determine", "terminate", "cancellation", "forfeiture"]):
+        m = re.search(r'(?:re-enter[^\n.,;]*|demise\s+shall\s+(?:absolutely\s+)?determine[^\n.,;]*|terminate\s+this\s+agreement[^\n.,;]*|in\s+arrear\s+for\s+the\s+space\s+of[^\n.,;]*|notice\s+of\s+termination[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Specifies triggers, forfeiture remedies, re-entry rights, or procedures for terminating the agreement."
+        return reason, span
+
+    elif cat_lower == "renewal" or any(k in t_lower for k in ["quiet enjoyment", "peaceably hold and enjoy", "automatic renewal", "successive", "term of"]):
+        m = re.search(r'(?:peaceably\s+hold\s+and\s+enjoy[^\n.,;]*|quiet\s+enjoyment[^\n.,;]*|automatically\s+renew[^\n.,;]*|for\s+the\s+term\s+of[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Defines agreement duration, quiet enjoyment tenure, or automatic renewal conditions."
+        return reason, span
+
+    elif cat_lower == "liability" or any(k in t_lower for k in ["indemnif", "hold harmless", "limitation of liability", "rates, taxes", "repair", "competing business", "non-compete"]):
+        m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*|limitation\s+of\s+liability[^\n.,;]*|pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes)[^\n.,;]*|good\s+and\s+substantial\s+repair[^\n.,;]*|competing\s+business[^\n.,;]*|non-compete[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Allocates legal liability, indemnification obligations, maintenance duties, and statutory taxes."
+        return reason, span
+
+    elif cat_lower in ["intellectual property", "ip"] or any(k in t_lower for k in ["vest in the lessor", "not assign", "sublet", "copyright", "work made for hire"]):
+        m = re.search(r'(?:vest\s+in\s+the\s+lessor[^\n.,;]*|shall\s+not\s+assign,?\s*underlet[^\n.,;]*|work\s+made\s+for\s+hire[^\n.,;]*|intellectual\s+property[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Governs ownership of property assets, permanent structures, vesting, and assignment/licensing restrictions."
+        return reason, span
+
+    elif cat_lower == "confidentiality" or any(k in t_lower for k in ["confidential", "secret", "non-disclosure", "trade secret"]):
+        m = re.search(r'(?:confidential\s+information[^\n.,;]*|strict\s+secrecy[^\n.,;]*|non-disclosure[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Mandates non-disclosure and strict confidentiality over proprietary technical and business data."
+        return reason, span
+
+    elif cat_lower == "privacy" or any(k in t_lower for k in ["privacy", "personal data", "gdpr", "pii"]):
+        m = re.search(r'(?:personal\s+data[^\n.,;]*|gdpr[^\n.,;]*|data\s+protection[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Regulates processing and security protection for personal data."
+        return reason, span
+
+    elif cat_lower == "dispute resolution" or any(k in t_lower for k in ["arbitration", "jurisdiction", "governing law", "court"]):
+        m = re.search(r'(?:binding\s+arbitration[^\n.,;]*|exclusive\s+jurisdiction[^\n.,;]*|governing\s+law[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        reason = "Specifies binding dispute resolution mechanisms, choice of law, and court jurisdiction."
+        return reason, span
+
+    else:
+        first_clause_sent = text.strip().split("\n")[0].split(".")[0].strip()
+        return "Standard contractual provision.", first_clause_sent[:min(80, len(first_clause_sent))]
+
+
+def extract_risk_evidence_span(
+    text: str,
+    severity: str,
+    rule_findings: Optional[List[Dict[str, Any]]] = None
+) -> Tuple[str, str]:
+    """
+    Extracts an exact verbatim substring span from the clause text justifying the risk level.
+    Returns (reason, evidence_span).
+    """
+    if not text or not text.strip():
+        return "No text provided.", ""
+
+    t_lower = text.lower()
+
+    if rule_findings:
+        for rf in rule_findings:
+            matched = rf.get("matched_span") or rf.get("matched_text")
+            if matched and matched in text:
+                reason = f"Identified {rf.get('risk_signal', 'risk pattern')} ({rf.get('rule_id', 'R-RULE')}) within clause text."
+                return reason, matched
+
+    if "re-entry" in t_lower or "arrears" in t_lower or "re-enter" in t_lower:
+        m = re.search(r'(?:re-enter[^\n.,;]*|in\s+arrear\s+for\s+the\s+space\s+of[^\n.,;]*|demise\s+shall\s+(?:absolutely\s+)?determine[^\n.,;]*)', text, re.IGNORECASE)
+        if m:
+            return "Permits unilateral landlord re-entry and immediate lease forfeiture upon payment arrears.", m.group(0).strip()
+
+    if "vest in the lessor" in t_lower or "without any payment" in t_lower:
+        m = re.search(r'(?:vest\s+in\s+the\s+lessor[^\n.,;]*|without\s+any\s+payment[^\n.,;]*|shall\s+not\s+assign,?\s*underlet[^\n.,;]*)', text, re.IGNORECASE)
+        if m:
+            return "Mandates automatic forfeiture of tenant-constructed structures to landlord upon expiry without financial compensation.", m.group(0).strip()
+
+    if "limitation of liability" in t_lower or "aggregate liability" in t_lower:
+        m = re.search(r'(?:limitation\s+of\s+liability[^\n.,;]*|aggregate\s+liability[^\n.,;]*|liability\s+shall\s+not\s+exceed[^\n.,;]*)', text, re.IGNORECASE)
+        if m:
+            return "Caps maximum recoverable damages, limiting financial recovery in breach scenarios.", m.group(0).strip()
+
+    if "indemnif" in t_lower:
+        m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*)', text, re.IGNORECASE)
+        if m:
+            return "Imposes broad indemnity obligations requiring defense and payment of third-party claims.", m.group(0).strip()
+
+    if str(severity).lower() in ("high", "moderate"):
+        first_sent = text.strip().split("\n")[0].split(".")[0].strip()
+        clean_span = first_sent[:min(80, len(first_sent))] if first_sent else text[:min(80, len(text))]
+        return f"Identified elevated {severity} contractual risk exposure.", clean_span
+
+    first_sent = text.strip().split("\n")[0].split(".")[0].strip()
+    clean_span = first_sent[:min(80, len(first_sent))] if first_sent else text[:min(80, len(text))]
+    return "Balanced contractual terms with standard operational covenants and no unilateral risk provisions.", clean_span
+
+
 def synthesize_detailed_plain_english_analysis(
     text: str,
     severity: str = "Safe",
@@ -56,7 +171,7 @@ def synthesize_detailed_plain_english_analysis(
     rule_findings: Optional[List[Dict[str, Any]]] = None,
     clause_number: Optional[str] = None,
     title: Optional[str] = None
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
     Synthesizes an authoritative, detailed, source-grounded plain-English breakdown
     answering the user's core questions without generic filler.
@@ -67,6 +182,7 @@ def synthesize_detailed_plain_english_analysis(
     - IMPORTANT DETAILS (amounts, dates, deadlines, conditions)
     - WHAT HAPPENS IF THE CONDITION IS NOT MET (consequences)
     - WHY THIS WAS FLAGGED (evidence-grounded rationale)
+    - STRUCTURED EXPLANATION (what_this_clause_means, risk, category)
     """
     t_lower = text.lower()
 
@@ -289,9 +405,28 @@ def synthesize_detailed_plain_english_analysis(
 
     full_plain_summary = "\n\n".join(sections)
 
+    # Structured Evidence-Backed Explanation Breakdown
+    cat_reason, cat_evidence = extract_category_evidence_span(text, category)
+    risk_reason, risk_evidence = extract_risk_evidence_span(text, severity, rule_findings)
+
+    structured_explanation = {
+        "what_this_clause_means": what_means,
+        "risk": {
+            "severity": severity,
+            "reason": why_rationale or risk_reason,
+            "evidence": risk_evidence
+        },
+        "category": {
+            "label": category,
+            "reason": cat_reason,
+            "evidence": cat_evidence
+        }
+    }
+
     return {
         "simplified_text": full_plain_summary,
-        "why_flagged": why_rationale
+        "why_flagged": why_rationale,
+        "structured_explanation": structured_explanation
     }
 
 
@@ -309,7 +444,7 @@ def simplify_single_clause(
     clause_number = clause.get("clause_number")
     title = clause.get("title")
     text = clause.get("text") or clause.get("original_text", "")
-    severity = clause.get("final_severity") or clause.get("severity") or "Safe"
+    severity = clause.get("final_severity") or clause.get("severity") or "RISK_CLASSIFICATION_UNAVAILABLE"
     categories = clause.get("categories", [])
 
     if not text or not text.strip():
@@ -385,6 +520,21 @@ Rule Signals: {signals_summary}
             raise ValueError(err_why)
 
         logger.info(f"Clause {clause_id} simplification PASSED: severity='{severity}'.")
+        cat_reason, cat_evidence = extract_category_evidence_span(text, categories[0] if categories else None)
+        risk_reason, risk_evidence = extract_risk_evidence_span(text, severity, clause_rule_findings)
+        structured_exp = {
+            "what_this_clause_means": simplified_text,
+            "risk": {
+                "severity": severity,
+                "reason": why_flagged or risk_reason,
+                "evidence": risk_evidence
+            },
+            "category": {
+                "label": categories[0] if categories else None,
+                "reason": cat_reason,
+                "evidence": cat_evidence
+            }
+        }
         return {
             "position": position,
             "clause_id": clause_id,
@@ -393,6 +543,7 @@ Rule Signals: {signals_summary}
             "original_text": text,
             "simplified_text": simplified_text,
             "why_flagged": why_flagged,
+            "structured_explanation": structured_exp,
             "severity": severity,
             "status": "SUCCESS"
         }
@@ -409,6 +560,19 @@ Rule Signals: {signals_summary}
                 "original_text": text,
                 "simplified_text": text,
                 "why_flagged": "Clause simplification unavailable.",
+                "structured_explanation": {
+                    "what_this_clause_means": "Clause simplification unavailable.",
+                    "risk": {
+                        "severity": severity,
+                        "reason": "Risk analysis unavailable.",
+                        "evidence": None
+                    },
+                    "category": {
+                        "label": categories[0] if categories else None,
+                        "reason": "Category analysis unavailable.",
+                        "evidence": None
+                    }
+                },
                 "severity": severity,
                 "status": "FAILED_SIMPLIFICATION"
             }
@@ -432,6 +596,7 @@ Rule Signals: {signals_summary}
             "original_text": text,
             "simplified_text": synth_res["simplified_text"],
             "why_flagged": synth_res["why_flagged"],
+            "structured_explanation": synth_res.get("structured_explanation"),
             "severity": severity,
             "status": "SUCCESS"
         }

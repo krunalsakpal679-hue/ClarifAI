@@ -296,8 +296,8 @@ def classify_document_clauses_risk(
             raw_classification=raw_res,
             rule_findings=clause_rule_findings
         )
-        # Ensure backwards compatible severity field
-        validated_item["severity"] = validated_item["final_severity"] or "Safe"
+        # Explicitly preserve validated final severity without silent Safe fallback (RISK_CLASSIFICATION_UNAVAILABLE on failure)
+        validated_item["severity"] = validated_item["final_severity"] or "RISK_CLASSIFICATION_UNAVAILABLE"
 
         classified_items.append(validated_item)
 

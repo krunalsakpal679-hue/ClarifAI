@@ -218,3 +218,105 @@ def test_inspect_analysis_confidentiality_grounding():
     assert "5 years" in simplified
     assert "rent" not in simplified.lower()
     assert "tenant" not in simplified.lower()
+
+
+def test_elimination_of_silent_safe_fallback():
+    """
+    Goal 1 Regression Test: Ensures missing or failed risk classification
+    explicitly returns RISK_CLASSIFICATION_UNAVAILABLE, NEVER silently defaulting to 'Safe'.
+    """
+    clause_missing_sev = {
+        "clause_id": "c-unavail-1",
+        "position": 1,
+        "text": "Any dispute arising under this Agreement shall be submitted to binding arbitration in New York.",
+        "category": "Dispute Resolution"
+    }
+    res = simplify_single_clause(clause_missing_sev)
+    assert res["severity"] == "RISK_CLASSIFICATION_UNAVAILABLE"
+    assert res["severity"] != "Safe"
+    assert res["severity"] != "safe"
+
+    # Mock per-clause failure isolation
+    failing_client = MagicMock()
+    failing_client.chat.completions.create.side_effect = RuntimeError("Classifier/LLM timeout")
+    fail_res = simplify_single_clause(clause_missing_sev, override_client=failing_client)
+    assert fail_res["status"] == "FAILED_SIMPLIFICATION"
+    assert fail_res["severity"] == "RISK_CLASSIFICATION_UNAVAILABLE"
+    assert fail_res["severity"] != "Safe"
+
+
+def test_structured_evidence_traceability_literal_substrings():
+    """
+    Goal 2 Anti-Hallucination Regression Test:
+    Asserts every generated risk and category evidence span is a literal substring
+    of the source clause text.
+    """
+    test_clauses = [
+        {
+            "clause_id": "1",
+            "position": 1,
+            "text": "The Lessee shall yield and pay monthly ground rent of ₹75,000 payable in advance on or before the 5th day of each calendar month.",
+            "category": "Payment",
+            "severity": "Safe",
+            "rule_findings": []
+        },
+        {
+            "clause_id": "2",
+            "position": 2,
+            "text": "If the rent shall be in arrear for 21 days, the Lessor may re-enter into and upon the Demised Premises and determine the lease without compensation.",
+            "category": "Termination",
+            "severity": "High",
+            "rule_findings": [{"rule_id": "R001", "risk_signal": "Unilateral Forfeiture/Re-entry", "clause_id": "2"}]
+        },
+        {
+            "clause_id": "3",
+            "position": 3,
+            "text": "The Tenant shall not assign, underlet, or part with possession of the premises, and all buildings erected shall vest in the lessor without compensation upon determination of the term.",
+            "category": "Intellectual Property",
+            "severity": "High",
+            "rule_findings": [{"rule_id": "R002", "risk_signal": "Asset Forfeiture to Lessor", "clause_id": "3"}]
+        },
+        {
+            "clause_id": "4",
+            "position": 4,
+            "text": "The Lessee paying the rent and performing the covenants shall peaceably hold and enjoy the Demised Premises during the said term without interruption by the Lessor.",
+            "category": "Renewal",
+            "severity": "Safe",
+            "rule_findings": []
+        },
+        {
+            "clause_id": "5",
+            "position": 5,
+            "text": "The Lessee covenants to bear, pay and discharge all existing and future rates, taxes, and assessments, and to keep the premises in good and tenantable repair.",
+            "category": "Liability",
+            "severity": "Moderate",
+            "rule_findings": [{"rule_id": "R003", "risk_signal": "Unlimited Repair/Tax Burden", "clause_id": "5"}]
+        }
+    ]
+
+    for tc in test_clauses:
+        res = simplify_single_clause(tc)
+        assert "structured_explanation" in res
+        se = res["structured_explanation"]
+
+        # Required fields in structured breakdown
+        assert "what_this_clause_means" in se
+        assert "risk" in se
+        assert "category" in se
+
+        assert se["what_this_clause_means"]
+        assert "reason" in se["risk"]
+        assert "reason" in se["category"]
+
+        # ANTI-HALLUCINATION EVIDENCE CHECK:
+        # Every non-null evidence span must be a direct, literal substring of the source clause text
+        if se["category"].get("evidence"):
+            cat_ev = se["category"]["evidence"]
+            assert isinstance(cat_ev, str)
+            assert cat_ev in tc["text"], f"Category evidence '{cat_ev}' is NOT a literal substring of clause text: '{tc['text']}'"
+
+        if se["risk"].get("evidence"):
+            risk_ev = se["risk"]["evidence"]
+            assert isinstance(risk_ev, str)
+            assert risk_ev in tc["text"], f"Risk evidence '{risk_ev}' is NOT a literal substring of clause text: '{tc['text']}'"
+

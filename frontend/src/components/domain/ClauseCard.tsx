@@ -223,12 +223,32 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
                   {lang === 'hi' ? 'इसका क्या अर्थ है (WHAT THIS MEANS)' : 'WHAT THIS MEANS'}
                 </p>
                 <p className="text-xs sm:text-sm text-secondary-900 leading-relaxed font-sans whitespace-pre-line">
-                  {simplifiedText || 'No plain-English summary available.'}
+                  {clause.structured_explanation?.what_this_clause_means || simplifiedText || 'No plain-English summary available.'}
                 </p>
               </div>
 
-              {/* Box 2: RISK SEVERITY RATIONALE */}
-              <div className="p-4 rounded-xl border border-secondary-200 bg-white space-y-1.5 shadow-2xs">
+              {/* Box 2: CATEGORY ASSESSMENT (If structured explanation provided) */}
+              {clause.structured_explanation?.category && (
+                <div className="p-4 rounded-xl border border-secondary-200 bg-white space-y-2 shadow-2xs">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-secondary-700">
+                    CATEGORY ASSESSMENT ({clause.structured_explanation.category.label || clause.category || 'General'})
+                  </p>
+                  <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans whitespace-pre-line">
+                    {clause.structured_explanation.category.reason}
+                  </p>
+                  {clause.structured_explanation.category.evidence && (
+                    <div className="p-2.5 rounded-lg bg-secondary-50 border border-secondary-200 text-xs font-serif text-secondary-800 italic">
+                      <span className="font-sans font-semibold text-[10px] text-secondary-500 uppercase not-italic block mb-0.5">
+                        Category Evidence Span:
+                      </span>
+                      &ldquo;{clause.structured_explanation.category.evidence}&rdquo;
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Box 3: RISK SEVERITY RATIONALE */}
+              <div className="p-4 rounded-xl border border-secondary-200 bg-white space-y-2 shadow-2xs">
                 <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-secondary-700">
                   <Info className="w-3.5 h-3.5 text-secondary-500" aria-hidden="true" />
                   <span>
@@ -238,9 +258,17 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
                   </span>
                 </p>
                 <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans whitespace-pre-line">
-                  {explanationText ||
+                  {clause.structured_explanation?.risk?.reason || explanationText ||
                     'Standard contractual clause aligning with legal commercial baselines.'}
                 </p>
+                {clause.structured_explanation?.risk?.evidence && (
+                  <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200 text-xs font-serif text-amber-950 italic">
+                    <span className="font-sans font-semibold text-[10px] text-amber-700 uppercase not-italic block mb-0.5">
+                      Risk Evidence Span:
+                    </span>
+                    &ldquo;{clause.structured_explanation.risk.evidence}&rdquo;
+                  </div>
+                )}
               </div>
             </div>
           </div>

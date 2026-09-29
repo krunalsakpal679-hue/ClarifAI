@@ -26,6 +26,24 @@ export interface RuleFinding {
 
 export type ClauseClassificationStatus = 'analyzed' | 'failed';
 
+export interface RiskExplanation {
+  severity?: SeverityLevel | string | null;
+  reason: string;
+  evidence?: string | null;
+}
+
+export interface CategoryExplanation {
+  label?: RiskCategory | string | null;
+  reason: string;
+  evidence?: string | null;
+}
+
+export interface StructuredClauseExplanation {
+  what_this_clause_means: string;
+  risk: RiskExplanation;
+  category: CategoryExplanation;
+}
+
 export interface ClauseItem {
   id: string;
   document_id: string;
@@ -35,6 +53,7 @@ export interface ClauseItem {
   severity: SeverityLevel | null;
   category: RiskCategory | null;
   explanation: string;
+  structured_explanation?: StructuredClauseExplanation;
   status: ClauseClassificationStatus;
   rule_findings: RuleFinding[];
   created_at: string;

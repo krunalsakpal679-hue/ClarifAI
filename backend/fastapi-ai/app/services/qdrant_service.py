@@ -175,7 +175,7 @@ def index_document_clauses(
             "language": clause.get("language", "en"),
             "text": clause.get("text", c_text),
             "original_text": clause.get("original_text", c_text),
-            "severity": clause.get("severity", clause.get("final_severity", "Safe")),
+            "severity": clause.get("severity") or clause.get("final_severity") or "RISK_CLASSIFICATION_UNAVAILABLE",
             "categories": clause.get("categories", []),
             "simplified_text": clause.get("simplified_text", ""),
             "why_flagged": clause.get("why_flagged", "")

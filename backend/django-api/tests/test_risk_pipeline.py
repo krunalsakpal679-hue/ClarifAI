@@ -14,6 +14,8 @@ from django.test import TestCase, override_settings
 from apps.documents.models import (
     Clause,
     ClauseStatus,
+    ClauseSeverity,
+    ClauseCategory,
     Document,
     DocumentStatus,
     DocumentSummary,
@@ -189,3 +191,80 @@ class RiskPipelineTestCase(TestCase):
         self.doc.refresh_from_db()
         self.assertEqual(self.doc.status, DocumentStatus.FAILED)
         self.assertIn("429 Quota Exhausted", self.doc.failure_reason)
+
+    def test_risk_classification_unavailable_mock_failure_never_safe(self):
+        """
+        Goal 1 Regression Test: Mocks a risk classification failure / unavailable state.
+        Asserts the API and serializer return explicit failure state (severity=null, status='failed'), NOT 'safe'.
+        """
+        from apps.documents.serializers import ClauseSerializer, DocumentDetailSerializer
+
+        unavail_payload = {
+            "document_id": str(self.doc.id),
+            "summary": {"overview": "Unavailable classifier output test", "key_points": []},
+            "clauses": [
+                {
+                    "clause_id": "c-unavail-test",
+                    "severity": "RISK_CLASSIFICATION_UNAVAILABLE",
+                    "category": "Dispute Resolution",
+                    "original_text": "All claims shall be resolved in arbitration.",
+                    "simplified_text": "All claims shall be resolved in arbitration.",
+                    "explanation": "Risk classification unavailable.",
+                    "rule_findings": [],
+                    "status": "failed"
+                }
+            ]
+        }
+
+        with patch("services.ai_client.process_document", return_value=unavail_payload):
+            process_document(str(self.doc.id))
+
+        clause = Clause.objects.get(document=self.doc)
+        self.assertEqual(clause.status, ClauseStatus.FAILED)
+        self.assertIsNone(clause.severity)
+        self.assertNotEqual(clause.severity, 'safe')
+
+        # Test serializer representation
+        serializer = ClauseSerializer(clause)
+        data = serializer.data
+        self.assertIsNone(data["severity"])
+        self.assertNotEqual(data["severity"], "safe")
+        self.assertIn("structured_explanation", data)
+        self.assertIsNone(data["structured_explanation"]["risk"]["severity"])
+
+        # Test Document overall risk does NOT fall back to 'safe'
+        doc_serializer = DocumentDetailSerializer(self.doc)
+        self.assertIsNone(doc_serializer.data["overall_risk"])
+        self.assertNotEqual(doc_serializer.data["overall_risk"], "safe")
+
+    def test_clause_serializer_structured_explanation_evidence_traceability(self):
+        """
+        Goal 2 Regression Test: Verifies ClauseSerializer outputs structured_explanation with
+        literal substring evidence matching the source text.
+        """
+        from apps.documents.serializers import ClauseSerializer
+
+        clause = Clause.objects.create(
+            document=self.doc,
+            position=99,
+            original_text="The Lessee shall yield and pay monthly ground rent of ₹75,000 payable in advance on or before the 5th day of each month.",
+            simplified_text="The tenant must pay monthly rent of ₹75,000 on or before the 5th of each month.",
+            severity=ClauseSeverity.SAFE,
+            category=ClauseCategory.PAYMENT,
+            explanation="Standard payment terms.",
+            status=ClauseStatus.COMPLETE
+        )
+
+        serializer = ClauseSerializer(clause)
+        data = serializer.data
+        self.assertIn("structured_explanation", data)
+        se = data["structured_explanation"]
+
+        assert "what_this_clause_means" in se
+        assert "risk" in se
+        assert "category" in se
+        assert se["category"]["label"] == "payment" or se["category"]["label"] == "Payment"
+
+        if se["category"]["evidence"]:
+            self.assertIn(se["category"]["evidence"], clause.original_text)
+

@@ -357,7 +357,7 @@ export const ClauseDetailPage: React.FC = () => {
             {/* What This Means */}
             <div className="p-4 bg-primary-50/40 rounded-lg border border-primary-200/70">
               <p className="font-semibold text-xs text-primary-900 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <span>{analysisLanguage === 'hi' ? 'इसका क्या अर्थ है' : 'What This Means'}</span>
+                <span>{analysisLanguage === 'hi' ? 'इसका क्या अर्थ है' : 'What This Clause Means'}</span>
                 {analysisLanguage === 'hi' && (
                   <span className="text-[10px] font-medium normal-case px-2 py-0.5 rounded bg-primary-100 text-primary-800">
                     हिंदी
@@ -366,22 +366,51 @@ export const ClauseDetailPage: React.FC = () => {
               </p>
               <p className="text-sm leading-relaxed text-primary-950 font-sans whitespace-pre-line">
                 {analysisLanguage === 'hi'
-                  ? (clause.simplified_text_hi || clause.simplified_text)
-                  : clause.simplified_text}
+                  ? (clause.simplified_text_hi || clause.structured_explanation?.what_this_clause_means || clause.simplified_text)
+                  : (clause.structured_explanation?.what_this_clause_means || clause.simplified_text)}
               </p>
             </div>
 
+            {/* Category Assessment */}
+            {clause.structured_explanation?.category && (
+              <div className="p-4 bg-secondary-50 rounded-lg border border-secondary-200 space-y-2">
+                <p className="font-semibold text-xs text-secondary-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5 text-secondary-600" aria-hidden="true" />
+                  <span>Category Assessment ({clause.structured_explanation.category.label || clause.category || 'General'})</span>
+                </p>
+                <p className="text-xs sm:text-sm leading-relaxed text-secondary-700 whitespace-pre-line">
+                  {clause.structured_explanation.category.reason}
+                </p>
+                {clause.structured_explanation.category.evidence && (
+                  <div className="p-2.5 rounded-lg bg-white border border-secondary-200 text-xs font-serif text-secondary-800 italic">
+                    <span className="font-sans font-semibold text-[10px] text-secondary-500 uppercase not-italic block mb-0.5">
+                      Category Evidence Span:
+                    </span>
+                    &ldquo;{clause.structured_explanation.category.evidence}&rdquo;
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Risk Severity Rationale */}
-            <div className="p-4 bg-secondary-50 rounded-lg border border-secondary-200">
+            <div className="p-4 bg-secondary-50 rounded-lg border border-secondary-200 space-y-2">
               <p className="font-semibold text-xs text-secondary-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <ShieldAlert className="w-3.5 h-3.5 text-secondary-600" aria-hidden="true" />
                 <span>{analysisLanguage === 'hi' ? 'जोखिम गंभीरता का कारण' : 'Risk Severity Rationale'}</span>
               </p>
               <p className="text-xs sm:text-sm leading-relaxed text-secondary-700 whitespace-pre-line">
                 {analysisLanguage === 'hi'
-                  ? (clause.why_flagged_hi || clause.explanation)
-                  : clause.explanation}
+                  ? (clause.why_flagged_hi || clause.structured_explanation?.risk?.reason || clause.explanation)
+                  : (clause.structured_explanation?.risk?.reason || clause.explanation)}
               </p>
+              {clause.structured_explanation?.risk?.evidence && (
+                <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200 text-xs font-serif text-amber-950 italic">
+                  <span className="font-sans font-semibold text-[10px] text-amber-700 uppercase not-italic block mb-0.5">
+                    Risk Evidence Span:
+                  </span>
+                  &ldquo;{clause.structured_explanation.risk.evidence}&rdquo;
+                </div>
+              )}
             </div>
 
             {/* Translation fallback notice if Hindi requested and translation unavailable */}

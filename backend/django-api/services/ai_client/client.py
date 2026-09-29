@@ -515,6 +515,10 @@ class RealAIClient:
         try:
             embed_res = self.generate_embeddings(classified_clauses)
             embedded_clauses = embed_res.get('embedded_clauses') or embed_res.get('clauses', classified_clauses)
+            try:
+                self.delete_document_embeddings(document_id=document_id, user_id=user_id)
+            except Exception as del_err:
+                logger.debug(f"Pre-indexing vector cleanup note for {document_id}: {del_err}")
             self.index_document_qdrant(
                 user_id=user_id,
                 document_id=document_id,
@@ -565,32 +569,30 @@ class RealAIClient:
                 matched_approved = next((ac for ac in APPROVED_CATEGORIES if ac.lower() == str(raw_cat).lower()), None)
                 raw_cat = matched_approved
 
-            # If still missing or unrecognized, detect from clause heading and content patterns
+            # If still missing or unrecognized, detect from clause heading and content patterns with dominant subject scoring
             if not raw_cat:
                 lower_text = orig_text.lower()
                 first_line = lower_text.split('\n')[0].strip()
-                if any(w in first_line for w in ['limitation of liability', 'liability cap', 'aggregate liability']) or any(w in lower_text for w in ['total liability under this agreement', 'limitation of liability', 'liability shall not exceed']):
-                    raw_cat = 'Liability'
-                elif any(w in first_line for w in ['indemnif', 'hold harmless', 'defend']) or any(w in lower_text for w in ['defend, indemnify', 'hold harmless']):
-                    raw_cat = 'Liability'
-                elif any(w in first_line for w in ['intellectual property', 'copyright', 'patent', 'work made for hire']) or any(w in lower_text for w in ['work made for hire', 'copyright law, and client shall own']):
-                    raw_cat = 'Intellectual Property'
-                elif any(w in first_line for w in ['fees', 'payment', 'invoic']) or any(w in lower_text for w in ['undisputed invoices', 'remit payment', 'net 30', 'accrue interest at the rate of']):
-                    raw_cat = 'Payment'
-                elif any(w in first_line for w in ['term and renewal', 'renewal']) or any(w in lower_text for w in ['automatically renew', 'successive one-year periods', 'notice of non-renewal']):
-                    raw_cat = 'Renewal'
-                elif any(w in first_line for w in ['terminat']) or any(w in lower_text for w in ['terminate this agreement', 'convenience upon']):
+                if any(w in lower_text for w in ['re-enter', 're-entry', 'demise shall absolutely determine', 'determination of the term', 'arrear for the space of', 'terminate this agreement']):
                     raw_cat = 'Termination'
-                elif any(w in first_line for w in ['confidential']) or any(w in lower_text for w in ['confidential and proprietary information', 'non-disclosure']):
+                elif any(w in lower_text for w in ['vest in the lessor', 'not assign', 'underlet', 'mortgage or part with possession', 'work made for hire', 'intellectual property', 'copyright']):
+                    raw_cat = 'Intellectual Property'
+                elif any(w in lower_text for w in ['peaceably hold and enjoy', 'quiet enjoyment', 'automatically renew', 'successive one-year periods', 'term and renewal']):
+                    raw_cat = 'Renewal'
+                elif any(w in lower_text for w in ['indemnif', 'hold harmless', 'rates, taxes', 'rates and taxes', 'tenantable repair', 'limitation of liability', 'liability cap', 'aggregate liability']):
+                    raw_cat = 'Liability'
+                elif any(w in lower_text for w in ['monthly ground rent', 'ground rent', 'yielding and paying', 'payable in advance', 'due by the 5th', 'remit payment', 'undisputed invoices', 'net 30', 'invoices are payable']):
+                    raw_cat = 'Payment'
+                elif any(w in lower_text for w in ['confidential and proprietary information', 'non-disclosure', 'trade secret', 'strict secrecy']):
                     raw_cat = 'Confidentiality'
-                elif any(w in first_line for w in ['privacy', 'data protection', 'gdpr', 'personal data']):
+                elif any(w in lower_text for w in ['privacy', 'data protection', 'gdpr', 'personal data']):
                     raw_cat = 'Privacy'
-                elif any(w in first_line for w in ['dispute', 'arbitrat', 'governing law', 'non-solicit', 'entire agreement']) or any(w in lower_text for w in ['binding arbitration', 'american arbitration association', 'conflict of laws', 'supersedes all prior']):
+                elif any(w in lower_text for w in ['binding arbitration', 'american arbitration association', 'exclusive jurisdiction', 'governing law', 'jury trial']):
                     raw_cat = 'Dispute Resolution'
-                elif any(w in lower_text for w in ['invoic', 'payment', 'fee', 'charge', 'billing', 'remit', 'price', 'interest']):
+                elif any(w in lower_text for w in ['pay', 'rent', 'fee', 'charge', 'billing', 'price']):
                     raw_cat = 'Payment'
                 else:
-                    raw_cat = 'Dispute Resolution'
+                    raw_cat = 'Renewal'
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
 

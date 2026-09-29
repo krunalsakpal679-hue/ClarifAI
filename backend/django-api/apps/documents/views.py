@@ -262,6 +262,7 @@ class ClauseListView(generics.ListAPIView):
                     c.translation_available = is_available
                     if str(c.id) in trans_map:
                         c.simplified_text_hi = trans_map[str(c.id)].get('simplified_text_hi')
+                        c.why_flagged_hi = trans_map[str(c.id)].get('why_flagged_hi')
             else:
                 try:
                     clauses_payload = [
@@ -367,6 +368,15 @@ class ClauseDetailView(generics.RetrieveAPIView):
                         clause.simplified_text_hi = clauses_hi[0].get("simplified_text_hi") or clauses_hi[0].get("simplified_text")
                         clause.why_flagged_hi = clauses_hi[0].get("why_flagged_hi") or clauses_hi[0].get("why_flagged")
                         clause.translation_available = True
+                        
+                        # Cache single-clause result to preserve cache consistency
+                        current_cached = cached_trans if cached_trans else {"translation_available": True, "clauses_map": {}}
+                        current_map = current_cached.get("clauses_map", {})
+                        current_map[str(clause.id)] = {
+                            "simplified_text_hi": clause.simplified_text_hi,
+                            "why_flagged_hi": clause.why_flagged_hi
+                        }
+                        cache.set(cache_key, {"translation_available": True, "clauses_map": current_map}, 86400)
                     else:
                         clause.translation_available = False
                 except Exception:

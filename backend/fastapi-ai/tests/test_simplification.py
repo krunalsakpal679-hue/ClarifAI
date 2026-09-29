@@ -16,6 +16,8 @@ from app.services.simplification_service import (
     check_for_prompt_injection_leak
 )
 
+from app.core.config import settings
+
 client = TestClient(app)
 
 
@@ -150,12 +152,69 @@ def test_simplify_clauses_api_endpoint():
             {"position": 1, "clause_id": "1", "text": "Invoices are payable net 30 days.", "severity": "Safe"}
         ]
     }
+    headers = {}
+    if settings.INTERNAL_SERVICE_SECRET:
+        headers["X-Internal-Service-Secret"] = settings.INTERNAL_SERVICE_SECRET
 
-    # Endpoint will attempt Groq call or fallback cleanly on API key / network state
-    response = client.post("/api/v1/simplify-clauses", json=payload)
+    response = client.post("/api/v1/simplify-clauses", json=payload, headers=headers)
     assert response.status_code == 200
 
     data = response.json()
     assert data["success"] is True
     assert data["total_clauses"] == 1
     assert data["clauses"][0]["position"] == 1
+
+
+def test_inspect_analysis_detailed_structure_and_source_grounding():
+    """Verifies Inspect Analysis delivers rich, structured plain-English analysis grounded in actual source facts."""
+    clause = {
+        "clause_id": "c-lease-rent",
+        "position": 1,
+        "text": "The Lessee shall pay to the Lessor a monthly rent of ₹75,000 on or before the 5th day of each calendar month. In case of delay, a late payment fee of ₹1,500 shall be levied.",
+        "category": "Payment",
+        "severity": "Moderate",
+        "rule_findings": [
+            {"rule_id": "R001", "name": "Late-Payment Penalty", "description": "Late payment penalty detected"}
+        ]
+    }
+    res = simplify_single_clause(clause)
+    simplified = res["simplified_text"]
+    explanation = res["why_flagged"]
+
+    # 1. Structural multi-section headers exist
+    assert "WHAT THIS CLAUSE MEANS:" in simplified
+    assert "WHO IS AFFECTED:" in simplified
+    assert "OBLIGATIONS & RIGHTS:" in simplified
+    assert "IMPORTANT DETAILS:" in simplified
+
+    # 2. Key facts and figures strictly preserved without hallucination
+    assert "₹75,000" in simplified
+    assert "₹1,500" in simplified
+    assert "5th day" in simplified or "5th" in simplified
+
+    # 3. Grounded risk rationale with rule evidence
+    assert "R001" in explanation or "Late-Payment Penalty" in explanation or "Moderate" in explanation
+
+    # 4. Zero generic filler
+    assert "This clause may create potential obligations or liability exposure." not in simplified
+    assert "This provision may be important." not in simplified
+
+
+def test_inspect_analysis_confidentiality_grounding():
+    """Verifies confidentiality clause receives confidentiality-grounded breakdown, not lease or payment concepts."""
+    clause = {
+        "clause_id": "c-nda-1",
+        "position": 2,
+        "text": "The Receiving Party agrees to hold in confidence all Proprietary Information disclosed by Disclosing Party for a period of 5 years following termination.",
+        "category": "Confidentiality",
+        "severity": "Safe",
+        "rule_findings": []
+    }
+    res = simplify_single_clause(clause)
+    simplified = res["simplified_text"]
+
+    # Verify confidentiality concepts present and lease concepts absent
+    assert "confidential" in simplified.lower() or "proprietary" in simplified.lower() or "disclos" in simplified.lower()
+    assert "5 years" in simplified
+    assert "rent" not in simplified.lower()
+    assert "tenant" not in simplified.lower()

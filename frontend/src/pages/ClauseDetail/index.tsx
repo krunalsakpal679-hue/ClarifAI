@@ -364,7 +364,7 @@ export const ClauseDetailPage: React.FC = () => {
                   </span>
                 )}
               </p>
-              <p className="text-sm leading-relaxed text-primary-950 font-sans">
+              <p className="text-sm leading-relaxed text-primary-950 font-sans whitespace-pre-line">
                 {analysisLanguage === 'hi'
                   ? (clause.simplified_text_hi || clause.simplified_text)
                   : clause.simplified_text}
@@ -377,7 +377,7 @@ export const ClauseDetailPage: React.FC = () => {
                 <ShieldAlert className="w-3.5 h-3.5 text-secondary-600" aria-hidden="true" />
                 <span>{analysisLanguage === 'hi' ? 'जोखिम गंभीरता का कारण' : 'Risk Severity Rationale'}</span>
               </p>
-              <p className="text-xs sm:text-sm leading-relaxed text-secondary-700">
+              <p className="text-xs sm:text-sm leading-relaxed text-secondary-700 whitespace-pre-line">
                 {analysisLanguage === 'hi'
                   ? (clause.why_flagged_hi || clause.explanation)
                   : clause.explanation}

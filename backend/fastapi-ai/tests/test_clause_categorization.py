@@ -86,6 +86,9 @@ def test_adversarial_out_of_set_category_rejection():
     assert "Input should be" in str(val_exc.value)
 
 
+from app.core.config import settings
+
+
 def test_categorize_clauses_api_endpoint():
     payload = {
         "clauses": [
@@ -98,7 +101,11 @@ def test_categorize_clauses_api_endpoint():
             }
         ]
     }
-    response = client.post("/api/v1/categorize-clauses", json=payload)
+    headers = {}
+    if settings.INTERNAL_SERVICE_SECRET:
+        headers["X-Internal-Service-Secret"] = settings.INTERNAL_SERVICE_SECRET
+
+    response = client.post("/api/v1/categorize-clauses", json=payload, headers=headers)
 
     assert response.status_code == 200
     data = response.json()

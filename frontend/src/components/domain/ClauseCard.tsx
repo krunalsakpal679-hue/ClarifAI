@@ -222,7 +222,7 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
                 <p className="text-[11px] font-bold uppercase tracking-wider text-secondary-700">
                   {lang === 'hi' ? 'इसका क्या अर्थ है (WHAT THIS MEANS)' : 'WHAT THIS MEANS'}
                 </p>
-                <p className="text-xs sm:text-sm text-secondary-900 leading-relaxed font-sans">
+                <p className="text-xs sm:text-sm text-secondary-900 leading-relaxed font-sans whitespace-pre-line">
                   {simplifiedText || 'No plain-English summary available.'}
                 </p>
               </div>
@@ -237,7 +237,7 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
                       : 'RISK SEVERITY RATIONALE'}
                   </span>
                 </p>
-                <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans">
+                <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans whitespace-pre-line">
                   {explanationText ||
                     'Standard contractual clause aligning with legal commercial baselines.'}
                 </p>

@@ -96,6 +96,43 @@ def test_verbatim_text_preservation():
     assert clause["character_count"] == len("".join(clause["text"].split()))
 
 
+from app.core.config import settings
+
+
+def test_preamble_and_closing_separation_segmentation():
+    contract_with_preamble = (
+        "THIS AGREEMENT is made between Company A and Company B.\n"
+        "WHEREAS the parties desire to collaborate;\n"
+        "NOW THEREFORE the parties agree as follows:\n\n"
+        "1. In pursuance of the said agreement, Company A shall provide services.\n\n"
+        "2. The Lessee hereby covenants to pay rent on time.\n\n"
+        "IN WITNESS WHEREOF the parties have executed this Agreement.\n"
+        "Signed and delivered by Company A.\n"
+        "THE SCHEDULE ABOVE REFERRED TO"
+    )
+    result = segment_document_clauses(contract_with_preamble)
+
+    assert result["success"] is True
+    assert result["total_clauses"] == 2
+    clauses = result["clauses"]
+
+    # Verify positions and numbering match the operative clauses exactly
+    assert clauses[0]["position"] == 1
+    assert clauses[0]["clause_number"] == "1"
+    assert "Company A shall provide services" in clauses[0]["text"]
+
+    assert clauses[1]["position"] == 2
+    assert clauses[1]["clause_number"] == "2"
+    assert "pay rent on time" in clauses[1]["text"]
+
+    # Verify preamble & closing are separated and not in clauses
+    assert result["preamble"] is not None
+    assert "WHEREAS the parties desire to collaborate" in result["preamble"]
+    assert "IN WITNESS WHEREOF" not in clauses[1]["text"]
+    assert result["signature_block"] is not None
+    assert "IN WITNESS WHEREOF" in result["signature_block"]
+
+
 def test_segment_clauses_api_endpoint():
     payload = {
         "text": (
@@ -103,7 +140,11 @@ def test_segment_clauses_api_endpoint():
             "Section 2. Fees and Expenses.\nClient agrees to pay invoices."
         )
     }
-    response = client.post("/api/v1/segment-clauses", json=payload)
+    headers = {}
+    if settings.INTERNAL_SERVICE_SECRET:
+        headers["X-Internal-Service-Secret"] = settings.INTERNAL_SERVICE_SECRET
+
+    response = client.post("/api/v1/segment-clauses", json=payload, headers=headers)
 
     assert response.status_code == 200
     data = response.json()
@@ -111,3 +152,4 @@ def test_segment_clauses_api_endpoint():
     assert data["total_clauses"] == 2
     assert data["clauses"][0]["position"] == 1
     assert data["clauses"][1]["position"] == 2
+

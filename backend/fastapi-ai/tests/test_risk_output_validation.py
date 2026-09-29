@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
 
 from app.main import app
+from app.core.config import settings
 from app.services.output_validator_service import (
     validate_severity_label,
     validate_and_resolve_clause_risk,
@@ -155,7 +156,11 @@ def test_validate_risk_output_api_endpoint():
         "rule_findings": [{"rule_id": "R005", "risk_signal": "Excessive Liability Transfer", "clause_id": "1"}]
     }
 
-    response = client.post("/api/v1/validate-risk-output", json=payload)
+    response = client.post(
+        "/api/v1/validate-risk-output",
+        json=payload,
+        headers={"X-Internal-Service-Secret": settings.INTERNAL_SERVICE_SECRET}
+    )
     assert response.status_code == 200
 
     data = response.json()

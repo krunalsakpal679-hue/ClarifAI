@@ -6,7 +6,7 @@ import uuid
 from django.core.files.storage import default_storage
 from rest_framework import serializers
 
-from apps.documents.models import Clause, Document, DocumentStatus, DocumentSummary
+from apps.documents.models import Clause, Document, DocumentStatus, DocumentSummary, ClauseStatus
 from apps.documents.validators import validate_pdf_upload
 
 
@@ -81,7 +81,7 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             return 'low'
         if 'safe' in severities:
             return 'safe'
-        return 'safe'
+        return None
 
 
 
@@ -147,6 +147,7 @@ class ClauseSerializer(serializers.ModelSerializer):
     Guarantees original_text is NEVER translated or altered.
     """
     translation_available = serializers.SerializerMethodField()
+    structured_explanation = serializers.SerializerMethodField()
 
     class Meta:
         model = Clause
@@ -159,12 +160,101 @@ class ClauseSerializer(serializers.ModelSerializer):
             'severity',
             'category',
             'explanation',
+            'structured_explanation',
             'status',
             'rule_findings',
             'created_at',
             'translation_available',
         ]
         read_only_fields = fields
+
+    def get_structured_explanation(self, obj):
+        """
+        Structured, evidence-backed breakdown containing what_this_clause_means,
+        risk assessment, and category assessment with literal source quotes.
+        """
+        if hasattr(obj, 'structured_explanation') and obj.structured_explanation:
+            return obj.structured_explanation
+
+        text = obj.original_text or ""
+        severity = obj.severity
+        category = obj.category
+        explanation = obj.explanation or ""
+
+        if obj.status == ClauseStatus.FAILED or not severity:
+            return {
+                "what_this_clause_means": obj.simplified_text or text,
+                "risk": {
+                    "severity": None,
+                    "reason": explanation or "Risk classification unavailable.",
+                    "evidence": None
+                },
+                "category": {
+                    "label": category,
+                    "reason": "Category assessment unavailable." if not category else f"Classified as {category}.",
+                    "evidence": None
+                }
+            }
+
+        cat_evidence = None
+        cat_reason = f"Identified as {category} based on standard contractual terms."
+        if category and text:
+            t_lower = text.lower()
+            markers_by_cat = {
+                "Payment": ["monthly ground rent", "ground rent", "payable in advance", "due by the 5th", "remit payment", "net 30", "invoice", "rent", "fee", "payment", "pay"],
+                "Termination": ["re-enter", "re-entry", "determine the demise", "terminate", "forfeiture", "cancellation", "notice to quit", "expiration"],
+                "Renewal": ["quiet enjoyment", "automatically renew", "renewal", "extension", "successive", "term"],
+                "Liability": ["indemnif", "hold harmless", "rates, taxes", "rates and taxes", "tenantable repair", "limitation of liability", "liability"],
+                "Confidentiality": ["confidential", "proprietary", "non-disclosure", "secrecy"],
+                "Intellectual Property": ["vest in the lessor", "assign", "underlet", "intellectual property", "work made for hire", "copyright"],
+                "Privacy": ["privacy", "data protection", "gdpr", "personal data"],
+                "Dispute Resolution": ["arbitrat", "exclusive jurisdiction", "governing law", "court", "dispute"]
+            }
+            markers = markers_by_cat.get(category, [])
+            for m in markers:
+                idx = t_lower.find(m)
+                if idx != -1:
+                    start = max(0, text.rfind('.', 0, idx) + 1)
+                    end = text.find('.', idx)
+                    if end == -1:
+                        end = len(text)
+                    span = text[start:end].strip()
+                    if span and span in text:
+                        cat_evidence = span
+                        cat_reason = f"Contains operative {category.lower()} terminology."
+                        break
+
+        risk_evidence = None
+        risk_reason = explanation
+        if text:
+            t_lower = text.lower()
+            if severity in ("high", "moderate"):
+                risk_markers = ["re-enter", "vest in the lessor", "without compensation", "without demand", "indemnif", "limitation of liability", "automatic renewal", "arbitrat", "forfeit", "interest at", "penalty"]
+                for rm in risk_markers:
+                    idx = t_lower.find(rm)
+                    if idx != -1:
+                        start = max(0, text.rfind('.', 0, idx) + 1)
+                        end = text.find('.', idx)
+                        if end == -1:
+                            end = len(text)
+                        span = text[start:end].strip()
+                        if span and span in text:
+                            risk_evidence = span
+                            break
+
+        return {
+            "what_this_clause_means": obj.simplified_text or text,
+            "risk": {
+                "severity": severity,
+                "reason": risk_reason,
+                "evidence": risk_evidence
+            },
+            "category": {
+                "label": category,
+                "reason": cat_reason,
+                "evidence": cat_evidence
+            }
+        }
 
     def get_translation_available(self, obj):
         if getattr(obj, 'translation_available', None) is not None:

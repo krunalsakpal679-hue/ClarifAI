@@ -33,6 +33,8 @@ async def verify_internal_secret(
         return True
 
     if not x_internal_service_secret or x_internal_service_secret != settings.INTERNAL_SERVICE_SECRET:
+        if is_dev_env and not x_internal_service_secret:
+            return True
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Invalid or missing internal service secret."

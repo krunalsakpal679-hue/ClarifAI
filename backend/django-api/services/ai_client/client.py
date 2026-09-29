@@ -549,9 +549,16 @@ class RealAIClient:
             simp = simp_map.get(pos, {})
             cat_info = cat_map.get(pos, {})
             
-            raw_sev = str(cl.get('severity') or cl.get('final_severity') or 'safe').lower()
-            if raw_sev not in ('high', 'moderate', 'low', 'safe'):
-                raw_sev = 'safe'
+            raw_sev_val = cl.get('severity') or cl.get('final_severity')
+            if raw_sev_val is None or str(raw_sev_val).strip() == "" or str(raw_sev_val).lower() in ("none", "risk_classification_unavailable"):
+                raw_sev = None
+                clause_status = "failed"
+            elif str(raw_sev_val).lower() in ('high', 'moderate', 'low', 'safe'):
+                raw_sev = str(raw_sev_val).lower()
+                clause_status = "complete"
+            else:
+                raw_sev = None
+                clause_status = "failed"
 
             orig_text = cl.get('text') or cl.get('original_text') or f"Clause {pos}"
 
@@ -595,6 +602,7 @@ class RealAIClient:
                     raw_cat = 'Renewal'
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
+            structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
 
             assembled_clauses.append({
                 "clause_id": f"c-{pos:03d}",
@@ -602,9 +610,10 @@ class RealAIClient:
                 "original_text": orig_text,
                 "simplified_text": simp_text,
                 "explanation": explanation,
+                "structured_explanation": structured_exp,
                 "severity": raw_sev,
                 "category": raw_cat,
-                "status": "complete",
+                "status": clause_status,
                 "rule_findings": cl.get('rule_findings', [])
             })
 

@@ -107,8 +107,9 @@ def test_semantic_golden_lease_fixture_categorization():
     # Clause 4: Primary category must be TERMINATION (Re-entry / Determination)
     assert clauses[3]["categories"][0] == ClauseCategoryEnum.TERMINATION
 
-    # Clause 5: Primary category must be INTELLECTUAL_PROPERTY (Asset Assignment / Vesting)
-    assert clauses[4]["categories"][0] == ClauseCategoryEnum.INTELLECTUAL_PROPERTY
+    # Clause 5: Primary category must be TERMINATION (Reversion of Improvements / Determination), NOT Intellectual Property
+    assert clauses[4]["categories"][0] == ClauseCategoryEnum.TERMINATION
+    assert ClauseCategoryEnum.INTELLECTUAL_PROPERTY not in clauses[4]["categories"]
 
 
 def test_universal_document_archetypes_categorization():

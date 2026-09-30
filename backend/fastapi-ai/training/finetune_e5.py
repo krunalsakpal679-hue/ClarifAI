@@ -8,9 +8,13 @@ from pathlib import Path
 
 # Add scripts directory to path
 SCRIPTS_DIR = Path(__file__).resolve().parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
-from train_multilingual_e5 import train_multilingual_e5, re_evaluate_checkpoint
+try:
+    from scripts.train_multilingual_e5 import train_multilingual_e5, re_evaluate_checkpoint
+except ImportError:
+    from train_multilingual_e5 import train_multilingual_e5, re_evaluate_checkpoint
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--eval-only":

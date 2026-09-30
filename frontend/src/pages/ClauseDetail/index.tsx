@@ -15,6 +15,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { SkeletonBlock } from '../../components/ui/Skeleton';
 import { RiskBadge } from '../../components/domain/RiskBadge';
 import { RiskCategoryTag } from '../../components/domain/RiskCategoryTag';
+import { RiskSourceBadge } from '../../components/domain/RiskSourceBadge';
 import { ClauseNavControls } from '../../components/domain/ClauseNavControls';
 import { useDocumentStore } from '../../store/documentStore';
 import { useClauseNavStore } from '../../store/clauseNavStore';
@@ -279,6 +280,10 @@ export const ClauseDetailPage: React.FC = () => {
               <RiskCategoryTag category={clause.category} size="md" />
             )}
 
+            {clause.risk_source && (
+              <RiskSourceBadge source={clause.risk_source} size="md" />
+            )}
+
             <span className="text-xs font-mono font-bold px-2.5 py-1 rounded bg-secondary-100 text-secondary-800">
               ID: {clause.id}
             </span>
@@ -376,7 +381,7 @@ export const ClauseDetailPage: React.FC = () => {
               <div className="p-4 bg-secondary-50 rounded-lg border border-secondary-200 space-y-2">
                 <p className="font-semibold text-xs text-secondary-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Scale className="w-3.5 h-3.5 text-secondary-600" aria-hidden="true" />
-                  <span>Category Assessment ({clause.structured_explanation.category.label || clause.category || 'General'})</span>
+                  <span>Category Assessment ({clause.structured_explanation.category.label || clause.category || 'Unclassified'})</span>
                 </p>
                 <p className="text-xs sm:text-sm leading-relaxed text-secondary-700 whitespace-pre-line">
                   {clause.structured_explanation.category.reason}

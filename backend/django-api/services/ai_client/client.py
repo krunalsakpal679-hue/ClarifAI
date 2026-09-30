@@ -621,10 +621,9 @@ class RealAIClient:
                 if re.search(r'\b(?:renew|extend|continue)\s+(?:the\s+)?(?:term|agreement|lease)\s+(?:for\s+(?:an\s+)?additional|successive)\b', clean_text):
                     cat_scores["Renewal"] += 9
 
-                # 3. High-Specificity Patterns
-                if any(w in clean_text for w in ['re-enter', 're-entry', 'demise shall absolutely determine', 'determination of the term', 'arrear for the space of', 'terminate this agreement', 'termination for cause', 'termination for convenience']):
+                if any(w in clean_text for w in ['re-enter', 're-entry', 'demise shall absolutely determine', 'determination of the term', 'earlier determination', 'sooner determination', 'arrear for the space of', 'terminate this agreement', 'termination for cause', 'termination for convenience']):
                     cat_scores["Termination"] += 8
-                if any(w in clean_text for w in ['vest in the lessor', 'not assign', 'underlet', 'mortgage or part with possession', 'work made for hire', 'intellectual property', 'copyright', 'patent rights']):
+                if any(w in clean_text for w in ['work made for hire', 'ownership of deliverables', 'ownership of inventions', 'intellectual property', 'copyright', 'patent rights', 'patent', 'trade secret', 'license grant']):
                     cat_scores["Intellectual Property"] += 8
                 if any(w in clean_text for w in ['peaceably hold and enjoy', 'quiet enjoyment', 'automatically renew', 'successive one-year periods', 'term and renewal']):
                     cat_scores["Renewal"] += 8
@@ -654,6 +653,7 @@ class RealAIClient:
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
             structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
+            risk_src = cl.get('risk_source') or simp.get('risk_source')
 
             assembled_clauses.append({
                 "clause_id": f"c-{pos:03d}",
@@ -664,6 +664,7 @@ class RealAIClient:
                 "structured_explanation": structured_exp,
                 "severity": raw_sev,
                 "category": raw_cat,
+                "risk_source": risk_src,
                 "status": clause_status,
                 "rule_findings": cl.get('rule_findings', [])
             })

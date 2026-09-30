@@ -41,7 +41,7 @@ LEGAL_TOPICS: Dict[str, List[str]] = {
     'governing_law': ['governing law', 'jurisdiction', 'arbitration', 'state of delaware', 'state of california', 'state of new york', 'venue'],
     'sla_uptime': ['uptime', 'service level', 'service credit', 'monthly uptime', 'availability commitment', 'scheduled maintenance', 'downtime'],
     'privacy': ['data privacy', 'regulatory bases', 'gdpr', 'personal data', 'safeguards', 'data security'],
-    'warranties': ['warranty', 'warranties', 'as-is', 'merchantability', 'fitness for a particular', 'express representation'],
+    'warranties': ['warrant', 'as-is', 'as is', 'merchantability', 'fitness for a particular', 'express representation'],
 }
 
 

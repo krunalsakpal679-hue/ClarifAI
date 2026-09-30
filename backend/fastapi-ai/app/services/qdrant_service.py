@@ -165,16 +165,19 @@ def index_document_clauses(
 
         point_uuid = generate_deterministic_point_id(user_id, document_id, c_id)
 
-        clause_num = str(clause.get("clause_number") or clause.get("position", idx + 1))
+        clause_num = str(clause.get("source_clause_number") or clause.get("clause_number") or clause.get("position", idx + 1))
         payload = {
             "clause_id": c_id,
             "clause_number": clause_num,
+            "source_clause_number": clause_num,
             "document_id": document_id,
+            "analysis_id": str(clause.get("analysis_id") or f"{document_id}_v1"),
             "user_id": user_id,
             "position": clause.get("position", idx + 1),
             "language": clause.get("language", "en"),
             "text": clause.get("text", c_text),
             "original_text": clause.get("original_text", c_text),
+            "source_text": c_text,
             "severity": clause.get("severity") or clause.get("final_severity") or "RISK_CLASSIFICATION_UNAVAILABLE",
             "categories": clause.get("categories", []),
             "simplified_text": clause.get("simplified_text", ""),

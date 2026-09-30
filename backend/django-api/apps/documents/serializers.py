@@ -159,6 +159,7 @@ class ClauseSerializer(serializers.ModelSerializer):
             'simplified_text',
             'severity',
             'category',
+            'risk_source',
             'explanation',
             'structured_explanation',
             'status',
@@ -206,7 +207,7 @@ class ClauseSerializer(serializers.ModelSerializer):
                 "Renewal": ["quiet enjoyment", "automatically renew", "renewal", "extension", "successive", "term"],
                 "Liability": ["indemnif", "hold harmless", "rates, taxes", "rates and taxes", "tenantable repair", "limitation of liability", "liability"],
                 "Confidentiality": ["confidential", "proprietary", "non-disclosure", "secrecy"],
-                "Intellectual Property": ["vest in the lessor", "assign", "underlet", "intellectual property", "work made for hire", "copyright"],
+                "Intellectual Property": ["intellectual property", "work made for hire", "copyright", "patent", "trade secret", "license grant", "proprietary rights"],
                 "Privacy": ["privacy", "data protection", "gdpr", "personal data"],
                 "Dispute Resolution": ["arbitrat", "exclusive jurisdiction", "governing law", "court", "dispute"]
             }

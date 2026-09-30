@@ -33,7 +33,11 @@ User = get_user_model()
 
 from django.test import override_settings
 
-@override_settings(CELERY_BROKER_URL='memory://')
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=False,
+    CELERY_RESULT_BACKEND=None,
+    CELERY_BROKER_URL='memory://'
+)
 class AuditLogsTestCase(APITestCase):
 
     def setUp(self):

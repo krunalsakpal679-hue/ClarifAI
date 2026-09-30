@@ -39,7 +39,8 @@ DOMINANT_CONSEQUENCE_PATTERNS = [
     (re.compile(r"\b(?:resolve|settled?|adjudicated?)\s+(?:all\s+)?(?:claims?|disputes?|differences?)\s+through\s+(?:binding\s+)?(?:arbitration|courts?|litigation|mediation)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION, 9),
     (re.compile(r"\b(?:dispute\s+resolution|exclusive\s+jurisdiction|governing\s+law|arbitration\s+clause)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION, 6),
     (re.compile(r"\b(?:maintain|keep|hold|preserve)\s+(?:the\s+)?(?:strict\s+)?(?:confidentiality|secrecy|non-disclosure)\b", re.IGNORECASE), ClauseCategoryEnum.CONFIDENTIALITY, 9),
-    (re.compile(r"\b(?:assigns?|transfer|vest\s+in|exclusive\s+property\s+of)\s+(?:all\s+)?(?:intellectual\s+property|patents?|copyrights?|inventions?|technology)\b", re.IGNORECASE), ClauseCategoryEnum.INTELLECTUAL_PROPERTY, 9),
+    (re.compile(r"\b(?:assigns?|transfer|vest\s+in|exclusive\s+property\s+of)\s+(?:all\s+)?(?:intellectual\s+property|patents?|patent\s+rights?|copyrights?|inventions?|technology)\b", re.IGNORECASE), ClauseCategoryEnum.INTELLECTUAL_PROPERTY, 9),
+    (re.compile(r"\b(?:all\s+)?(?:intellectual\s+property|patents?|patent\s+rights?|copyrights?|inventions?|technology|work\s+product)\b.{0,60}\b(?:shall\s+)?(?:vest\s+in|be\s+the\s+property\s+of|assigned\s+to)\b", re.IGNORECASE), ClauseCategoryEnum.INTELLECTUAL_PROPERTY, 9),
     (re.compile(r"\b(?:under\s+no\s+circumstances\s+shall|in\s+no\s+event\s+shall|neither\s+party\s+shall\s+be\s+liable\s+for)\s+(?:any\s+)?(?:indirect|consequential|punitive|special)\s+damages\b", re.IGNORECASE), ClauseCategoryEnum.LIABILITY, 9),
     (re.compile(r"\b(?:renew|extend|continue)\s+(?:the\s+)?(?:term|agreement|lease)\s+(?:for\s+(?:an\s+)?additional|successive)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL, 9),
 ]
@@ -62,7 +63,7 @@ CATEGORY_SCORING_RULES = {
     },
     ClauseCategoryEnum.TERMINATION: {
         "positive": [
-            (re.compile(r"\b(?:re-enter|re-entry|demise\s+shall\s+(?:absolutely\s+)?determine|determination\s+of\s+the\s+term|sooner\s+determination|forfeiture|in\s+arrear\s+for\s+the\s+space\s+of)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:re-enter|re-entry|demise\s+shall\s+(?:absolutely\s+)?determine|determination\s+of\s+the\s+term|sooner\s+determination|earlier\s+determination|forfeiture|in\s+arrear\s+for\s+the\s+space\s+of)\b", re.IGNORECASE), 8),
             (re.compile(r"\b(?:terminate\s+this\s+agreement|termination\s+for\s+cause|termination\s+for\s+convenience|right\s+to\s+terminate|notice\s+of\s+termination|early\s+termination\s+fee)\b", re.IGNORECASE), 7),
             (re.compile(r"\b(?:terminate|termination|cancel|cancellation|cure\s+period|default\s+resulting\s+in|material\s+breach)\b", re.IGNORECASE), 4),
             (re.compile(r"\b(?:expire|expiration|end\s+of\s+term)\b", re.IGNORECASE), 2),
@@ -90,8 +91,9 @@ CATEGORY_SCORING_RULES = {
     },
     ClauseCategoryEnum.INTELLECTUAL_PROPERTY: {
         "positive": [
-            (re.compile(r"\b(?:vest\s+in\s+the\s+lessor|vesting\s+of\s+buildings|not\s+assign,?\s*underlet,?\s*mortgage|part\s+with\s+(?:the\s+)?possession|sublet\s+the\s+premises|assignment\s+restriction)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:work\s+made\s+for\s+hire|ownership\s+of\s+deliverables|assigns\s+all\s+right,\s+title\s+and\s+interest|intellectual\s+property|copyrights?|trademarks?|patents?|trade\s+secrets?|license\s+grant|exclusive\s+property\s+of\s+client)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:work\s+made\s+for\s+hire|ownership\s+of\s+deliverables|ownership\s+of\s+inventions|assigns\s+all\s+right,\s+title\s+and\s+interest|intellectual\s+property|copyrights?|trademarks?|patents?|patent\s+rights?|trade\s+secrets?|license\s+grant|exclusive\s+property\s+of\s+(?:client|customer|company))\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:all\s+)?(?:intellectual\s+property|patents?|patent\s+rights?|copyrights?|inventions?|technology|work\s+product)\b.{0,60}\b(?:shall\s+)?(?:vest\s+in|be\s+the\s+property\s+of|assigned\s+to)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:vest\s+in\s+(?:the\s+)?(?:client|customer|company))\b", re.IGNORECASE), 6),
             (re.compile(r"\b(?:ip|proprietary\s+rights|ownership|license|licensor|licensee|source\s+code)\b", re.IGNORECASE), 4),
         ],
         "negative": []

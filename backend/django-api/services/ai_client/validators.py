@@ -34,7 +34,7 @@ def validate_clause(clause_data: dict) -> dict:
         )
 
     category = clause_data.get('category')
-    if category not in ALLOWED_CATEGORIES:
+    if category is not None and category not in ALLOWED_CATEGORIES:
         raise AIServiceValidationError(
             f"Invalid risk category '{category}'. Allowed: {sorted(list(ALLOWED_CATEGORIES))}"
         )

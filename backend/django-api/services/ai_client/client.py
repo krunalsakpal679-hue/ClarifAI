@@ -6,6 +6,7 @@ Fully reconciled against FastAPI routers under backend/fastapi-ai/app/routers/.
 import io
 import logging
 import os
+import re
 import uuid
 from typing import Any, Dict, List, Optional, Union
 import requests

@@ -144,6 +144,8 @@ class Clause(models.Model):
         db_index=True,
     )
     explanation = models.TextField(null=True, blank=True)
+    structured_explanation = models.JSONField(null=True, blank=True)
+    risk_source = models.CharField(max_length=50, null=True, blank=True, db_index=True)
     status = models.CharField(
         max_length=20,
         choices=ClauseStatus.choices,

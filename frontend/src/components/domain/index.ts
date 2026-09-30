@@ -18,3 +18,4 @@ export * from './ComparisonClausePair';
 export * from './ComparisonResultGroup';
 export * from './LanguageToggle';
 export * from './ReportDownloadButton';
+export * from './RiskSourceBadge';

@@ -132,6 +132,8 @@ def process_document(document_id):
             original_text = clause_item.get('original_text', f'Clause {idx}')
             simplified_text = clause_item.get('simplified_text', '')
             explanation = clause_item.get('explanation', '')
+            structured_explanation = clause_item.get('structured_explanation')
+            risk_source = clause_item.get('risk_source')
             rule_findings = clause_item.get('rule_findings', [])
 
             # Check for Per-Clause Failure Isolation (Ch. 16.5) or Invalid Classifier Output (Ch. 56.10)
@@ -151,8 +153,10 @@ def process_document(document_id):
                     original_text=original_text or f"Clause {idx}",
                     simplified_text=simplified_text or "Clause processing failed.",
                     explanation=explanation or "Clause classification/extraction failed during AI pipeline execution.",
+                    structured_explanation=structured_explanation,
                     severity=None,
                     category=None,
+                    risk_source=risk_source,
                     status=ClauseStatus.FAILED,
                     rule_findings=rule_findings if isinstance(rule_findings, list) else []
                 )
@@ -166,8 +170,10 @@ def process_document(document_id):
                     original_text=original_text,
                     simplified_text=simplified_text,
                     explanation=explanation,
+                    structured_explanation=structured_explanation,
                     severity=raw_severity,
                     category=raw_category,
+                    risk_source=risk_source,
                     status=ClauseStatus.COMPLETE,
                     rule_findings=rule_findings if isinstance(rule_findings, list) else []
                 )

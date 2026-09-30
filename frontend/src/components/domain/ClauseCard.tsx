@@ -5,6 +5,7 @@ import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { RiskBadge } from './RiskBadge';
 import { RiskCategoryTag } from './RiskCategoryTag';
+import { RiskSourceBadge } from './RiskSourceBadge';
 import { cn } from '../../utils/cn';
 import type { ClauseItem } from '../../types';
 
@@ -147,6 +148,7 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
               </span>
               {clause.severity && <RiskBadge severity={clause.severity} size="md" />}
               {clause.category && <RiskCategoryTag category={clause.category} size="md" />}
+              {clause.risk_source && <RiskSourceBadge source={clause.risk_source} size="md" />}
               <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-secondary-100 text-secondary-700">
                 ID: {clause.id}
               </span>
@@ -231,7 +233,7 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
               {clause.structured_explanation?.category && (
                 <div className="p-4 rounded-xl border border-secondary-200 bg-white space-y-2 shadow-2xs">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-secondary-700">
-                    CATEGORY ASSESSMENT ({clause.structured_explanation.category.label || clause.category || 'General'})
+                    CATEGORY ASSESSMENT ({clause.structured_explanation.category.label || clause.category || 'Unclassified'})
                   </p>
                   <p className="text-xs sm:text-sm text-secondary-700 leading-relaxed font-sans whitespace-pre-line">
                     {clause.structured_explanation.category.reason}

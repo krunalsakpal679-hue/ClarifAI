@@ -159,6 +159,7 @@ class ClauseSerializer(serializers.ModelSerializer):
             'simplified_text',
             'severity',
             'category',
+            'risk_source',
             'explanation',
             'structured_explanation',
             'status',

@@ -87,4 +87,56 @@ describe('ClauseCard Component (components/domain/ClauseCard)', () => {
     // Explanation is surfaced
     expect(screen.getByText(/Automated engine could not classify risk/i)).toBeInTheDocument();
   });
+
+  it('renders risk_source provenance badge when provided by the backend', () => {
+    const clauseWithProvenance: ClauseItem = {
+      ...standardClause,
+      id: 'clause-prov-1',
+      risk_source: 'RULE_PRECEDENCE',
+    };
+
+    render(
+      <MemoryRouter>
+        <ClauseCard clause={clauseWithProvenance} documentId="doc-msa-001" />
+      </MemoryRouter>
+    );
+
+    const provenanceBadge = screen.getByTestId('risk-source-badge');
+    expect(provenanceBadge).toBeInTheDocument();
+    expect(screen.getByText('Rule Precedence')).toBeInTheDocument();
+  });
+
+  it('renders structured_explanation with category reason and evidence spans', () => {
+    const structuredClause: ClauseItem = {
+      ...standardClause,
+      id: 'clause-struct-1',
+      structured_explanation: {
+        what_this_clause_means: 'Customer must indemnify without any ceiling.',
+        risk: {
+          severity: 'High',
+          reason: 'Uncapped liability creates severe financial exposure.',
+          evidence: 'without limitation'
+        },
+        category: {
+          label: 'Liability',
+          reason: 'Operative indemnification covenant.',
+          evidence: 'defend and indemnify'
+        }
+      }
+    };
+
+    render(
+      <MemoryRouter>
+        <ClauseCard clause={structuredClause} documentId="doc-msa-001" />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Customer must indemnify without any ceiling.')).toBeInTheDocument();
+    expect(screen.getByText(/Operative indemnification covenant/)).toBeInTheDocument();
+    expect(screen.getByText(/Category Evidence Span:/)).toBeInTheDocument();
+    expect(screen.getByText(/Risk Evidence Span:/)).toBeInTheDocument();
+    expect(screen.getAllByText(/defend and indemnify/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/without limitation/).length).toBeGreaterThanOrEqual(1);
+  });
 });
+

@@ -60,6 +60,7 @@ export interface ClauseItem {
   translation_available: boolean;
   simplified_text_hi?: string;
   why_flagged_hi?: string;
+  risk_source?: string | null;
 }
 
 export interface PaginatedClauseResponse {

@@ -654,6 +654,7 @@ class RealAIClient:
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
             structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
+            risk_src = cl.get('risk_source') or simp.get('risk_source')
 
             assembled_clauses.append({
                 "clause_id": f"c-{pos:03d}",
@@ -664,6 +665,7 @@ class RealAIClient:
                 "structured_explanation": structured_exp,
                 "severity": raw_sev,
                 "category": raw_cat,
+                "risk_source": risk_src,
                 "status": clause_status,
                 "rule_findings": cl.get('rule_findings', [])
             })

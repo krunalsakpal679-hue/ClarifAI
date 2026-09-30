@@ -21,6 +21,7 @@ from app.services.llm_client import (
     validate_untrusted_llm_output
 )
 from app.services.output_validator_service import validate_structured_output
+from app.services.claim_grounding_service import verify_and_ground_clause_narrative
 
 logger = logging.getLogger(__name__)
 
@@ -199,45 +200,113 @@ def synthesize_detailed_plain_english_analysis(
     """
     t_lower = text.lower()
 
-    # 1. Identify Contracting Parties
+    # 1. Dynamic Extraction of Contracting Parties
     if any(k in t_lower for k in ["lessee", "lessor", "tenant", "landlord"]):
         affected_parties = "The Landlord (Lessor) and the Tenant (Lessee)."
-        actor_role = "tenant"
-        counterparty_role = "landlord"
-    elif any(k in t_lower for k in ["customer", "client"]) and any(k in t_lower for k in ["vendor", "provider", "contractor", "consultant", "company"]):
+        actor_role = "Tenant (Lessee)"
+        counterparty_role = "Landlord (Lessor)"
+    elif any(k in t_lower for k in ["consultant", "advisor"]) and any(k in t_lower for k in ["client", "customer", "company"]):
+        affected_parties = "The Consultant and the Client."
+        actor_role = "Consultant"
+        counterparty_role = "Client"
+    elif any(k in t_lower for k in ["customer", "client"]) and any(k in t_lower for k in ["vendor", "provider", "contractor", "company"]):
         affected_parties = "The Customer (Client) and the Vendor (Service Provider)."
-        actor_role = "customer"
-        counterparty_role = "vendor"
+        actor_role = "Customer"
+        counterparty_role = "Vendor"
     elif any(k in t_lower for k in ["employer", "employee"]):
         affected_parties = "The Employer and the Employee."
-        actor_role = "employee"
-        counterparty_role = "employer"
+        actor_role = "Employee"
+        counterparty_role = "Employer"
     elif any(k in t_lower for k in ["disclosing party", "receiving party"]):
         affected_parties = "The Disclosing Party and the Receiving Party."
-        actor_role = "receiving party"
-        counterparty_role = "disclosing party"
+        actor_role = "Receiving Party"
+        counterparty_role = "Disclosing Party"
     elif any(k in t_lower for k in ["borrower", "lender"]):
         affected_parties = "The Borrower and the Lender."
-        actor_role = "borrower"
-        counterparty_role = "lender"
+        actor_role = "Borrower"
+        counterparty_role = "Lender"
     else:
         affected_parties = "The designated contracting parties."
-        actor_role = "obligated party"
-        counterparty_role = "counterparty"
+        actor_role = "Obligated Party"
+        counterparty_role = "Counterparty"
 
-    # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes)
+    # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes, Rates)
     amounts = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?', text, re.IGNORECASE)
     durations = re.findall(r'\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|thirty|sixty|ninety)\s+(?:days?|months?|years?|hours?|business\s+days?)\b', text, re.IGNORECASE)
-    percentages = re.findall(r'\b\d+(?:\.\d+)?\s*%', text)
+    percentages = [m.group(0).strip() for m in re.finditer(r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?', text, re.IGNORECASE)]
 
-    # 3. Grounded Semantic Clause Analysis
+    # 3. Grounded Semantic Clause Analysis (Ordered by specific covenant to general)
     what_means = ""
     obligations = ""
     details_list = []
     consequences = ""
 
-    # Specific Contract Patterns
-    if any(k in t_lower for k in ["demise unto the lessee", "doth hereby demise", "piece or parcel of land", "grant to the lessee a lease", "grant a lease"]):
+    # Specific Covenants (evaluated before generic 'terminat')
+    if any(k in t_lower for k in ["confidential and proprietary information", "confidentiality covenant", "non-disclosure", "confidential information", "strict secrecy"]) or (category and category.lower() == "confidentiality"):
+        what_means = "This clause defines confidential business information and obligates both parties to maintain strict secrecy over proprietary technical and commercial data."
+        obligations = "The receiving party must protect confidential data using at least reasonable care, restrict access strictly to authorized personnel, and refrain from disclosing information to unauthorized third parties."
+        if durations:
+            details_list.append(f"Protection Period: Obligations survive for {', '.join(durations)} following agreement termination.")
+        consequences = "Unauthorized disclosure constitutes a material breach of contractual confidentiality covenants."
+
+    elif any(k in t_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement"]):
+        what_means = "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
+        obligations = "Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches."
+        if amounts:
+            details_list.append(f"Financial Cap: {', '.join(amounts)}.")
+        if percentages:
+            details_list.append(f"Limit Percentage: {', '.join(percentages)}.")
+        consequences = "In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
+
+    elif any(k in t_lower for k in ["indemnif", "hold harmless", "defend and indemnify", "third-party claims"]):
+        what_means = "This clause defines indemnity obligations, specifying who is financially responsible for defending lawsuits, paying legal defense expenses, and satisfying damages if a third party files a lawsuit."
+        if "consultant agrees to defend" in t_lower or "consultant shall defend" in t_lower or "consultant shall indemnify" in t_lower:
+            obligations = "The Consultant is obligated to defend, indemnify, and hold harmless the Client against third-party claims or losses arising from specified breach or gross negligence."
+        elif "customer agrees to defend" in t_lower or "customer shall defend" in t_lower or "lessee shall indemnify" in t_lower:
+            obligations = f"The {actor_role} is obligated to defend, indemnify, and hold harmless the {counterparty_role} against specified third-party claims."
+        else:
+            obligations = f"The obligated party must defend, indemnify, and hold harmless the counterparty from and against covered third-party claims."
+        details_list.append("Defense Duty: Obligated party must defend and hold the indemnified party harmless from covered claims.")
+        consequences = "If a covered third-party claim is initiated, the indemnifying party must bear the financial defense and liability obligations."
+
+    elif any(k in t_lower for k in ["work made for hire", "intellectual property", "ownership of deliverables", "work product ownership", "copyright"]):
+        what_means = "This clause establishes intellectual property ownership, providing that analysis reports, spreadsheets, deliverables, and custom work product created under the agreement constitute works made for hire belonging exclusively to the client."
+        if "consultant" in t_lower and "client" in t_lower:
+            obligations = "The Consultant agrees that all work product created under the agreement is deemed work made for hire and becomes the Client's exclusive intellectual property."
+        else:
+            obligations = f"The {actor_role} transfers or assigns intellectual property rights in agreed deliverables to the {counterparty_role} as work made for hire."
+        details_list.append("Work Made for Hire: Deliverables are created on a work-made-for-hire basis and vest exclusively in the client.")
+
+    elif any(k in t_lower for k in ["invoicing and finance", "fees and payment", "remit payment", "net 30", "invoice date", "invoices are due", "invoicing"]):
+        what_means = "This clause establishes the financial payment terms, billing cadence, invoice due dates, and finance charges for overdue balances."
+        if "consultant" in t_lower and "client" in t_lower:
+            obligations = "The Client must remit payment for all invoices upon receipt or within the designated payment window."
+        else:
+            obligations = f"The {actor_role} must remit payment for all invoices within the designated credit window."
+        if amounts:
+            details_list.append(f"Payment Amount: {', '.join(amounts)}.")
+        if durations:
+            details_list.append(f"Payment Due Window: {', '.join(durations)} from invoice receipt.")
+        if percentages:
+            details_list.append(f"Finance Charges / Overdue Interest: {', '.join(percentages)} on overdue balances.")
+        consequences = "Late payments accrue interest penalties and finance charges on unpaid balances past the due date."
+
+    elif any(k in t_lower for k in ["engagement and deliverables", "consultant shall render", "scope of services", "scope of work", "render strategic"]):
+        what_means = "This clause defines the engagement scope, specifying that the consultant provides strategic management and technical advisory services under agreed statements of work."
+        obligations = "The Consultant is obligated to perform the agreed deliverables, advisory services, and strategic tasks as authorized by the Client."
+        details_list.append("Scope: Strategic management and technical advisory services as agreed in work statements.")
+
+    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue shall be"]):
+        has_subst_law = any(k in t_lower for k in ["governed by the laws", "governing substantive law", "substantive law of"])
+        if has_subst_law:
+            what_means = "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
+            obligations = "Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law."
+        else:
+            what_means = "This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes, designating the agreed court or arbitration venue."
+            obligations = "Both parties agree to submit legal controversies to the designated court venue and consent to personal jurisdiction in that forum."
+        details_list.append("Forum: Exclusive jurisdiction and venue in the designated courts.")
+
+    elif any(k in t_lower for k in ["demise unto the lessee", "doth hereby demise", "piece or parcel of land", "grant to the lessee a lease", "grant a lease"]):
         what_means = "This clause legally leases the specified property, land parcel, and all attached buildings from the landlord to the tenant for a fixed long-term duration in exchange for designated rent payments."
         obligations = "The landlord grants exclusive legal possession and rights of easement over the premises to the tenant for the agreed term. In exchange, the tenant is obligated to pay the reserved rent according to the agreed schedule."
         if amounts:
@@ -280,32 +349,6 @@ def synthesize_detailed_plain_english_analysis(
         details_list.append("Asset Vesting: All buildings and permanent fixtures vest automatically in the landlord upon expiration.")
         consequences = "Attempting to assign or sublet without authorization constitutes a lease default. Upon expiration, all tenant-constructed buildings transfer to the landlord without any compensation or reimbursement."
 
-    elif any(k in t_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement"]):
-        what_means = "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
-        obligations = "Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches."
-        if amounts:
-            details_list.append(f"Financial Cap: {', '.join(amounts)}.")
-        if percentages:
-            details_list.append(f"Limit Percentage: {', '.join(percentages)}.")
-        consequences = "In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing full recovery of consequential or indirect commercial losses."
-
-    elif any(k in t_lower for k in ["indemnif", "hold harmless", "defend and indemnify", "third-party claims"]):
-        what_means = "This clause defines indemnity obligations, specifying who is financially responsible for defending lawsuits, paying legal defense expenses, and satisfying damages if a third party files a lawsuit."
-        obligations = f"The {actor_role} is obligated to defend, indemnify, and hold harmless the {counterparty_role} from and against third-party claims, legal judgments, regulatory penalties, and reasonable attorney fees."
-        details_list.append("Defense Duty: Obligated party must retain legal counsel and bear litigation expenses.")
-        consequences = f"If a third-party claim is initiated, the {actor_role} must fund the defense and pay any resulting judgments or settlements."
-
-    elif any(k in t_lower for k in ["fees and payment", "remit payment", "net 30", "invoice date", "billing"]):
-        what_means = "This clause establishes the financial payment terms, billing cadence, credit terms, and invoicing requirements between the parties."
-        obligations = f"The {actor_role} must remit payment for all undisputed invoices within the designated credit window from the date of invoice receipt."
-        if amounts:
-            details_list.append(f"Payment Amount: {', '.join(amounts)}.")
-        if durations:
-            details_list.append(f"Payment Due Window: {', '.join(durations)} from invoice receipt.")
-        if percentages:
-            details_list.append(f"Late Interest Rate: {', '.join(percentages)} on overdue balances.")
-        consequences = "Late payments accrue interest penalties and may result in service suspension if balances remain unpaid past the due date."
-
     elif any(k in t_lower for k in ["automatic renewal", "successive one-year periods", "notice of non-renewal", "term and renewal"]):
         what_means = "This clause establishes the contract duration and provides for automatic contract renewal unless a party delivers advance written notice of cancellation."
         obligations = "The agreement remains in effect for the initial term and automatically extends for successive renewal periods unless either party provides advance written notice of non-renewal."
@@ -313,41 +356,18 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Notice Window / Term: {', '.join(durations)} advance notice required to prevent renewal.")
         consequences = "Failing to provide timely written notice before the deadline binds the parties to an additional full renewal term."
 
-    elif any(k in t_lower for k in ["materially breaches this agreement", "convenience upon", "terminat", "cancellation"]):
+    elif any(k in t_lower for k in ["materially breaches this agreement", "convenience upon", "right to terminate", "notice of termination"]):
         what_means = "This clause outlines the procedures, notice requirements, cure periods, and conditions under which either party may terminate the agreement."
         obligations = "A party terminating for cause must deliver formal written notice detailing the breach and provide any required cure period. Termination for convenience requires compliance with advance notice windows."
         if durations:
             details_list.append(f"Notice / Cure Period: {', '.join(durations)} written notice required.")
         consequences = "Upon termination, services cease, accrued unpaid fees become immediately due, and designated post-termination obligations survive."
 
-    elif any(k in t_lower for k in ["confidential and proprietary information", "confidential", "trade secret", "non-disclosure"]):
-        what_means = "This clause defines confidential business information and obligates both parties to maintain strict secrecy over proprietary technical and commercial data."
-        obligations = "The receiving party must protect confidential data using at least reasonable care, restrict access strictly to authorized personnel, and refrain from disclosing information to unauthorized third parties."
-        if durations:
-            details_list.append(f"Protection Period: Obligations survive for {', '.join(durations)} post-termination.")
-        consequences = "Unauthorized disclosure constitutes a material breach and entitles the disclosing party to immediate injunctive relief and monetary damages."
-
-    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "dispute resolution"]):
-        what_means = "This clause mandates that all legal disputes must be resolved through private binding arbitration rather than public court litigation, waiving the right to a jury trial or class action."
-        obligations = "Both parties agree to submit any dispute, controversy, or claim arising out of the agreement to binding arbitration under designated rules, accepting the arbitrator's decision as final."
-        details_list.append("Forum: Binding arbitration under formal arbitration rules in lieu of public courts.")
-        details_list.append("Waivers: Express waiver of jury trial rights and participation in class-action lawsuits.")
-
-    elif any(k in t_lower for k in ["work made for hire", "intellectual property", "ownership of deliverables", "copyright"]):
-        what_means = "This clause establishes intellectual property ownership, specifying whether custom deliverables, code, or materials belong to the customer upon payment or remain proprietary to the vendor."
-        obligations = f"The {actor_role} transfers or licenses intellectual property rights in agreed deliverables to the {counterparty_role}, contingent upon full receipt of agreed payment."
-        details_list.append("Work Made for Hire: Deliverables are created on a work-made-for-hire basis where applicable.")
-        details_list.append("Condition: Ownership transfer is conditioned upon full payment of contractual fees.")
-
     elif any(k in t_lower for k in ["non-compete", "non-solicit", "solicit for employment", "competing business"]):
         what_means = "This clause restricts parties from poaching employees or engaging in competing commercial activities during and after the contractual relationship."
         obligations = f"The {actor_role} agrees not to recruit, solicit, or hire employees of the other party, nor engage in directly competing business within designated territories."
         if durations:
             details_list.append(f"Restriction Duration: {', '.join(durations)} post-termination.")
-
-    elif any(k in t_lower for k in ["governing law", "jurisdiction", "conflict of laws"]):
-        what_means = "This clause designates the substantive law governing the contract and specifies which state or court venue has exclusive jurisdiction over legal disputes."
-        obligations = "Both parties agree that contractual rights and duties will be interpreted according to designated statutory law, and consent to personal jurisdiction in designated courts."
 
     elif any(k in t_lower for k in ["monthly rent", "rent of", "shall pay to the lessor", "pay rent", "invoices are payable", "payment terms", "late payment fee", "late-payment"]):
         what_means = f"This clause defines payment obligations, specifying that the {actor_role} must pay agreed rent, fees, and financial sums according to strict contractual deadlines."
@@ -356,17 +376,13 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Financial Amount: {', '.join(amounts)}.")
         if durations:
             details_list.append(f"Payment Schedule / Grace Period: {', '.join(durations)}.")
-        due_dates = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?\s+day(?:\s+of\s+[a-z]+)?|\d+(?:st|nd|rd|th)?\s+of\s+[a-z]+)\b', text, re.IGNORECASE)
-        if due_dates:
-            details_list.append(f"Payment Due Date: On or before the {', '.join(due_dates)}.")
-        elif any(d in t_lower for d in ["5th", "1st", "calendar month", "due date"]):
-            details_list.append("Payment Due Date: On or before the scheduled due date each month.")
+        if percentages:
+            details_list.append(f"Late Interest Rate: {', '.join(percentages)} on overdue balances.")
         if "late payment" in t_lower or "late fee" in t_lower:
             consequences = "Failure to pay on time incurs late payment penalties or fees as specified in the agreement."
 
     else:
         # Resilient synthesis fallback for unclassified / general operative clauses
-        clean_first = text.strip().split("\n")[0].strip()
         what_means = f"This clause defines legal rights, operating procedures, and contractual terms governing {title or 'this provision'}."
         obligations = f"Both parties are obligated to comply with the terms and commitments established in this section of the agreement."
         if amounts:
@@ -374,7 +390,23 @@ def synthesize_detailed_plain_english_analysis(
         if durations:
             details_list.append(f"Timeframes: {', '.join(durations)}.")
 
-    # 4. Formulate Evidence-Grounded Risk Rationale
+    # 4. Mandatory Claim-Level Provenance & Grounding Verification
+    grounding_res = verify_and_ground_clause_narrative(
+        source_text=text,
+        clause_title=title or "",
+        what_this_clause_means=what_means,
+        obligations=obligations,
+        details_list=details_list,
+        consequences=consequences,
+        category=category,
+        severity=severity
+    )
+    what_means = grounding_res["what_this_clause_means"]
+    obligations = grounding_res["obligations"]
+    details_list = grounding_res["details_list"]
+    consequences = grounding_res["consequences"]
+
+    # 5. Formulate Evidence-Grounded Risk Rationale
     if rule_findings:
         signals = [rf.get("risk_signal") or rf.get("name") or "Risk signal" for rf in rule_findings if rf.get("risk_signal") or rf.get("name")]
         signals_str = ", ".join(sorted(set(signals)))
@@ -433,7 +465,9 @@ def synthesize_detailed_plain_english_analysis(
             "label": category,
             "reason": cat_reason,
             "evidence": cat_evidence
-        }
+        },
+        "grounding_warnings": grounding_res.get("warnings", []),
+        "grounding_notes": grounding_res.get("grounding_notes", [])
     }
 
     return {

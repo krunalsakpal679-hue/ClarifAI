@@ -137,7 +137,9 @@ class ChatMessageListCreateView(generics.ListCreateAPIView):
             ai_response = ai_client.chat(
                 document_id=str(document.id),
                 message=query_text,
-                history=history_list
+                history=history_list,
+                user_id=str(request.user.id),
+                session_id=str(session.id)
             )
         except AIServiceError as exc:
             logger.error(f"AI chat client error for document {document.id}: {exc}")

@@ -74,7 +74,8 @@ def test_per_clause_failure_isolation():
     assert results[0]["severity"] in {"High", "Moderate", "Low", "Safe"}
 
     assert results[1]["position"] == 2
-    assert results[1]["severity"] in {"High", "Moderate", "Low", "Safe"}  # Fallback applied cleanly
+    assert results[1]["severity"] == "RISK_CLASSIFICATION_UNAVAILABLE" or results[1]["validation_status"] == "FAILED_VALIDATION"
+    assert results[1]["severity"] != "Safe"
 
     assert results[2]["position"] == 3
     assert results[2]["severity"] in {"High", "Moderate", "Low", "Safe"}

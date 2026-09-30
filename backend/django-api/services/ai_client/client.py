@@ -162,10 +162,11 @@ class RealAIClient:
         }
         return self._send_request("POST", "/api/v1/segment-clauses", json_data=payload)
 
-    def categorize_clauses(self, clauses: list) -> dict:
+    def categorize_clauses(self, clauses: list, rule_findings: list = None) -> dict:
         """Invokes POST /api/v1/categorize-clauses on FastAPI."""
         payload = {
-            "clauses": clauses
+            "clauses": clauses,
+            "rule_findings": rule_findings or []
         }
         return self._send_request("POST", "/api/v1/categorize-clauses", json_data=payload)
 
@@ -491,30 +492,34 @@ class RealAIClient:
         segment_res = self.segment_clauses(cleaned_text, pages=pages_metadata)
         segmented_clauses = segment_res.get('clauses', [])
 
-        # Step 4: Categorize Clauses
-        categorize_res = self.categorize_clauses(segmented_clauses)
-        categorized_clauses = categorize_res.get('categorized_clauses', segmented_clauses)
-
-        # Step 5: Evaluate Rules
-        rule_res = self.evaluate_rules(clauses=categorized_clauses, text=cleaned_text)
+        # Step 4: Evaluate Rules on segmented clauses first so findings are available
+        rule_res = self.evaluate_rules(clauses=segmented_clauses, text=cleaned_text)
         rule_findings = rule_res.get('findings', [])
+
+        # Step 5: Categorize Clauses using rule findings for dominant subject scoring
+        categorize_res = self.categorize_clauses(segmented_clauses, rule_findings=rule_findings)
+        categorized_clauses = categorize_res.get('clauses') or categorize_res.get('categorized_clauses', segmented_clauses)
 
         # Step 6: Classify Risk
         risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings)
-        classified_clauses = risk_res.get('classified_clauses', categorized_clauses)
+        classified_clauses = risk_res.get('clauses') or risk_res.get('classified_clauses', categorized_clauses)
 
         # Step 7: Simplify Clauses
         simplify_res = self.simplify_clauses(classified_clauses, rule_findings=rule_findings)
-        simplified_clauses = simplify_res.get('simplified_clauses', classified_clauses)
+        simplified_clauses = simplify_res.get('clauses') or simplify_res.get('simplified_clauses', classified_clauses)
 
         # Step 8: Summarize Document
         summary_res = self.summarize_document(classified_clauses, rule_findings=rule_findings)
-        summary_payload = summary_res.get('summary', {})
+        summary_payload = summary_res.get('summary') or summary_res
 
         # Step 9: Generate Embeddings & Index in Qdrant Vector DB
         try:
             embed_res = self.generate_embeddings(classified_clauses)
-            embedded_clauses = embed_res.get('embedded_clauses', classified_clauses)
+            embedded_clauses = embed_res.get('embedded_clauses') or embed_res.get('clauses', classified_clauses)
+            try:
+                self.delete_document_embeddings(document_id=document_id, user_id=user_id)
+            except Exception as del_err:
+                logger.debug(f"Pre-indexing vector cleanup note for {document_id}: {del_err}")
             self.index_document_qdrant(
                 user_id=user_id,
                 document_id=document_id,
@@ -525,30 +530,131 @@ class RealAIClient:
 
         # Step 10: Assemble Complete Normalized Payload
         assembled_clauses = []
-        # Index simplifications by position/id
+        # Index simplifications and categorized clauses by position/id
         simp_map = {
             sc.get('position', idx): sc
             for idx, sc in enumerate(simplified_clauses, start=1)
+        }
+        cat_map = {
+            cc.get('position', idx): cc
+            for idx, cc in enumerate(categorized_clauses, start=1)
+        }
+
+        APPROVED_CATEGORIES = {
+            'Payment', 'Termination', 'Renewal', 'Confidentiality',
+            'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
         }
 
         for idx, cl in enumerate(classified_clauses, start=1):
             pos = cl.get('position', idx)
             simp = simp_map.get(pos, {})
+            cat_info = cat_map.get(pos, {})
             
-            raw_sev = str(cl.get('severity', 'safe')).lower()
-            if raw_sev not in ('high', 'moderate', 'low', 'safe'):
-                raw_sev = 'safe'
-
-            raw_cat = cl.get('category', 'General')
-            if raw_cat not in {
-                'Payment', 'Termination', 'Renewal', 'Confidentiality',
-                'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
-            }:
-                raw_cat = 'Dispute Resolution'  # Canonical fallback category
+            raw_sev_val = cl.get('severity') or cl.get('final_severity')
+            if raw_sev_val is None or str(raw_sev_val).strip() == "" or str(raw_sev_val).lower() in ("none", "risk_classification_unavailable"):
+                raw_sev = None
+                clause_status = "failed"
+            elif str(raw_sev_val).lower() in ('high', 'moderate', 'low', 'safe'):
+                raw_sev = str(raw_sev_val).lower()
+                clause_status = "complete"
+            else:
+                raw_sev = None
+                clause_status = "failed"
 
             orig_text = cl.get('text') or cl.get('original_text') or f"Clause {pos}"
+
+            # Extract category from direct field, categories list, or categorized_clauses map
+            raw_cat = cl.get('category') or cat_info.get('category')
+            if not raw_cat:
+                cats = cl.get('categories') or cat_info.get('categories') or []
+                if isinstance(cats, list) and len(cats) > 0:
+                    raw_cat = str(cats[0])
+                elif cats:
+                    raw_cat = str(cats)
+
+            # Standardize string formatting
+            if raw_cat:
+                matched_approved = next((ac for ac in APPROVED_CATEGORIES if ac.lower() == str(raw_cat).lower()), None)
+                raw_cat = matched_approved
+
+            # If still missing or unrecognized, detect using evidence-weighted dominant subject scoring
+            if not raw_cat:
+                lower_text = orig_text.lower()
+                clean_text = re.sub(r'\blimited\s+liability\s+(?:company|partnership|llc|llp)\b', '', lower_text)
+                clause_rfs = cl.get('rule_findings', [])
+                cat_scores = {ac: 0 for ac in APPROVED_CATEGORIES}
+
+                # 1. Rule findings weighting
+                RULE_CAT_MAP = {
+                    "R001": ("Renewal", 10),
+                    "R002": ("Termination", 10),
+                    "R003": ("Payment", 10),
+                    "R004": ("Payment", 10),
+                    "R005": ("Liability", 10),
+                    "R006": ("Liability", 10),
+                    "R007": ("Termination", 8),
+                    "R008": ("Termination", 10),
+                    "R009": ("Termination", 7),
+                    "R010": ("Confidentiality", 10),
+                    "R011": ("Intellectual Property", 10),
+                    "R012": ("Dispute Resolution", 10),
+                    "R013": ("Privacy", 10),
+                    "R014": ("Liability", 8),
+                    "R015": ("Liability", 10),
+                }
+                for rf in clause_rfs:
+                    rid = rf.get('rule_id')
+                    if rid in RULE_CAT_MAP:
+                        target_c, boost = RULE_CAT_MAP[rid]
+                        cat_scores[target_c] += boost
+
+                # 2. Dominant Consequence / Action Proximity
+                if re.search(r'\b(?:resulting\s+in|lead\s+to|entitled?\s+to|cause\s+for|triggering|subject\s+to)\s+(?:immediate\s+)?(?:termination|determination|forfeiture|re-entry|cancellation|eviction)\b', clean_text):
+                    cat_scores["Termination"] += 9
+                if re.search(r'\b(?:resolve|settled?|adjudicated?)\s+(?:all\s+)?(?:claims?|disputes?|differences?)\s+through\s+(?:binding\s+)?(?:arbitration|courts?|litigation|mediation)\b', clean_text):
+                    cat_scores["Dispute Resolution"] += 9
+                if re.search(r'\b(?:maintain|keep|hold)\s+(?:strict\s+)?(?:confidentiality|secrecy|non-disclosure)\b', clean_text):
+                    cat_scores["Confidentiality"] += 9
+                if re.search(r'\b(?:assigns?|transfer|vest\s+in|exclusive\s+property\s+of)\s+(?:all\s+)?(?:intellectual\s+property|patents?|copyrights?|inventions?|technology)\b', clean_text):
+                    cat_scores["Intellectual Property"] += 9
+                if re.search(r'\b(?:under\s+no\s+circumstances\s+shall|in\s+no\s+event\s+shall|neither\s+party\s+shall\s+be\s+liable\s+for)\s+(?:any\s+)?(?:indirect|consequential|punitive|special)\s+damages\b', clean_text):
+                    cat_scores["Liability"] += 9
+                if re.search(r'\b(?:renew|extend|continue)\s+(?:the\s+)?(?:term|agreement|lease)\s+(?:for\s+(?:an\s+)?additional|successive)\b', clean_text):
+                    cat_scores["Renewal"] += 9
+
+                if any(w in clean_text for w in ['re-enter', 're-entry', 'demise shall absolutely determine', 'determination of the term', 'earlier determination', 'sooner determination', 'arrear for the space of', 'terminate this agreement', 'termination for cause', 'termination for convenience']):
+                    cat_scores["Termination"] += 8
+                if any(w in clean_text for w in ['work made for hire', 'ownership of deliverables', 'ownership of inventions', 'intellectual property', 'copyright', 'patent rights', 'patent', 'trade secret', 'license grant']):
+                    cat_scores["Intellectual Property"] += 8
+                if any(w in clean_text for w in ['peaceably hold and enjoy', 'quiet enjoyment', 'automatically renew', 'successive one-year periods', 'term and renewal']):
+                    cat_scores["Renewal"] += 8
+                if any(w in clean_text for w in ['indemnif', 'hold harmless', 'rates, taxes', 'rates and taxes', 'tenantable repair', 'limitation of liability', 'liability cap', 'aggregate liability']):
+                    cat_scores["Liability"] += 8
+                if any(w in clean_text for w in ['monthly ground rent', 'ground rent', 'yielding and paying', 'payable in advance', 'due by the 5th', 'remit payment', 'undisputed invoices', 'net 30', 'invoices are payable']):
+                    cat_scores["Payment"] += 6
+                if any(w in clean_text for w in ['confidential and proprietary information', 'non-disclosure', 'trade secret', 'strict secrecy']):
+                    cat_scores["Confidentiality"] += 8
+                if any(w in clean_text for w in ['privacy', 'data protection', 'gdpr', 'personal data']):
+                    cat_scores["Privacy"] += 8
+                if any(w in clean_text for w in ['binding arbitration', 'american arbitration association', 'exclusive jurisdiction', 'governing law', 'jury trial']):
+                    cat_scores["Dispute Resolution"] += 8
+
+                # 4. Negative Carve-outs for Payment
+                if re.search(r'\b(?:without\s+any\s+(?:payment|compensation|reimbursement|fee)|shall\s+pay\s+no\s+(?:royalties|fees|compensation)|pay\s+no\s+royalties|without\s+financial\s+reimbursement)\b', clean_text):
+                    cat_scores["Payment"] -= 10
+                if re.search(r'\b(?:even\s+if\s+customer\s+has\s+paid|provided\s+all\s+(?:previous\s+)?(?:service\s+)?fees\s+have\s+been\s+settled)\b', clean_text):
+                    cat_scores["Payment"] -= 6
+                if re.search(r'\b(?:confidentiality\s+over|confidential\s+information\s+including)\s+.*?(?:pricing|payment|fee)\b', clean_text):
+                    cat_scores["Payment"] -= 6
+                if re.search(r'\b(?:billing\s+or\s+payment\s+dispute|dispute\s+arising\s+from\s+invoices?)\b', clean_text):
+                    cat_scores["Payment"] -= 4
+
+                best_cat, best_score = max(cat_scores.items(), key=lambda x: x[1])
+                raw_cat = best_cat if best_score >= 3 else None
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
+            structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
+            risk_src = cl.get('risk_source') or simp.get('risk_source')
 
             assembled_clauses.append({
                 "clause_id": f"c-{pos:03d}",
@@ -556,11 +662,26 @@ class RealAIClient:
                 "original_text": orig_text,
                 "simplified_text": simp_text,
                 "explanation": explanation,
+                "structured_explanation": structured_exp,
                 "severity": raw_sev,
                 "category": raw_cat,
-                "status": "complete",
+                "risk_source": risk_src,
+                "status": clause_status,
                 "rule_findings": cl.get('rule_findings', [])
             })
+
+        # Step 11: Enforce Structural Integrity Join Verification (Part 1 Guarantee)
+        for i, cl in enumerate(assembled_clauses):
+            expected_pos = i + 1
+            if i < len(segmented_clauses):
+                src_seg = segmented_clauses[i]
+                src_text = src_seg.get('text', '')
+                if cl.get('original_text') != src_text or cl.get('position') != expected_pos:
+                    logger.error(
+                        f"CRITICAL JOIN INTEGRITY FAILURE at position {cl.get('position')} (expected {expected_pos}): "
+                        f"Assembled clause text differs from segmented source text. Marking clause as 'failed'."
+                    )
+                    cl['status'] = 'failed'
 
         response_payload = {
             "document_id": str(document_id),

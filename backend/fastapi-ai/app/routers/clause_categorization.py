@@ -30,5 +30,5 @@ async def categorize_clauses_endpoint(payload: ClauseCategorizationRequest):
         )
 
     raw_clauses = [c.model_dump() for c in payload.clauses]
-    result = categorize_clause_records(raw_clauses)
+    result = categorize_clause_records(raw_clauses, rule_findings=payload.rule_findings)
     return ClauseCategorizationResponse(**result)

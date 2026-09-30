@@ -126,7 +126,7 @@ class MockAIClient:
 
         return validate_process_document_response(raw_response)
 
-    def chat(self, document_id: str, message: str, history: list = None) -> dict:
+    def chat(self, document_id: str, message: str, history: list = None, user_id: str = None, session_id: str = None, **kwargs) -> dict:
         """
         Mock RAG Chat response.
         Supports both valid answer and explicit no-answer chatbot cases (PRD Task 5 & Ch. 56.38).

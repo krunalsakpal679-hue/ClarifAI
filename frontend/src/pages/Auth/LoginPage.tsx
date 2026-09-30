@@ -84,13 +84,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handlePrefillDemoUser = () => {
-    setEmail('counsel@clarifai.internal');
-    setPassword('Password123!');
-    setEmailError(null);
-    setPasswordError(null);
-    setAuthError(null);
-  };
 
   return (
     <Card elevation="md" className="border-secondary-200">
@@ -160,17 +153,6 @@ export const LoginPage: React.FC = () => {
             disabled={isLoading}
           >
             {isLoading ? 'Signing in...' : t('auth.signIn', 'Sign In')}
-          </Button>
-
-          {/* Quick Demo Credentials Prefill */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handlePrefillDemoUser}
-            className="w-full border-dashed border-secondary-300 text-secondary-600 hover:text-primary-900 text-xs"
-          >
-            ⚡ Auto-Fill Demo Credentials (Counsel)
           </Button>
 
           <p className="text-xs text-center text-secondary-600 mt-2">

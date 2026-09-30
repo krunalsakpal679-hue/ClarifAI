@@ -80,6 +80,8 @@ class ComparisonDetailSerializer(serializers.ModelSerializer):
     Includes translation_available flag for multilingual fallback (Ch. 19),
     low-confidence structural indicator (Ch. 18.3), and category counts.
     """
+    base_document_name = serializers.CharField(source='base_document.original_filename', read_only=True, default='')
+    target_document_name = serializers.CharField(source='target_document.original_filename', read_only=True, default='')
     results = ComparisonResultSerializer(many=True, read_only=True)
     translation_available = serializers.SerializerMethodField()
     is_low_confidence = serializers.SerializerMethodField()
@@ -94,6 +96,8 @@ class ComparisonDetailSerializer(serializers.ModelSerializer):
             'id',
             'base_document_id',
             'target_document_id',
+            'base_document_name',
+            'target_document_name',
             'status',
             'results',
             'created_at',

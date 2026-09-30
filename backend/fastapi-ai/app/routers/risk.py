@@ -71,8 +71,8 @@ async def validate_risk_output_endpoint(request: OutputValidationRequest):
         raw_classification=request.raw_classification,
         rule_findings=request.rule_findings
     )
-    # Ensure backwards compatible severity field
-    result_item["severity"] = result_item["final_severity"] or "Safe"
+    # Explicitly set severity without silent Safe fallback
+    result_item["severity"] = result_item["final_severity"] or "RISK_CLASSIFICATION_UNAVAILABLE"
 
     return OutputValidationResponse(
         success=True,

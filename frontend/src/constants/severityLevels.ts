@@ -66,11 +66,19 @@ export const SEVERITY_DEFINITIONS: Record<SeverityLevel, SeverityDefinition> = {
 /**
  * Flagged clauses include High, Moderate, and Low severities.
  * Safe clauses are non-flagged.
+ * Case-insensitive to handle both canonical 'High' and backend API 'high'.
  */
-export const isRiskySeverity = (severity?: SeverityLevel | null): boolean => {
+export const isRiskySeverity = (severity?: SeverityLevel | string | null): boolean => {
   if (!severity) return false;
-  return severity === 'High' || severity === 'Moderate' || severity === 'Low';
+  const normalized = normalizeSeverity(severity);
+  return normalized === 'High' || normalized === 'Moderate' || normalized === 'Low';
 };
+
+export const isSafeSeverity = (severity?: SeverityLevel | string | null): boolean => {
+  if (!severity) return false;
+  return normalizeSeverity(severity) === 'Safe';
+};
+
 
 /**
  * Normalizes case-insensitive API inputs (e.g. 'high', 'HIGH', 'High') to the canonical SeverityLevel.

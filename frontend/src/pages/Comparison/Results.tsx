@@ -45,14 +45,27 @@ export const ComparisonResultsPage: React.FC = () => {
   }, [comparisonId, idA, idB]);
 
   // Document labels for display and routing contract
-  const docALabel = comparison?.base_document_id || idA || 'doc-1';
-  const docBLabel = comparison?.target_document_id || idB || 'doc-2';
+  const docALabel = comparison?.base_document_name || comparison?.base_document_id || idA || 'doc-1';
+  const docBLabel = comparison?.target_document_name || comparison?.target_document_id || idB || 'doc-2';
 
   useEffect(() => {
     if (effectiveId) {
       fetchComparison(effectiveId, analysisLanguage);
     }
   }, [effectiveId, analysisLanguage, fetchComparison]);
+
+  // Poll while comparison is pending or processing
+  useEffect(() => {
+    if (!comparison || comparison.status === 'complete' || comparison.status === 'failed') {
+      return;
+    }
+    const interval = setInterval(() => {
+      if (effectiveId) {
+        fetchComparison(effectiveId, analysisLanguage);
+      }
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [comparison?.status, effectiveId, analysisLanguage, fetchComparison]);
 
   // Group clauses into the 3 categories
   const { changedItems, matchedItems, missingItems } = useMemo(() => {
@@ -174,8 +187,55 @@ export const ComparisonResultsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Comparison Processing State */}
+      {comparison && (comparison.status === 'pending' || comparison.status === 'processing') && (
+        <Card elevation="sm" className="p-10 text-center border-secondary-200">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center animate-spin">
+              <RotateCcw className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold text-secondary-900">Comparing Legal Documents...</h2>
+              <p className="text-sm text-secondary-500 max-w-md mx-auto">
+                ClarifAI is aligning clauses between drafts and analyzing wording & risk changes. This takes just a moment.
+              </p>
+            </div>
+            <Badge variant="info" size="sm" className="animate-pulse">
+              Status: {comparison.status === 'processing' ? 'Aligning Clauses' : 'Queued'}
+            </Badge>
+          </div>
+        </Card>
+      )}
+
+      {/* Comparison Failed State */}
+      {comparison && comparison.status === 'failed' && (
+        <div className="py-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-secondary-900">Comparison Processing Failed</h2>
+          <p className="text-sm text-secondary-600 max-w-md mx-auto">
+            The pairwise comparison analysis could not be completed. Please ensure both documents have been successfully analyzed.
+          </p>
+          <div className="flex justify-center gap-3 pt-2">
+            <Link to="/compare">
+              <Button variant="outline" size="sm">&larr; Return to Setup</Button>
+            </Link>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => effectiveId && fetchComparison(effectiveId, analysisLanguage)}
+              className="gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Retry Comparison</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Main Results View */}
-      {comparison && (
+      {comparison && comparison.status === 'complete' && (
         <div className="space-y-6">
           {/* PRD Ch. 18.3 Low Alignment Confidence Indicator */}
           {isLowConfidence && (

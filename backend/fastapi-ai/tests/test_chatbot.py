@@ -192,6 +192,63 @@ def test_cross_session_cross_user_cross_document_memory_isolation(memory_qdrant_
     assert history_cross_doc == []
 
 
+from app.core.config import settings
+
+
+def test_exact_clause_lookup_and_missing_clause_handling(memory_qdrant_client):
+    """Test: Asking for an exact clause resolves to that clause; asking for a non-existent clause returns controlled no-answer."""
+    user_id = "user_exact_01"
+    document_id = "doc_exact_01"
+    session_id = "session_exact_01"
+
+    clauses = [
+        {
+            "position": 1,
+            "clause_number": "1",
+            "clause_id": "c-001",
+            "text": "1. In pursuance of the said agreement, Lessor doth hereby demise unto Lessee the land.",
+            "simplified_text": "Grants the lease of the specified property to the tenant.",
+            "severity": "Safe",
+            "categories": ["Payment"]
+        },
+        {
+            "position": 2,
+            "clause_number": "2",
+            "clause_id": "c-002",
+            "text": "2. The Lessee hereby covenants with the Lessor to pay the reserved rent.",
+            "simplified_text": "Obligates the tenant to pay rent on time.",
+            "severity": "Safe",
+            "categories": ["Payment"]
+        }
+    ]
+
+    index_document_clauses(user_id=user_id, document_id=document_id, clauses=clauses, client=memory_qdrant_client)
+
+    # 1. Asking for Clause 1 resolves directly to Clause 1
+    res1 = generate_chatbot_answer(
+        session_id=session_id,
+        user_id=user_id,
+        document_id=document_id,
+        question="Explain Clause 1",
+        qdrant_client=memory_qdrant_client
+    )
+    assert res1["has_sufficient_evidence"] is True
+    assert "Clause 1" in res1["answer"]
+    assert "demise" in res1["answer"].lower() or "grants the lease" in res1["answer"].lower()
+
+    # 2. Asking for non-existent Clause 6 returns controlled no-answer stating Clause 6 was not found
+    res6 = generate_chatbot_answer(
+        session_id=session_id,
+        user_id=user_id,
+        document_id=document_id,
+        question="Explain Clause 6",
+        qdrant_client=memory_qdrant_client
+    )
+    assert res6["has_sufficient_evidence"] is False
+    assert "Clause 6 was not found" in res6["answer"]
+    assert "Clauses 1 through 2" in res6["answer"]
+
+
 def test_chatbot_api_endpoints():
     """API endpoint test for POST /api/v1/chatbot/chat and DELETE /api/v1/chatbot/session/{session_id}."""
     payload = {
@@ -201,7 +258,11 @@ def test_chatbot_api_endpoints():
         "question": "Sample API test question?"
     }
 
-    response = client.post("/api/v1/chatbot/chat", json=payload)
+    headers = {}
+    if settings.INTERNAL_SERVICE_SECRET:
+        headers["X-Internal-Service-Secret"] = settings.INTERNAL_SERVICE_SECRET
+
+    response = client.post("/api/v1/chatbot/chat", json=payload, headers=headers)
     assert response.status_code == 200
 
     data = response.json()
@@ -211,6 +272,10 @@ def test_chatbot_api_endpoints():
     assert "disclaimer" in data
 
     # Clear session API call
-    del_res = client.delete("/api/v1/chatbot/session/api_session_01?user_id=api_user_01&document_id=api_doc_01")
+    del_res = client.delete(
+        "/api/v1/chatbot/session/api_session_01?user_id=api_user_01&document_id=api_doc_01",
+        headers=headers
+    )
     assert del_res.status_code == 200
     assert del_res.json()["success"] is True
+

@@ -143,6 +143,12 @@ def index_document_clauses(
     ensure_collection_exists(client)
     collection_name = settings.QDRANT_COLLECTION_NAME
 
+    # Idempotent cleanup: Purge prior points for this user and document to prevent stale clause leakage
+    try:
+        delete_document_points(user_id=user_id, document_id=document_id, client=client)
+    except Exception as cleanup_err:
+        logger.debug(f"Pre-indexing Qdrant cleanup note for doc {document_id}: {cleanup_err}")
+
     points = []
     for idx, clause in enumerate(clauses):
         c_id = str(clause.get("clause_id", f"clause_{idx + 1}"))
@@ -159,15 +165,20 @@ def index_document_clauses(
 
         point_uuid = generate_deterministic_point_id(user_id, document_id, c_id)
 
+        clause_num = str(clause.get("source_clause_number") or clause.get("clause_number") or clause.get("position", idx + 1))
         payload = {
             "clause_id": c_id,
+            "clause_number": clause_num,
+            "source_clause_number": clause_num,
             "document_id": document_id,
+            "analysis_id": str(clause.get("analysis_id") or f"{document_id}_v1"),
             "user_id": user_id,
             "position": clause.get("position", idx + 1),
             "language": clause.get("language", "en"),
             "text": clause.get("text", c_text),
             "original_text": clause.get("original_text", c_text),
-            "severity": clause.get("severity", clause.get("final_severity", "Safe")),
+            "source_text": c_text,
+            "severity": clause.get("severity") or clause.get("final_severity") or "RISK_CLASSIFICATION_UNAVAILABLE",
             "categories": clause.get("categories", []),
             "simplified_text": clause.get("simplified_text", ""),
             "why_flagged": clause.get("why_flagged", "")

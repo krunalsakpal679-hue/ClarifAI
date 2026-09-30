@@ -54,6 +54,17 @@ class ComparisonListCreateView(generics.ListCreateAPIView):
         if doc_a.status != DocumentStatus.COMPLETE or doc_b.status != DocumentStatus.COMPLETE:
             raise DocumentNotReadyException("Both documents must be fully processed before comparison.")
 
+        # Check for existing completed comparison between these documents
+        existing_comp = Comparison.objects.filter(
+            user=request.user,
+            base_document=doc_a,
+            target_document=doc_b,
+            status=ComparisonStatus.COMPLETE
+        ).order_by('-created_at').first()
+        if existing_comp and existing_comp.results.exists():
+            response_serializer = ComparisonDetailSerializer(existing_comp, context={'request': request})
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
         # 3. Create Comparison record
         comparison = Comparison.objects.create(
             user=request.user,
@@ -80,7 +91,44 @@ class ComparisonListCreateView(generics.ListCreateAPIView):
 class ComparisonDetailView(generics.RetrieveAPIView):
     """
     GET /api/comparisons/{id}/ - Retrieve comparison status and results (Owner-only).
+    Supports UUID PK as well as composite 'comp-{docA}-{docB}' identifier.
     """
     permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = ComparisonDetailSerializer
     queryset = Comparison.objects.all()
+
+    def get_object(self):
+        pk = str(self.kwargs.get('pk', ''))
+        # Handle composite 'comp-{docA}-{docB}' pattern
+        if pk.startswith('comp-'):
+            sub = pk[5:]
+            if len(sub) == 73 and sub[36] == '-':
+                doc_a_id = sub[:36]
+                doc_b_id = sub[37:]
+                comp = Comparison.objects.filter(
+                    user=self.request.user,
+                    base_document_id=doc_a_id,
+                    target_document_id=doc_b_id
+                ).order_by('-created_at').first()
+                if comp:
+                    self.check_object_permissions(self.request, comp)
+                    return comp
+
+                doc_a = Document.objects.filter(id=doc_a_id, user=self.request.user).first()
+                doc_b = Document.objects.filter(id=doc_b_id, user=self.request.user).first()
+                if doc_a and doc_b:
+                    comp = Comparison.objects.create(
+                        user=self.request.user,
+                        base_document=doc_a,
+                        target_document=doc_b,
+                        status=ComparisonStatus.PENDING
+                    )
+                    try:
+                        process_comparison.delay(str(comp.id))
+                    except Exception:
+                        process_comparison(str(comp.id))
+                    comp.refresh_from_db()
+                    self.check_object_permissions(self.request, comp)
+                    return comp
+
+        return super().get_object()

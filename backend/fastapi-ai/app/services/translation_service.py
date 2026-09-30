@@ -328,10 +328,83 @@ def offline_translate_legal_text_to_hindi(text: str) -> str:
     return result
 
 
+DEVANAGARI_DIGITS_MAP: Dict[str, str] = {
+    '०': '0', '१': '1', '२': '2', '३': '3', '४': '4',
+    '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
+}
+
+
+def normalize_digits_and_amounts(text: str) -> str:
+    """Normalizes Devanagari numerals to standard ASCII digits."""
+    if not text:
+        return ""
+    for d_hi, d_ar in DEVANAGARI_DIGITS_MAP.items():
+        text = text.replace(d_hi, d_ar)
+    return text
+
+
+def extract_factual_entities(text: str) -> Dict[str, List[str]]:
+    """
+    Extracts key numbers, currency amounts, percentages, and numerical figures from text.
+    """
+    norm = normalize_digits_and_amounts(text)
+
+    # Extract currency numbers: e.g. $50,000, ₹75,000, Rs. 500, USD 1000
+    currency_matches = re.findall(r'(?:[\$₹€]|USD|INR|Rs\.?)\s*([\d,]+(?:\.\d+)?)', norm, re.IGNORECASE)
+    currency_vals = [c.replace(',', '').strip() for c in currency_matches]
+
+    # Extract percentage numbers: e.g. 2.5%, 18%
+    pct_matches = re.findall(r'([\d,]+(?:\.\d+)?)\s*%', norm)
+    pct_vals = [p.replace(',', '').strip() for p in pct_matches]
+
+    # Extract all numeric figures (integers, floats)
+    num_matches = re.findall(r'\b\d+(?:,\d+)*(?:\.\d+)?\b', norm)
+    num_vals = [n.replace(',', '').strip() for n in num_matches if n.replace(',', '').strip()]
+
+    return {
+        "currencies": currency_vals,
+        "percentages": pct_vals,
+        "numbers": num_vals
+    }
+
+
+def validate_hindi_factual_preservation(source_en: str, translated_hi: str) -> Tuple[bool, Optional[str]]:
+    """
+    Validates that numeric quantities, currency amounts, percentages, and facts from the
+    English source are accurately preserved in the Hindi output, and that Devanagari script is present.
+    """
+    if not translated_hi or not translated_hi.strip():
+        return False, "Translated Hindi text is empty."
+
+    has_devanagari = any('\u0900' <= char <= '\u097f' for char in translated_hi)
+    if not has_devanagari:
+        return False, "Translation output contains no Devanagari Hindi characters."
+
+    src_facts = extract_factual_entities(source_en)
+    hi_facts = extract_factual_entities(translated_hi)
+
+    # 1. Verify currency amounts
+    for c_val in src_facts["currencies"]:
+        if c_val not in hi_facts["currencies"] and c_val not in hi_facts["numbers"]:
+            return False, f"Factual preservation failed: Currency amount '{c_val}' missing or altered in Hindi translation."
+
+    # 2. Verify percentage figures
+    for p_val in src_facts["percentages"]:
+        if p_val not in hi_facts["percentages"] and p_val not in hi_facts["numbers"]:
+            return False, f"Factual preservation failed: Percentage '{p_val}%' missing or altered in Hindi translation."
+
+    # 3. Verify all significant numeric values (days, durations, amounts)
+    for n_val in src_facts["numbers"]:
+        if n_val not in hi_facts["numbers"]:
+            return False, f"Factual preservation failed: Numeric figure '{n_val}' from source missing or altered in Hindi translation."
+
+    return True, None
+
+
 def translate_text_to_hindi(text: str, override_client: Optional[Any] = None) -> str:
     """
     Translates an English string into natural Devanagari Hindi using Groq LLM
-    with automatic offline legal dictionary fallback.
+    with factual preservation validation and automatic offline legal dictionary fallback.
     """
     if not text or not text.strip():
         return text
@@ -351,8 +424,15 @@ def translate_text_to_hindi(text: str, override_client: Optional[Any] = None) ->
         content = res.get("content", "").strip()
 
         is_safe, validated = validate_untrusted_llm_output(content)
-        if is_safe and any('\u0900' <= char <= '\u097f' for char in validated):
+        if not is_safe:
+            logger.warning("Unsafe output or prompt injection detected in translation output. Returning original text.")
+            return text
+
+        is_preserved, err_msg = validate_hindi_factual_preservation(text, validated)
+        if is_preserved:
             return validated
+        else:
+            logger.warning(f"LLM Hindi translation rejected due to factual preservation check: {err_msg}. Using fallback.")
     except Exception as exc:
         if override_client is not None:
             # Re-raise when explicit mock test client is provided so test_translation_failure_isolated_fallback passes

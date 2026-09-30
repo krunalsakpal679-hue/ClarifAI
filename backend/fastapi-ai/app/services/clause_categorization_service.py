@@ -38,7 +38,7 @@ DOMINANT_CONSEQUENCE_PATTERNS = [
     (re.compile(r"\b(?:resulting\s+in|lead\s+to|entitled?\s+to|cause\s+for|triggering|subject\s+to)\s+(?:immediate\s+)?(?:termination|determination|forfeiture|re-entry|cancellation|eviction)\b", re.IGNORECASE), ClauseCategoryEnum.TERMINATION, 9),
     (re.compile(r"\b(?:resolve|settled?|adjudicated?)\s+(?:all\s+)?(?:claims?|disputes?|differences?)\s+through\s+(?:binding\s+)?(?:arbitration|courts?|litigation|mediation)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION, 9),
     (re.compile(r"\b(?:dispute\s+resolution|exclusive\s+jurisdiction|governing\s+law|arbitration\s+clause)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION, 6),
-    (re.compile(r"\b(?:maintain|keep|hold)\s+(?:strict\s+)?(?:confidentiality|secrecy|non-disclosure)\b", re.IGNORECASE), ClauseCategoryEnum.CONFIDENTIALITY, 9),
+    (re.compile(r"\b(?:maintain|keep|hold|preserve)\s+(?:the\s+)?(?:strict\s+)?(?:confidentiality|secrecy|non-disclosure)\b", re.IGNORECASE), ClauseCategoryEnum.CONFIDENTIALITY, 9),
     (re.compile(r"\b(?:assigns?|transfer|vest\s+in|exclusive\s+property\s+of)\s+(?:all\s+)?(?:intellectual\s+property|patents?|copyrights?|inventions?|technology)\b", re.IGNORECASE), ClauseCategoryEnum.INTELLECTUAL_PROPERTY, 9),
     (re.compile(r"\b(?:under\s+no\s+circumstances\s+shall|in\s+no\s+event\s+shall|neither\s+party\s+shall\s+be\s+liable\s+for)\s+(?:any\s+)?(?:indirect|consequential|punitive|special)\s+damages\b", re.IGNORECASE), ClauseCategoryEnum.LIABILITY, 9),
     (re.compile(r"\b(?:renew|extend|continue)\s+(?:the\s+)?(?:term|agreement|lease)\s+(?:for\s+(?:an\s+)?additional|successive)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL, 9),
@@ -55,7 +55,7 @@ CATEGORY_SCORING_RULES = {
         "negative": [
             (re.compile(r"\b(?:without\s+any\s+(?:payment|compensation|reimbursement|fee)|shall\s+pay\s+no\s+(?:royalties|fees|compensation)|pay\s+no\s+royalties|without\s+financial\s+reimbursement)\b", re.IGNORECASE), -10),
             (re.compile(r"\b(?:even\s+if\s+customer\s+has\s+paid|provided\s+all\s+(?:previous\s+)?(?:service\s+)?fees\s+have\s+been\s+settled)\b", re.IGNORECASE), -6),
-            (re.compile(r"\b(?:confidentiality\s+over|confidential\s+information\s+including)\s+.*?(?:pricing|payment|fee)\b", re.IGNORECASE), -6),
+            (re.compile(r"\b(?:confidentiality\s+(?:over|of|regarding)|confidential\s+information\s+(?:including|regarding)|maintain\s+(?:the\s+)?confidentiality\s+of)\s+.*?(?:pricing|payment|billing|fees?|structures?)\b", re.IGNORECASE), -8),
             (re.compile(r"\b(?:billing\s+or\s+payment\s+dispute|dispute\s+arising\s+from\s+invoices?)\b", re.IGNORECASE), -4),
             (re.compile(r"\b(?:re-enter|re-entry|demise\s+shall\s+(?:absolutely\s+)?determine|forfeiture)\b", re.IGNORECASE), -3),
         ]
@@ -98,7 +98,7 @@ CATEGORY_SCORING_RULES = {
     },
     ClauseCategoryEnum.CONFIDENTIALITY: {
         "positive": [
-            (re.compile(r"\b(?:confidential\s+information|non-disclosure|nda|strict\s+secrecy|keep\s+confidential|proprietary\s+information|maintain\s+strict\s+confidentiality)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:confidential\s+information|non-disclosure|nda|strict\s+secrecy|keep\s+confidential|proprietary\s+information|maintain\s+(?:the\s+)?(?:strict\s+)?confidentiality|confidentiality\s+of)\b", re.IGNORECASE), 8),
             (re.compile(r"\b(?:confidential|confidentiality|secret|disclose|disclosure)\b", re.IGNORECASE), 4),
         ],
         "negative": []

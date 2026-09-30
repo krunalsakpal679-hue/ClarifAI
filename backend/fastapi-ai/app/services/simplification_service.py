@@ -232,7 +232,7 @@ def synthesize_detailed_plain_english_analysis(
 
     # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes, Rates)
     amounts = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?', text, re.IGNORECASE)
-    durations = re.findall(r'\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|thirty|sixty|ninety)\s+(?:days?|months?|years?|hours?|business\s+days?)\b', text, re.IGNORECASE)
+    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|thirty|sixty|ninety)\s+(?:days?|months?|years?|hours?|business\s+days?)\b', text, re.IGNORECASE)
     percentages = [m.group(0).strip() for m in re.finditer(r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?', text, re.IGNORECASE)]
 
     # 3. Grounded Semantic Clause Analysis (Ordered by specific covenant to general)

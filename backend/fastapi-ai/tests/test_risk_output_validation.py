@@ -157,10 +157,14 @@ def test_validate_risk_output_api_endpoint():
         "rule_findings": [{"rule_id": "R005", "risk_signal": "Excessive Liability Transfer", "clause_id": "1"}]
     }
 
+    headers = {}
+    if settings.INTERNAL_SERVICE_SECRET:
+        headers["X-Internal-Service-Secret"] = settings.INTERNAL_SERVICE_SECRET
+
     response = client.post(
         "/api/v1/validate-risk-output",
         json=payload,
-        headers={"X-Internal-Service-Secret": settings.INTERNAL_SERVICE_SECRET}
+        headers=headers
     )
     assert response.status_code == 200
 

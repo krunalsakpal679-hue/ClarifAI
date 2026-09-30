@@ -263,6 +263,7 @@ def segment_document_clauses(
 
         clauses.append({
             "position": idx,
+            "clause_id": f"c-{idx:03d}",
             "clause_number": src_clause_num if src_clause_num is not None else None,
             "title": src_title or (f"Clause {src_clause_num}" if src_clause_num else f"Section {idx}"),
             "text": verbatim_text,

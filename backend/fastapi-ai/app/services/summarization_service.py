@@ -14,6 +14,7 @@ import logging
 from typing import Dict, Any, Optional, List
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from app.services.claim_grounding_service import verify_and_ground_executive_summary
 
 logger = logging.getLogger(__name__)
 
@@ -346,10 +347,21 @@ def generate_document_summary(
         if "statement of work" in full_doc_lower:
             ob_items.append("Provider must deliver services in accordance with agreed Statements of Work (SOWs)")
 
-        if not ob_items:
-            ob_items.append("Contracting parties are bound by the operational covenants, compliance duties, and standards established in the agreement")
-
         obligations_text = f"{ob_items[0]}, and {ob_items[-1]}." if len(ob_items) > 1 else f"{ob_items[0]}."
+
+        # Apply mandatory claim-level provenance verification on executive summary
+        full_doc_combined = "\n".join([c.get("text", "") for c in clauses if c.get("text")])
+        grounded_summary = verify_and_ground_executive_summary(
+            full_document_text=full_doc_combined,
+            purpose_text=purpose_text,
+            key_risks_text=key_risks_text,
+            key_terms_text=key_terms_text,
+            obligations_text=obligations_text
+        )
+        purpose_text = grounded_summary["purpose_text"]
+        key_risks_text = grounded_summary["key_risks_text"]
+        key_terms_text = grounded_summary["key_terms_text"]
+        obligations_text = grounded_summary["obligations_text"]
 
         latency_ms = (time.time() - t0) * 1000
 

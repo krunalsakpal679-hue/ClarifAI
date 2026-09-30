@@ -162,10 +162,11 @@ class RealAIClient:
         }
         return self._send_request("POST", "/api/v1/segment-clauses", json_data=payload)
 
-    def categorize_clauses(self, clauses: list) -> dict:
+    def categorize_clauses(self, clauses: list, rule_findings: list = None) -> dict:
         """Invokes POST /api/v1/categorize-clauses on FastAPI."""
         payload = {
-            "clauses": clauses
+            "clauses": clauses,
+            "rule_findings": rule_findings or []
         }
         return self._send_request("POST", "/api/v1/categorize-clauses", json_data=payload)
 
@@ -491,13 +492,13 @@ class RealAIClient:
         segment_res = self.segment_clauses(cleaned_text, pages=pages_metadata)
         segmented_clauses = segment_res.get('clauses', [])
 
-        # Step 4: Categorize Clauses
-        categorize_res = self.categorize_clauses(segmented_clauses)
-        categorized_clauses = categorize_res.get('clauses') or categorize_res.get('categorized_clauses', segmented_clauses)
-
-        # Step 5: Evaluate Rules
-        rule_res = self.evaluate_rules(clauses=categorized_clauses, text=cleaned_text)
+        # Step 4: Evaluate Rules on segmented clauses first so findings are available
+        rule_res = self.evaluate_rules(clauses=segmented_clauses, text=cleaned_text)
         rule_findings = rule_res.get('findings', [])
+
+        # Step 5: Categorize Clauses using rule findings for dominant subject scoring
+        categorize_res = self.categorize_clauses(segmented_clauses, rule_findings=rule_findings)
+        categorized_clauses = categorize_res.get('clauses') or categorize_res.get('categorized_clauses', segmented_clauses)
 
         # Step 6: Classify Risk
         risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings)
@@ -649,7 +650,7 @@ class RealAIClient:
                     cat_scores["Payment"] -= 4
 
                 best_cat, best_score = max(cat_scores.items(), key=lambda x: x[1])
-                raw_cat = best_cat if best_score >= 3 else 'Renewal'
+                raw_cat = best_cat if best_score >= 3 else None
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
             explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
             structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
@@ -668,6 +669,19 @@ class RealAIClient:
                 "status": clause_status,
                 "rule_findings": cl.get('rule_findings', [])
             })
+
+        # Step 11: Enforce Structural Integrity Join Verification (Part 1 Guarantee)
+        for i, cl in enumerate(assembled_clauses):
+            expected_pos = i + 1
+            if i < len(segmented_clauses):
+                src_seg = segmented_clauses[i]
+                src_text = src_seg.get('text', '')
+                if cl.get('original_text') != src_text or cl.get('position') != expected_pos:
+                    logger.error(
+                        f"CRITICAL JOIN INTEGRITY FAILURE at position {cl.get('position')} (expected {expected_pos}): "
+                        f"Assembled clause text differs from segmented source text. Marking clause as 'failed'."
+                    )
+                    cl['status'] = 'failed'
 
         response_payload = {
             "document_id": str(document_id),

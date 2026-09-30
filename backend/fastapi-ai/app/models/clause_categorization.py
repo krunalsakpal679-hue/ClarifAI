@@ -42,6 +42,7 @@ class CategorizedClauseItem(ClauseItem):
 
 class ClauseCategorizationRequest(BaseModel):
     clauses: List[ClauseItem] = Field(..., description="List of segmented clause items to categorize")
+    rule_findings: Optional[List[dict]] = Field(None, description="Optional rule engine findings for category signal weighting")
 
 
 class ClauseCategorizationResponse(BaseModel):

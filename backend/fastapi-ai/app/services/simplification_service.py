@@ -58,57 +58,58 @@ def extract_category_evidence_span(text: str, category: Optional[str]) -> Tuple[
         return "No text provided.", ""
 
     t_lower = text.lower()
-    cat_lower = (category or "").lower()
+    cat_lower = (category or "").lower().strip()
 
-    if cat_lower == "payment" or any(k in t_lower for k in ["monthly ground rent", "ground rent", "payable in advance", "due by the 5th", "remit payment", "invoices", "fees", "rent of"]):
-        m = re.search(r'(?:monthly\s+(?:ground\s+)?rent[^\n.,;]*|yielding\s+and\s+paying[^\n.,;]*|payable\s+in\s+advance[^\n.,;]*|remit\s+payment[^\n.,;]*|invoices?\s+(?:within|due)[^\n.,;]*|fees?\s+(?:within|due)[^\n.,;]*|(?:₹|Rs\.?|\$)\s*[\d,]+[^\n.,;]*)', text, re.IGNORECASE)
+    if cat_lower == "payment":
+        m = re.search(r'(?:monthly\s+(?:ground\s+)?rent[^\n.,;]*|yielding\s+and\s+paying[^\n.,;]*|payable\s+in\s+advance[^\n.,;]*|remit\s+payment[^\n.,;]*|undisputed\s+invoices[^\n.,;]*|invoices?\s+(?:within|due)[^\n.,;]*|fees?\s+(?:within|due)[^\n.,;]*|(?:₹|Rs\.?|\$)\s*[\d,]+[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Establishes financial consideration, payment timing, rates, and invoicing obligations."
         return reason, span
 
-    elif cat_lower == "termination" or any(k in t_lower for k in ["re-enter", "determination of the term", "demise shall absolutely determine", "terminate", "cancellation", "forfeiture"]):
-        m = re.search(r'(?:re-enter[^\n.,;]*|demise\s+shall\s+(?:absolutely\s+)?determine[^\n.,;]*|terminate\s+this\s+agreement[^\n.,;]*|in\s+arrear\s+for\s+the\s+space\s+of[^\n.,;]*|notice\s+of\s+termination[^\n.,;]*)', text, re.IGNORECASE)
+    elif cat_lower == "termination":
+        m = re.search(r'(?:re-enter[^\n.,;]*|demise\s+shall\s+(?:absolutely\s+)?determine[^\n.,;]*|terminate\s+this\s+agreement[^\n.,;]*|termination\s+for\s+(?:cause|convenience)[^\n.,;]*|in\s+arrear\s+for\s+the\s+space\s+of[^\n.,;]*|notice\s+of\s+termination[^\n.,;]*|resulting\s+in\s+(?:immediate\s+)?(?:contract\s+)?termination[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Specifies triggers, forfeiture remedies, re-entry rights, or procedures for terminating the agreement."
         return reason, span
 
-    elif cat_lower == "renewal" or any(k in t_lower for k in ["quiet enjoyment", "peaceably hold and enjoy", "automatic renewal", "successive", "term of"]):
-        m = re.search(r'(?:peaceably\s+hold\s+and\s+enjoy[^\n.,;]*|quiet\s+enjoyment[^\n.,;]*|automatically\s+renew[^\n.,;]*|for\s+the\s+term\s+of[^\n.,;]*)', text, re.IGNORECASE)
+    elif cat_lower == "renewal":
+        m = re.search(r'(?:peaceably\s+hold\s+and\s+enjoy[^\n.,;]*|quiet\s+enjoyment[^\n.,;]*|automatically\s+renew[^\n.,;]*|extend\s+the\s+term[^\n.,;]*|for\s+the\s+term\s+of[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Defines agreement duration, quiet enjoyment tenure, or automatic renewal conditions."
         return reason, span
 
-    elif cat_lower == "liability" or any(k in t_lower for k in ["indemnif", "hold harmless", "limitation of liability", "rates, taxes", "repair", "competing business", "non-compete"]):
-        m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*|limitation\s+of\s+liability[^\n.,;]*|pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes)[^\n.,;]*|good\s+and\s+substantial\s+repair[^\n.,;]*|competing\s+business[^\n.,;]*|non-compete[^\n.,;]*)', text, re.IGNORECASE)
+    elif cat_lower == "liability":
+        m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*|limitation\s+of\s+liability[^\n.,;]*|neither\s+party\s+shall\s+be\s+liable[^\n.,;]*|pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes)[^\n.,;]*|good\s+and\s+substantial\s+repair[^\n.,;]*|competing\s+business[^\n.,;]*|non-compete[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Allocates legal liability, indemnification obligations, maintenance duties, and statutory taxes."
         return reason, span
 
-    elif cat_lower in ["intellectual property", "ip"] or any(k in t_lower for k in ["vest in the lessor", "not assign", "sublet", "copyright", "work made for hire"]):
-        m = re.search(r'(?:vest\s+in\s+the\s+lessor[^\n.,;]*|shall\s+not\s+assign,?\s*underlet[^\n.,;]*|work\s+made\s+for\s+hire[^\n.,;]*|intellectual\s+property[^\n.,;]*)', text, re.IGNORECASE)
+    elif cat_lower in ["intellectual property", "intellectual_property", "ip"]:
+        m = re.search(r'(?:vest\s+in\s+the\s+lessor[^\n.,;]*|shall\s+not\s+assign,?\s*underlet[^\n.,;]*|work\s+made\s+for\s+hire[^\n.,;]*|assigns\s+all\s+right[^\n.,;]*|intellectual\s+property[^\n.,;]*|patent\s+rights[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Governs ownership of property assets, permanent structures, vesting, and assignment/licensing restrictions."
         return reason, span
 
-    elif cat_lower == "confidentiality" or any(k in t_lower for k in ["confidential", "secret", "non-disclosure", "trade secret"]):
-        m = re.search(r'(?:confidential\s+information[^\n.,;]*|strict\s+secrecy[^\n.,;]*|non-disclosure[^\n.,;]*)', text, re.IGNORECASE)
+    elif cat_lower == "confidentiality":
+        m = re.search(r'(?:confidential\s+information[^\n.,;]*|strict\s+secrecy[^\n.,;]*|maintain\s+strict\s+confidentiality[^\n.,;]*|non-disclosure[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Mandates non-disclosure and strict confidentiality over proprietary technical and business data."
         return reason, span
 
-    elif cat_lower == "privacy" or any(k in t_lower for k in ["privacy", "personal data", "gdpr", "pii"]):
+    elif cat_lower == "privacy":
         m = re.search(r'(?:personal\s+data[^\n.,;]*|gdpr[^\n.,;]*|data\s+protection[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Regulates processing and security protection for personal data."
         return reason, span
 
-    elif cat_lower == "dispute resolution" or any(k in t_lower for k in ["arbitration", "jurisdiction", "governing law", "court"]):
-        m = re.search(r'(?:binding\s+arbitration[^\n.,;]*|exclusive\s+jurisdiction[^\n.,;]*|governing\s+law[^\n.,;]*)', text, re.IGNORECASE)
+    elif cat_lower in ["dispute resolution", "dispute_resolution"]:
+        m = re.search(r'(?:binding\s+arbitration[^\n.,;]*|exclusive\s+jurisdiction[^\n.,;]*|resolve\s+(?:the\s+)?claim\s+through[^\n.,;]*|governing\s+law[^\n.,;]*)', text, re.IGNORECASE)
         span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
         reason = "Specifies binding dispute resolution mechanisms, choice of law, and court jurisdiction."
         return reason, span
 
     else:
+        # Fallback when category is not specified
         first_clause_sent = text.strip().split("\n")[0].split(".")[0].strip()
         return "Standard contractual provision.", first_clause_sent[:min(80, len(first_clause_sent))]
 
@@ -119,19 +120,29 @@ def extract_risk_evidence_span(
     rule_findings: Optional[List[Dict[str, Any]]] = None
 ) -> Tuple[str, str]:
     """
-    Extracts an exact verbatim substring span from the clause text justifying the risk level.
+    Extracts an exact verbatim substring span from the clause text justifying the risk level,
+    with explicit reasoning documenting whether the severity stems from rule match, model, or agreement.
     Returns (reason, evidence_span).
     """
     if not text or not text.strip():
         return "No text provided.", ""
 
     t_lower = text.lower()
+    clean_sev = str(severity).capitalize()
 
     if rule_findings:
+        rule_ids = [rf.get("rule_id", "") for rf in rule_findings if "rule_id" in rf]
+        rule_signals = [rf.get("risk_signal", "Risk pattern") for rf in rule_findings if "risk_signal" in rf]
+        signals_str = ", ".join(rule_signals)
+        ids_str = ", ".join(rule_ids)
+
         for rf in rule_findings:
             matched = rf.get("matched_span") or rf.get("matched_text")
             if matched and matched in text:
-                reason = f"Identified {rf.get('risk_signal', 'risk pattern')} ({rf.get('rule_id', 'R-RULE')}) within clause text."
+                if clean_sev in ("High", "Moderate"):
+                    reason = f"Flagged as {clean_sev} risk due to deterministic rule match: {signals_str} ({ids_str})."
+                else:
+                    reason = f"Deterministic rule match ({ids_str}) and Legal-BERT model agreed on {clean_sev} severity."
                 return reason, matched
 
     if "re-entry" in t_lower or "arrears" in t_lower or "re-enter" in t_lower:
@@ -154,14 +165,16 @@ def extract_risk_evidence_span(
         if m:
             return "Imposes broad indemnity obligations requiring defense and payment of third-party claims.", m.group(0).strip()
 
-    if str(severity).lower() in ("high", "moderate"):
-        first_sent = text.strip().split("\n")[0].split(".")[0].strip()
-        clean_span = first_sent[:min(80, len(first_sent))] if first_sent else text[:min(80, len(text))]
-        return f"Identified elevated {severity} contractual risk exposure.", clean_span
-
     first_sent = text.strip().split("\n")[0].split(".")[0].strip()
     clean_span = first_sent[:min(80, len(first_sent))] if first_sent else text[:min(80, len(text))]
-    return "Balanced contractual terms with standard operational covenants and no unilateral risk provisions.", clean_span
+    if clean_sev in ("High", "Moderate"):
+        return f"Flagged as {clean_sev} risk by Legal-BERT classification based on contextual contractual exposure.", clean_span
+    elif clean_sev == "Low":
+        return "Standard clause with minimal contractual risk. Classified as Low severity by Legal-BERT.", clean_span
+    elif clean_sev == "Safe":
+        return "Standard clause with balanced commercial terms. No elevated risk signals detected.", clean_span
+    else:
+        return "Risk classification unavailable.", clean_span
 
 
 def synthesize_detailed_plain_english_analysis(

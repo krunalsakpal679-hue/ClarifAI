@@ -43,8 +43,8 @@ def test_validate_severity_label_out_of_enum_adversarial_rejection():
 
 def test_conflict_preservation_policy():
     """
-    Chapter 16.9: Valid classifier result becomes final severity.
-    Conflicting rule findings are PRESERVED as supporting evidence — never override and never discarded.
+    Chapter 16.9: Principled precedence: deterministic rule findings (R005 = High)
+    take precedence over underpredicting classifier (Low), and findings are PRESERVED as supporting evidence.
     """
     clause = {"position": 1, "clause_id": "1", "text": "Customer assumes liability."}
     raw_classification = {"severity": "Low", "confidence": 0.85}
@@ -59,7 +59,8 @@ def test_conflict_preservation_policy():
     )
 
     assert res["validation_status"] == "VALIDATED"
-    assert res["final_severity"] == "Low"  # Classifier result is final severity
+    assert res["final_severity"] == "High"  # Rule precedence takes effect
+    assert res["risk_source"] == "RULE_PRECEDENCE"
     assert res["error_reason"] is None
 
     # Assert rule finding is preserved unaltered as evidence

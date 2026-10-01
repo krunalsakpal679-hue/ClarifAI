@@ -98,6 +98,7 @@ services:
       EMBEDDING_MODEL_NAME: backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1
       BART_MODEL_NAME: facebook/bart-base
     volumes:
+      - ./backend/fastapi-ai/app:/app/app
       - ./backend/fastapi-ai/training:/app/training:ro
     depends_on:
       qdrant:
@@ -135,7 +136,7 @@ services:
       AI_SERVICE_BASE_URL: http://fastapi-ai:8000
       AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
       AI_SERVICE_USE_MOCK: "false"
-      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-120}
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-300}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
       JWT_ACCESS_TOKEN_LIFETIME_MINUTES: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
       JWT_REFRESH_TOKEN_DAYS: ${JWT_REFRESH_TOKEN_DAYS:-7}
@@ -151,6 +152,10 @@ services:
     networks:
       - clarifai_network
     volumes:
+      - ./backend/django-api/apps:/app/apps
+      - ./backend/django-api/config:/app/config
+      - ./backend/django-api/services:/app/services
+      - ./backend/django-api/tasks:/app/tasks
       - media_data:/app/media
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
@@ -179,7 +184,7 @@ services:
       AI_SERVICE_BASE_URL: http://fastapi-ai:8000
       AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
       AI_SERVICE_USE_MOCK: "false"
-      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-120}
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-300}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
     depends_on:
       postgres:
@@ -191,6 +196,10 @@ services:
     networks:
       - clarifai_network
     volumes:
+      - ./backend/django-api/apps:/app/apps
+      - ./backend/django-api/config:/app/config
+      - ./backend/django-api/services:/app/services
+      - ./backend/django-api/tasks:/app/tasks
       - media_data:/app/media
 
   # ----------------------------------------------------------------------------

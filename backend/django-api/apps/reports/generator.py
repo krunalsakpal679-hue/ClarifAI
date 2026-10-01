@@ -198,11 +198,21 @@ def generate_document_pdf(report, document, language='en'):
                 elif getattr(clause, 'simplified_text_hi', None):
                     simplified = clause.simplified_text_hi
 
+            sev_display = clause.severity.upper() if clause.severity else "RISK_CLASSIFICATION_UNAVAILABLE"
+            cat_display = clause.category if clause.category else "Unclassified"
+            
+            # Prefer structured what_this_clause_means for concise report table rendering
+            display_text = simplified
+            if not display_text and clause.structured_explanation:
+                display_text = clause.structured_explanation.get('what_this_clause_means')
+            if not display_text:
+                display_text = clause.simplified_text or clause.original_text[:150]
+
             table_data.append([
                 str(clause.position),
-                (clause.severity or "UNKNOWN").upper(),
-                clause.category or "General",
-                Paragraph(_safe_str(simplified, has_unicode, clause.simplified_text or clause.original_text[:150]), body_style)
+                sev_display,
+                cat_display,
+                Paragraph(_safe_str(display_text, has_unicode, display_text), body_style)
             ])
 
         t = Table(table_data, colWidths=[36, 64, 90, 350])

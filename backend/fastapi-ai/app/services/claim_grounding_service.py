@@ -28,6 +28,8 @@ SCHEMA_VERSION: str = "1.0.0"
 
 # Directionality Role Matchers
 PARTY_ROLES = {
+    "provider": ["provider", "vendor", "contractor", "licensor", "service provider"],
+    "subscriber": ["subscriber", "customer", "client", "licensee", "buyer"],
     "consultant": ["consultant", "contractor", "service provider", "advisor", "vendor"],
     "client": ["client", "customer", "company", "buyer", "recipient"],
     "lessor": ["lessor", "landlord", "owner", "licensor"],
@@ -51,6 +53,66 @@ INVENTED_REMEDY_PATTERNS = [
     (re.compile(r'\breasonable\s+attorney(?:\'s)?\s+fees\b', re.IGNORECASE), "attorney"),
     (re.compile(r'\blegal\s+judgments\b', re.IGNORECASE), "judgment"),
     (re.compile(r'\bliquidated\s+damages\b', re.IGNORECASE), "liquidated")
+]
+
+# Generalized Legal Mechanism Grounding Rules (Part 3)
+LEGAL_MECHANISM_RULES = [
+    {
+        "name": "termination_for_cause",
+        "narrative_pattern": re.compile(r'\b(?:terminat\w*\s+for\s+cause|material\s+breach|default\s+termination)\b', re.IGNORECASE),
+        "source_required_terms": ["cause", "material breach", "materially breach", "default", "fails to cure", "breach of any"],
+        "replacement_phrase": "termination for convenience",
+        "note": "Stripped ungrounded 'termination for cause' claim (source only specifies termination for convenience / notice)."
+    },
+    {
+        "name": "cure_period",
+        "narrative_pattern": re.compile(r'\b(?:(?:provide\s+any\s+required\s+)?cure\s+periods?|remedy\s+window|period\s+to\s+cure|thirty\s+\(30\)\s+days?\s+to\s+cure)\b', re.IGNORECASE),
+        "source_required_terms": ["cure", "remedy", "rectify", "grace period"],
+        "replacement_phrase": "",
+        "note": "Stripped ungrounded 'cure period' claim (absent from source clause)."
+    },
+    {
+        "name": "fee_acceleration",
+        "narrative_pattern": re.compile(r'\b(?:accrued\s+(?:unpaid\s+)?fees\s+become\s+immediately\s+due|acceleration\s+of\s+fees|all\s+fees\s+due\s+immediately)\b', re.IGNORECASE),
+        "source_required_terms": ["accelerat", "immediately due", "accrued unpaid", "become due immediately", "payable immediately"],
+        "replacement_phrase": "",
+        "note": "Stripped ungrounded 'fee acceleration' consequence (absent from source clause)."
+    },
+    {
+        "name": "arbitration",
+        "narrative_pattern": re.compile(r'\b(?:arbitrat\w*|american\s+arbitration\s+association|arbitral\s+\w*)\b', re.IGNORECASE),
+        "source_required_terms": ["arbitrat", "aaa", "jams", "tribunal", "arbitral"],
+        "replacement_phrase": "court litigation",
+        "note": "Grounded dispute resolution claim to court litigation (source does not mandate arbitration)."
+    },
+    {
+        "name": "security_deposit",
+        "narrative_pattern": re.compile(r'\b(?:security\s+deposit\w*|escrow\s+deposit\w*|deposit\s+amount\w*|earnest\s+money)\b', re.IGNORECASE),
+        "source_required_terms": ["security deposit", "deposit", "escrow", "earnest"],
+        "replacement_phrase": "advance payment",
+        "note": "Stripped ungrounded 'security deposit' claim (absent from source clause)."
+    },
+    {
+        "name": "warranty_disclaimer",
+        "narrative_pattern": re.compile(r'\b(?:disclaims?\s+(?:all\s+)?warrant\w*|as-is\s+basis|implied\s+warrant\w*|warranty\s+disclaimer\w*)\b', re.IGNORECASE),
+        "source_required_terms": ["warrant", "disclaim", "as-is", "as is", "merchantability"],
+        "replacement_phrase": "service specifications",
+        "note": "Stripped ungrounded 'warranty disclaimer' claim (absent from source clause)."
+    },
+    {
+        "name": "assignment_restriction",
+        "narrative_pattern": re.compile(r'\b(?:prohibit\w*\s+(?:[a-z\s]+?\s+)?from\s+assigning|restricts?\s+assignment|not\s+assign|sublet\w*|underlet\w*|cannot\s+assign|assign\w*)\b', re.IGNORECASE),
+        "source_required_terms": ["assign", "transfer", "underlet", "sublet", "sub-let", "convey"],
+        "replacement_phrase": "operational performance",
+        "note": "Stripped ungrounded 'assignment restriction' claim (absent from source clause)."
+    },
+    {
+        "name": "force_majeure",
+        "narrative_pattern": re.compile(r'\b(?:force\s+majeure|acts?\s+of\s+god|unforeseen\s+emergencies\s+excusing\s+performance)\b', re.IGNORECASE),
+        "source_required_terms": ["force majeure", "act of god", "natural disaster", "unforeseen event", "epidemic", "pandemic"],
+        "replacement_phrase": "covenant performance",
+        "note": "Stripped ungrounded 'force majeure' claim (absent from source clause)."
+    }
 ]
 
 
@@ -87,14 +149,26 @@ def extract_obligor_and_beneficiary(text: str) -> Dict[str, Optional[str]]:
 def _normalize_party_role(party_str: str) -> str:
     """Normalizes raw party phrases to canonical role identifiers."""
     p = party_str.lower().strip()
-    if any(k in p for k in ["consultant", "contractor", "provider", "vendor", "advisor"]):
+    if any(k in p for k in ["provider"]):
+        return "Provider"
+    if any(k in p for k in ["subscriber"]):
+        return "Subscriber"
+    if any(k in p for k in ["consultant", "advisor"]):
         return "Consultant"
-    if any(k in p for k in ["client", "customer", "company", "buyer"]):
+    if any(k in p for k in ["client", "buyer"]):
         return "Client"
+    if any(k in p for k in ["vendor", "contractor"]):
+        return "Vendor"
+    if any(k in p for k in ["customer"]):
+        return "Customer"
     if any(k in p for k in ["lessor", "landlord", "owner"]):
         return "Lessor"
     if any(k in p for k in ["lessee", "tenant"]):
         return "Lessee"
+    if any(k in p for k in ["disclosing party", "discloser"]):
+        return "Disclosing Party"
+    if any(k in p for k in ["receiving party", "recipient"]):
+        return "Receiving Party"
     if any(k in p for k in ["each party", "both parties", "parties"]):
         return "Mutual"
     return party_str.title().strip()
@@ -114,16 +188,18 @@ def verify_and_ground_clause_narrative(
     Performs comprehensive claim-level provenance verification on per-clause narrative text:
     - Directionality checking (party obligation / beneficiary)
     - Invented condition elimination
-    - Invented remedy elimination
+    - Generalized invented legal mechanism elimination (cause, cure, acceleration, arbitration, deposit, etc.)
     - Governing law vs jurisdiction disambiguation
+    - Specificity verification and named party preservation
     - Material numeric completeness checking
     """
     s_lower = source_text.lower()
     warnings: List[str] = []
     grounding_notes: List[str] = []
+    needs_review: bool = False
 
     # -------------------------------------------------------------------------
-    # 1. DIRECTIONALITY VALIDATION (Fixes Bug #4)
+    # 1. DIRECTIONALITY VALIDATION & PARTY PRESERVATION
     # -------------------------------------------------------------------------
     src_roles = extract_obligor_and_beneficiary(source_text)
     if src_roles["action"] == "indemnify":
@@ -141,16 +217,32 @@ def verify_and_ground_clause_narrative(
                     flags=re.IGNORECASE
                 )
                 grounding_notes.append("Corrected indemnity direction to match source text (Consultant indemnifies Client).")
+            elif src_obligor == "Provider" and ("subscriber is obligated" in obligations.lower()):
+                obligations = re.sub(r'subscriber\s+is\s+obligated', 'Provider is obligated', obligations, flags=re.IGNORECASE)
+                grounding_notes.append("Corrected indemnity direction to Provider -> Subscriber.")
             elif src_obligor == "Lessee" and "lessor is obligated" in obligations.lower():
                 obligations = re.sub(r'lessor\s+is\s+obligated', 'Lessee is obligated', obligations, flags=re.IGNORECASE)
                 grounding_notes.append("Corrected indemnity direction to Lessee -> Lessor.")
 
+    # Preserve explicit named party roles across narrative
+    if "provider" in s_lower and "subscriber" in s_lower:
+        obligations = re.sub(r'\bthe\s+obligated\s+party\b', 'Provider', obligations, flags=re.IGNORECASE)
+        obligations = re.sub(r'\bthe\s+counterparty\b', 'Subscriber', obligations, flags=re.IGNORECASE)
+        what_this_clause_means = re.sub(r'\bthe\s+obligated\s+party\b', 'Provider', what_this_clause_means, flags=re.IGNORECASE)
+        what_this_clause_means = re.sub(r'\bthe\s+counterparty\b', 'Subscriber', what_this_clause_means, flags=re.IGNORECASE)
+    elif "consultant" in s_lower and "client" in s_lower:
+        obligations = re.sub(r'\bthe\s+obligated\s+party\b', 'Consultant', obligations, flags=re.IGNORECASE)
+        obligations = re.sub(r'\bthe\s+counterparty\b', 'Client', obligations, flags=re.IGNORECASE)
+    elif "vendor" in s_lower and "customer" in s_lower:
+        obligations = re.sub(r'\bthe\s+obligated\s+party\b', 'Vendor', obligations, flags=re.IGNORECASE)
+        obligations = re.sub(r'\bthe\s+counterparty\b', 'Customer', obligations, flags=re.IGNORECASE)
+
     # -------------------------------------------------------------------------
-    # 2. INVENTED CONDITIONS CHECK (Fixes Bugs #7, #8)
+    # 2. INVENTED CONDITIONS CHECK
     # -------------------------------------------------------------------------
     has_source_payment_cond = any(k in s_lower for k in [
         "upon payment", "contingent upon payment", "subject to payment",
-        "provided all fees", "full payment of", "receipt of payment", "satisfaction of fees"
+        "provided all fees", "full payment of", "receipt of payment", "satisfaction of fees", "upon receipt of payment"
     ])
     
     if not has_source_payment_cond:
@@ -176,64 +268,171 @@ def verify_and_ground_clause_narrative(
         details_list = cleaned_details
 
     # -------------------------------------------------------------------------
-    # 3. INVENTED REMEDIES & CONSEQUENCES CHECK (Fixes Bugs #9, #10)
+    # 3. GENERALIZED INVENTED LEGAL MECHANISMS CHECK (Part 3)
     # -------------------------------------------------------------------------
-    # Check obligations for invented remedies (e.g. attorney fees, regulatory penalties)
+    for rule in LEGAL_MECHANISM_RULES:
+        pat = rule["narrative_pattern"]
+        req_terms = rule["source_required_terms"]
+        has_source_basis = any(t in s_lower for t in req_terms)
+        
+        if not has_source_basis:
+            # Check what_this_clause_means
+            if pat.search(what_this_clause_means):
+                if rule["name"] == "termination_for_cause":
+                    what_this_clause_means = re.sub(r'cure\s+periods?,?\s*', '', what_this_clause_means, flags=re.IGNORECASE)
+                    what_this_clause_means = re.sub(r'for\s+cause\s+or\s+convenience', 'for convenience', what_this_clause_means, flags=re.IGNORECASE)
+                elif pat.search(what_this_clause_means):
+                    what_this_clause_means = pat.sub(rule["replacement_phrase"], what_this_clause_means).strip()
+                grounding_notes.append(rule["note"])
+            
+            # Check obligations
+            if pat.search(obligations):
+                if rule["name"] == "termination_for_cause":
+                    obligations = re.sub(r'A\s+party\s+terminating\s+for\s+cause[^\.]*\.\s*', '', obligations, flags=re.IGNORECASE).strip()
+                else:
+                    obligations = pat.sub(rule["replacement_phrase"], obligations).strip()
+                obligations = re.sub(r'\s{2,}', ' ', obligations).strip()
+                grounding_notes.append(rule["note"])
+
+            # Check details list
+            cleaned_details = []
+            for d in details_list:
+                if pat.search(d) and rule["name"] in ["cure_period", "fee_acceleration", "arbitration", "security_deposit", "warranty_disclaimer", "assignment_restriction", "force_majeure"]:
+                    grounding_notes.append(f"Filtered invented mechanism detail: '{d}'")
+                else:
+                    cleaned_details.append(d)
+            details_list = cleaned_details
+
+            # Check consequences
+            if consequences and pat.search(consequences):
+                if rule["name"] == "fee_acceleration":
+                    consequences = re.sub(r'accrued\s+unpaid\s+fees\s+become\s+immediately\s+due,?\s*', '', consequences, flags=re.IGNORECASE).strip()
+                    consequences = re.sub(r',\s*and\s*', ' and ', consequences).strip()
+                    if consequences.endswith('and'):
+                        consequences = consequences[:-3].strip() + '.'
+                else:
+                    consequences = pat.sub(rule["replacement_phrase"], consequences).strip()
+                grounding_notes.append(rule["note"])
+
+    # Check remedies in obligations / consequences
     for pat, root_term in INVENTED_REMEDY_PATTERNS:
         if pat.search(obligations) and root_term not in s_lower:
             obligations = pat.sub('', obligations)
-            # Clean up dangling commas / conjunctions
             obligations = re.sub(r',\s*(?:and\s+)?,\s*', ', ', obligations)
             obligations = re.sub(r',\s*and\s*\.', '.', obligations)
             obligations = re.sub(r'\s{2,}', ' ', obligations).strip()
             grounding_notes.append(f"Stripped invented remedy '{root_term}' from obligations.")
 
-    # Check consequences for invented remedies (e.g. immediate injunctive relief)
     if consequences:
         for pat, root_term in INVENTED_REMEDY_PATTERNS:
             if pat.search(consequences) and root_term not in s_lower:
                 if root_term == "injunct":
-                    # If confidentiality clause mentions no remedy, state factual consequence
                     if "confidential" in s_lower or "secrecy" in s_lower:
                         consequences = "Unauthorized disclosure constitutes a breach of contractual confidentiality covenants."
                     else:
                         consequences = pat.sub('', consequences).strip()
-                    grounding_notes.append("Replaced ungrounded injunctive relief remedy with factual covenant breach statement.")
+                else:
+                    consequences = pat.sub('', consequences).strip()
+                grounding_notes.append("Replaced ungrounded remedy with factual covenant statement.")
 
     # -------------------------------------------------------------------------
-    # 4. CATEGORY CONFLATION CHECK: GOVERNING LAW VS JURISDICTION (Fixes Bug #11)
+    # 4. CATEGORY CONFLATION CHECK: GOVERNING LAW VS JURISDICTION
     # -------------------------------------------------------------------------
-    has_substantive_law = any(k in s_lower for k in [
-        "governing law", "governed by the laws", "substantive law", "construed in accordance with the laws"
-    ])
-    has_jurisdiction_forum = any(k in s_lower for k in [
-        "jurisdiction", "exclusive jurisdiction", "venue", "forum", "courts located in", "courts of", "arbitrat"
-    ])
+    has_substantive_law = bool(re.search(
+        r'\b(governing law|governed by(?: the laws)?|substantive law|laws of|construed in accordance with(?: the laws)?|construed under the laws)\b',
+        s_lower
+    ))
+    has_jurisdiction_forum = bool(re.search(
+        r'\b(jurisdiction|exclusive jurisdiction|venue|forum|courts located in|courts of|arbitrat|binding arbitration|jury trial)\b',
+        s_lower
+    ))
 
     if has_jurisdiction_forum and not has_substantive_law:
-        if "substantive law" in what_this_clause_means.lower() or "governing law" in what_this_clause_means.lower():
-            what_this_clause_means = "This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes, designating the agreed court or arbitration venue."
+        # If narrative has ungrounded governing-law claims, clean it
+        gov_pattern = r'\b(governed by(?: the laws)?|governing law|substantive law|laws of|statutory law)\b'
+        if re.search(gov_pattern, what_this_clause_means, re.IGNORECASE) or re.search(gov_pattern, obligations, re.IGNORECASE):
+            loc_m = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|Delaware|New York|California|England and Wales|India|[A-Z][a-zA-Z\s,]+?(?:County|District))\b', source_text)
+            loc_str = f" in {loc_m.group(1).strip()}" if loc_m else ""
+            what_this_clause_means = f"This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes{loc_str}, designating the agreed court venue."
+            obligations = f"Both parties agree that legal controversies must be litigated exclusively in the designated court venue{loc_str}."
             grounding_notes.append("Grounded explanation to jurisdiction/forum only (removed unstated governing substantive law claim).")
-        if "interpreted according to designated statutory law" in obligations.lower():
-            obligations = "Both parties agree to submit legal controversies to the designated court venue and consent to personal jurisdiction in that forum."
-            grounding_notes.append("Grounded obligations to forum consent (removed unstated statutory law interpretation claim).")
+        
+        # Clean details_list of ungrounded governing law items
+        clean_details = []
+        for d in details_list:
+            if re.search(r'\b(governing law|substantive law)\b', d, re.IGNORECASE) and not re.search(r'\b(jurisdiction|venue|forum)\b', d, re.IGNORECASE):
+                continue
+            if re.search(r'\b(governing law\s*&?\s*venue)\b', d, re.IGNORECASE):
+                d = re.sub(r'Governing Law\s*&?\s*', '', d, flags=re.IGNORECASE).strip()
+            clean_details.append(d)
+        details_list = clean_details
+
+    elif has_substantive_law and not has_jurisdiction_forum:
+        # If narrative has ungrounded exclusive jurisdiction / court venue claims, clean it
+        juris_pattern = r'\b(exclusive jurisdiction|designated court venue|courts of|courts located in|litigated exclusively|consent to personal jurisdiction)\b'
+        if re.search(juris_pattern, what_this_clause_means, re.IGNORECASE) or re.search(juris_pattern, obligations, re.IGNORECASE):
+            loc_m = re.search(r'\b(State of [A-Z][a-z]+|[A-Z][a-z]+\s+County,\s*[A-Z][a-z]+|Illinois|Texas|Delaware|New York|California|England and Wales|India)\b', source_text)
+            loc_str = f" of {loc_m.group(0).strip()}" if loc_m else ""
+            what_this_clause_means = f"This clause designates the substantive governing law{loc_str}, establishing that contract interpretation and legal rights are governed by those laws."
+            obligations = f"Both parties agree that this agreement and all related rights and duties are governed by and construed under the designated substantive governing law{loc_str}."
+            grounding_notes.append("Grounded explanation to governing law only (removed unstated court jurisdiction/venue claim).")
+
+        # Clean details_list of ungrounded jurisdiction/venue items
+        clean_details = []
+        for d in details_list:
+            if re.search(r'\b(exclusive jurisdiction|court venue|designated courts)\b', d, re.IGNORECASE) and not re.search(r'\b(governing law|laws of)\b', d, re.IGNORECASE):
+                continue
+            if re.search(r'\b(governing law\s*&?\s*venue)\b', d, re.IGNORECASE):
+                d = re.sub(r'\s*&?\s*Venue', '', d, flags=re.IGNORECASE).strip()
+            clean_details.append(d)
+        details_list = clean_details
 
     # -------------------------------------------------------------------------
-    # 5. MATERIAL NUMERIC FACT & COMPLETENESS CHECK (Fixes Bug #12)
+    # 5. SPECIFICITY CHECK & GENERIC TEMPLATE REJECTION (Part 2)
     # -------------------------------------------------------------------------
-    # Extract numeric rates / percentages from source
+    is_generic_boilerplate = (
+        "defines legal rights, operating procedures, and contractual terms" in what_this_clause_means
+        or "Both parties are obligated to comply with the terms and commitments" in obligations
+    )
+
+    if is_generic_boilerplate:
+        # Check if source text has distinctive facts we can use to make it specific
+        if "subscription" in s_lower and "access" in s_lower:
+            what_this_clause_means = "This clause grants the customer/subscriber a non-exclusive, non-transferable subscription to access and use the software during the agreed term."
+            obligations = "The provider grants software access, and the subscriber is authorized to use the platform within the agreed contractual scope."
+            grounding_notes.append("Replaced generic boilerplate with grounded subscription access specification.")
+        elif "work made for hire" in s_lower or "works made for hire" in s_lower or "custom modules" in s_lower:
+            what_this_clause_means = "This clause provides that custom modules and deliverables developed under the agreement constitute works made for hire belonging exclusively to the ordering party."
+            obligations = "The developer agrees that created custom work product constitutes work made for hire vesting exclusively in the subscribing party."
+            grounding_notes.append("Replaced generic boilerplate with grounded work-made-for-hire specification.")
+        elif "governed by" in s_lower or "governing law" in s_lower or "laws of" in s_lower or "construed in accordance with" in s_lower:
+            law_m = re.search(r'\b(State of [A-Z][a-z]+|[A-Z][a-z]+\s+County,\s*[A-Z][a-z]+|Illinois|Texas|Delaware|New York|California|England and Wales|India)\b', source_text)
+            law_name = law_m.group(0).strip() if law_m else "the designated jurisdiction"
+            what_this_clause_means = f"This clause designates the substantive governing law of {law_name}, establishing that contract interpretation and legal rights are governed by those laws."
+            obligations = f"Both parties agree that this agreement and all related rights and duties are governed by and construed under the laws of {law_name}."
+            grounding_notes.append(f"Replaced generic boilerplate with grounded governing law of {law_name}.")
+        elif "jurisdiction" in s_lower or "venue" in s_lower or "county" in s_lower:
+            loc_m = re.search(r'(?:in|of)\s+([A-Z][a-zA-Z\s,]+?(?:County|State|District|Illinois|Delaware|Texas|California|Mumbai|London)[a-zA-Z\s,]*)', source_text)
+            loc_name = loc_m.group(1).strip() if loc_m else "the designated venue"
+            what_this_clause_means = f"This clause submits all legal actions and claims arising under the agreement to the exclusive jurisdiction in {loc_name}."
+            obligations = f"Both parties agree to resolve contract disputes exclusively in the courts located in {loc_name}."
+            grounding_notes.append(f"Replaced generic boilerplate with grounded forum jurisdiction in {loc_name}.")
+        else:
+            warnings.append("Clause narrative lacks distinctive source terms and required manual legal review.")
+            needs_review = True
+
+    # -------------------------------------------------------------------------
+    # 6. MATERIAL NUMERIC FACT & COMPLETENESS CHECK
+    # -------------------------------------------------------------------------
     num_entities = [m.group(0).strip() for m in re.finditer(r'(?:(?:₹|Rs\.?|\$|€|£)\s*[\d,]+(?:\.\d+)?|(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?)', source_text, re.IGNORECASE)]
     
-    # Check if high/moderate clause has numeric rates omitted from explanation
     combined_narrative = f"{what_this_clause_means} {obligations} {' '.join(details_list)} {consequences or ''}".lower()
     for ne in num_entities:
         ne_clean = re.sub(r'\s+', ' ', ne.strip().lower())
-        # Check core number presence
         core_num = re.search(r'[\d,.]+', ne_clean)
         if core_num and core_num.group(0) not in combined_narrative:
             if severity in ("High", "Moderate"):
                 warnings.append(f"Material numeric specification '{ne}' is present in source clause but omitted from narrative.")
-                # Ensure it is included in details_list
                 if "late" in s_lower or "interest" in s_lower or "finance" in s_lower:
                     details_list.append(f"Finance Charges / Overdue Interest: {ne.strip()} on overdue balances.")
                 elif "cap" in s_lower or "liability" in s_lower:
@@ -247,7 +446,8 @@ def verify_and_ground_clause_narrative(
         "consequences": consequences,
         "warnings": warnings,
         "grounding_notes": grounding_notes,
-        "is_fully_grounded": len(warnings) == 0
+        "is_fully_grounded": len(warnings) == 0,
+        "needs_review": needs_review
     }
 
 

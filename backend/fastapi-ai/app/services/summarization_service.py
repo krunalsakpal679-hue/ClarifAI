@@ -347,7 +347,12 @@ def generate_document_summary(
         if "statement of work" in full_doc_lower:
             ob_items.append("Provider must deliver services in accordance with agreed Statements of Work (SOWs)")
 
-        obligations_text = f"{ob_items[0]}, and {ob_items[-1]}." if len(ob_items) > 1 else f"{ob_items[0]}."
+        if not ob_items:
+            obligations_text = "Each party is obligated to perform its commitments in accordance with the terms of the agreement."
+        elif len(ob_items) > 1:
+            obligations_text = f"{ob_items[0]}, and {ob_items[-1]}."
+        else:
+            obligations_text = f"{ob_items[0]}."
 
         # Apply mandatory claim-level provenance verification on executive summary
         full_doc_combined = "\n".join([c.get("text", "") for c in clauses if c.get("text")])

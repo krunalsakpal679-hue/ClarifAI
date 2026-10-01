@@ -135,7 +135,7 @@ services:
       AI_SERVICE_BASE_URL: http://fastapi-ai:8000
       AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
       AI_SERVICE_USE_MOCK: "false"
-      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-120}
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-300}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
       JWT_ACCESS_TOKEN_LIFETIME_MINUTES: ${JWT_ACCESS_TOKEN_LIFETIME_MINUTES:-15}
       JWT_REFRESH_TOKEN_DAYS: ${JWT_REFRESH_TOKEN_DAYS:-7}
@@ -179,7 +179,7 @@ services:
       AI_SERVICE_BASE_URL: http://fastapi-ai:8000
       AI_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET:-clarifai_internal_secret_token_2026}
       AI_SERVICE_USE_MOCK: "false"
-      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-120}
+      AI_SERVICE_TIMEOUT: ${AI_SERVICE_TIMEOUT:-300}
       JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-dev_jwt_signing_key_secret_clarifai_2026}
     depends_on:
       postgres:

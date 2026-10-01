@@ -38,7 +38,7 @@ class RealAIClient:
     def __init__(self, base_url: str = None, secret: str = None, timeout: int = None):
         self.base_url = (base_url or getattr(settings, 'AI_SERVICE_BASE_URL', 'http://localhost:8001')).rstrip('/')
         self.secret = secret or getattr(settings, 'AI_SERVICE_SECRET', '')
-        self.timeout = timeout or getattr(settings, 'AI_SERVICE_TIMEOUT', 30)
+        self.timeout = timeout or getattr(settings, 'AI_SERVICE_TIMEOUT', 300)
 
     def _get_headers(self) -> dict:
         headers = {'Content-Type': 'application/json'}

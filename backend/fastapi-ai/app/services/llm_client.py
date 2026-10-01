@@ -74,7 +74,10 @@ def get_groq_api_key() -> Optional[str]:
     Retrieves GROQ_API_KEY from environment variables.
     Never hardcoded, never logged.
     """
-    return os.getenv("GROQ_API_KEY")
+    key = (os.getenv("GROQ_API_KEY") or "").strip()
+    if not key or key.lower() in ["none", "placeholder", "gsk_placeholder", "undefined"] or "your_groq_api_key" in key.lower() or key == "":
+        return None
+    return key
 
 
 def get_groq_model_name() -> str:
@@ -180,7 +183,7 @@ def classify_llm_exception(e: Exception) -> Dict[str, Any]:
     """
     clean_err = sanitize_error_message(str(e))
     
-    if isinstance(e, AuthenticationError):
+    if isinstance(e, AuthenticationError) or "401" in clean_err or "invalid_api_key" in clean_err or "authentication" in clean_err.lower():
         category = "AUTH_FAILURE"
         is_transient = False
     elif isinstance(e, NotFoundError):

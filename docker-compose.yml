@@ -98,6 +98,7 @@ services:
       EMBEDDING_MODEL_NAME: backend/fastapi-ai/training/checkpoints/multilingual-e5/v1.1
       BART_MODEL_NAME: facebook/bart-base
     volumes:
+      - ./backend/fastapi-ai/app:/app/app
       - ./backend/fastapi-ai/training:/app/training:ro
     depends_on:
       qdrant:
@@ -151,6 +152,10 @@ services:
     networks:
       - clarifai_network
     volumes:
+      - ./backend/django-api/apps:/app/apps
+      - ./backend/django-api/config:/app/config
+      - ./backend/django-api/services:/app/services
+      - ./backend/django-api/tasks:/app/tasks
       - media_data:/app/media
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
@@ -191,6 +196,10 @@ services:
     networks:
       - clarifai_network
     volumes:
+      - ./backend/django-api/apps:/app/apps
+      - ./backend/django-api/config:/app/config
+      - ./backend/django-api/services:/app/services
+      - ./backend/django-api/tasks:/app/tasks
       - media_data:/app/media
 
   # ----------------------------------------------------------------------------

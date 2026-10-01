@@ -50,9 +50,37 @@ JSON Output Format:
 }"""
 
 
+def _clean_clause_prefix(text: str) -> str:
+    """Strips leading numbering, Roman numerals, or section headers e.g. '2.', 'a.', '(1)'."""
+    if not text:
+        return ""
+    cleaned = re.sub(
+        r'^\s*(?:(?:clause|section|article|item|\d+|[a-zA-Z]|\([0-9a-zA-Z]+\))\s*[\.\:\-\)]\s*)+',
+        '',
+        text,
+        flags=re.IGNORECASE
+    )
+    return cleaned.strip() if cleaned.strip() else text.strip()
+
+
+def _extract_clean_fallback_span(text: str) -> str:
+    """Extracts a non-empty, non-numeric, human-readable substring from the clause for fallback evidence."""
+    if not text or not text.strip():
+        return ""
+    cleaned = _clean_clause_prefix(text)
+    first_clause_sent = cleaned.split("\n")[0].strip()
+    sent_m = re.split(r'(?<=[a-zA-Z]{2})\.\s+', first_clause_sent)
+    first_sent = sent_m[0].strip() if sent_m else first_clause_sent
+    span = first_sent[:min(80, len(first_sent))].strip()
+    if re.match(r'^\W*\d+\W*$', span) or len(span) < 3:
+        span = cleaned[:min(80, len(cleaned))].strip()
+    return span
+
+
 def extract_category_evidence_span(text: str, category: Optional[str]) -> Tuple[str, str]:
     """
     Extracts an exact verbatim substring span from the clause text justifying the category.
+    Guarantees the evidence span is never a numeric position index or single character.
     Returns (reason, evidence_span).
     """
     if not text or not text.strip():
@@ -63,56 +91,53 @@ def extract_category_evidence_span(text: str, category: Optional[str]) -> Tuple[
 
     if cat_lower == "payment":
         m = re.search(r'(?:monthly\s+(?:ground\s+)?rent[^\n.,;]*|yielding\s+and\s+paying[^\n.,;]*|payable\s+in\s+advance[^\n.,;]*|remit\s+payment[^\n.,;]*|undisputed\s+invoices[^\n.,;]*|invoices?\s+(?:within|due)[^\n.,;]*|fees?\s+(?:within|due)[^\n.,;]*|(?:₹|Rs\.?|\$)\s*[\d,]+[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Establishes financial consideration, payment timing, rates, and invoicing obligations."
-        return reason, span
 
     elif cat_lower == "termination":
         m = re.search(r'(?:re-enter[^\n.,;]*|demise\s+shall\s+(?:absolutely\s+)?determine[^\n.,;]*|terminate\s+this\s+agreement[^\n.,;]*|termination\s+for\s+(?:cause|convenience)[^\n.,;]*|in\s+arrear\s+for\s+the\s+space\s+of[^\n.,;]*|notice\s+of\s+termination[^\n.,;]*|resulting\s+in\s+(?:immediate\s+)?(?:contract\s+)?termination[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Specifies triggers, forfeiture remedies, re-entry rights, or procedures for terminating the agreement."
-        return reason, span
 
     elif cat_lower == "renewal":
         m = re.search(r'(?:peaceably\s+hold\s+and\s+enjoy[^\n.,;]*|quiet\s+enjoyment[^\n.,;]*|automatically\s+renew[^\n.,;]*|extend\s+the\s+term[^\n.,;]*|for\s+the\s+term\s+of[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Defines agreement duration, quiet enjoyment tenure, or automatic renewal conditions."
-        return reason, span
 
     elif cat_lower == "liability":
         m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*|limitation\s+of\s+liability[^\n.,;]*|neither\s+party\s+shall\s+be\s+liable[^\n.,;]*|pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes)[^\n.,;]*|good\s+and\s+substantial\s+repair[^\n.,;]*|competing\s+business[^\n.,;]*|non-compete[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Allocates legal liability, indemnification obligations, maintenance duties, and statutory taxes."
-        return reason, span
 
     elif cat_lower in ["intellectual property", "intellectual_property", "ip"]:
-        m = re.search(r'(?:vest\s+in\s+the\s+lessor[^\n.,;]*|shall\s+not\s+assign,?\s*underlet[^\n.,;]*|work\s+made\s+for\s+hire[^\n.,;]*|assigns\s+all\s+right[^\n.,;]*|intellectual\s+property[^\n.,;]*|patent\s+rights[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        m = re.search(r'(?:vest\s+in\s+the\s+lessor[^\n.,;]*|shall\s+not\s+assign,?\s*underlet[^\n.,;]*|work\s+made\s+for\s+hire[^\n.,;]*|assigns\s+all\s+right[^\n.,;]*|custom\s+modules?[^\n.,;]*|intellectual\s+property[^\n.,;]*|patent\s+rights[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Governs ownership of property assets, permanent structures, vesting, and assignment/licensing restrictions."
-        return reason, span
 
     elif cat_lower == "confidentiality":
         m = re.search(r'(?:confidential\s+information[^\n.,;]*|strict\s+secrecy[^\n.,;]*|maintain\s+strict\s+confidentiality[^\n.,;]*|non-disclosure[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Mandates non-disclosure and strict confidentiality over proprietary technical and business data."
-        return reason, span
 
     elif cat_lower == "privacy":
         m = re.search(r'(?:personal\s+data[^\n.,;]*|gdpr[^\n.,;]*|data\s+protection[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Regulates processing and security protection for personal data."
-        return reason, span
 
     elif cat_lower in ["dispute resolution", "dispute_resolution"]:
-        m = re.search(r'(?:binding\s+arbitration[^\n.,;]*|exclusive\s+jurisdiction[^\n.,;]*|resolve\s+(?:the\s+)?claim\s+through[^\n.,;]*|governing\s+law[^\n.,;]*)', text, re.IGNORECASE)
-        span = m.group(0).strip() if m else text[:min(80, len(text))].strip()
+        m = re.search(r'(?:binding\s+arbitration[^\n.,;]*|exclusive\s+jurisdiction[^\n.,;]*|resolve\s+(?:the\s+)?claim\s+through[^\n.,;]*|governing\s+law[^\n.,;]*|cook\s+county[^\n.,;]*|travis\s+county[^\n.,;]*)', text, re.IGNORECASE)
+        span = m.group(0).strip() if m else _extract_clean_fallback_span(text)
         reason = "Specifies binding dispute resolution mechanisms, choice of law, and court jurisdiction."
-        return reason, span
 
     else:
-        # Fallback when category is not specified
-        first_clause_sent = text.strip().split("\n")[0].split(".")[0].strip()
-        return "Standard contractual provision.", first_clause_sent[:min(80, len(first_clause_sent))]
+        span = _extract_clean_fallback_span(text)
+        reason = "Standard contractual provision."
+
+    # Guard against pure numbers or single characters leaking into evidence
+    if re.match(r'^\W*\d+\W*$', span) or len(span) < 3:
+        span = _extract_clean_fallback_span(text)
+
+    return reason, span
 
 
 def extract_risk_evidence_span(
@@ -166,8 +191,7 @@ def extract_risk_evidence_span(
         if m:
             return "Imposes broad indemnity obligations requiring defense and payment of third-party claims.", m.group(0).strip()
 
-    first_sent = text.strip().split("\n")[0].split(".")[0].strip()
-    clean_span = first_sent[:min(80, len(first_sent))] if first_sent else text[:min(80, len(text))]
+    clean_span = _extract_clean_fallback_span(text)
     if clean_sev in ("High", "Moderate"):
         return f"Flagged as {clean_sev} risk by Legal-BERT classification based on contextual contractual exposure.", clean_span
     elif clean_sev == "Low":
@@ -201,7 +225,11 @@ def synthesize_detailed_plain_english_analysis(
     t_lower = text.lower()
 
     # 1. Dynamic Extraction of Contracting Parties
-    if any(k in t_lower for k in ["lessee", "lessor", "tenant", "landlord"]):
+    if any(k in t_lower for k in ["provider", "subscriber"]):
+        affected_parties = "The Provider and the Subscriber."
+        actor_role = "Subscriber"
+        counterparty_role = "Provider"
+    elif any(k in t_lower for k in ["lessee", "lessor", "tenant", "landlord"]):
         affected_parties = "The Landlord (Lessor) and the Tenant (Lessee)."
         actor_role = "Tenant (Lessee)"
         counterparty_role = "Landlord (Lessor)"
@@ -209,7 +237,7 @@ def synthesize_detailed_plain_english_analysis(
         affected_parties = "The Consultant and the Client."
         actor_role = "Consultant"
         counterparty_role = "Client"
-    elif any(k in t_lower for k in ["customer", "client"]) and any(k in t_lower for k in ["vendor", "provider", "contractor", "company"]):
+    elif any(k in t_lower for k in ["customer", "client"]) and any(k in t_lower for k in ["vendor", "contractor", "company"]):
         affected_parties = "The Customer (Client) and the Vendor (Service Provider)."
         actor_role = "Customer"
         counterparty_role = "Vendor"
@@ -260,7 +288,14 @@ def synthesize_detailed_plain_english_analysis(
 
     elif any(k in t_lower for k in ["indemnif", "hold harmless", "defend and indemnify", "third-party claims"]):
         what_means = "This clause defines indemnity obligations, specifying who is financially responsible for defending lawsuits, paying legal defense expenses, and satisfying damages if a third party files a lawsuit."
-        if "consultant agrees to defend" in t_lower or "consultant shall defend" in t_lower or "consultant shall indemnify" in t_lower:
+        if "provider" in t_lower and "subscriber" in t_lower:
+            if "provider shall defend" in t_lower or "provider agrees to defend" in t_lower:
+                obligations = "The Provider is obligated to defend, indemnify, and hold harmless the Subscriber against specified third-party claims."
+            elif "subscriber shall defend" in t_lower or "subscriber agrees to defend" in t_lower:
+                obligations = "The Subscriber is obligated to defend, indemnify, and hold harmless the Provider against specified third-party claims."
+            else:
+                obligations = "The obligated party must defend, indemnify, and hold harmless the counterparty from and against covered third-party claims."
+        elif "consultant agrees to defend" in t_lower or "consultant shall defend" in t_lower or "consultant shall indemnify" in t_lower:
             obligations = "The Consultant is obligated to defend, indemnify, and hold harmless the Client against third-party claims or losses arising from specified breach or gross negligence."
         elif "customer agrees to defend" in t_lower or "customer shall defend" in t_lower or "lessee shall indemnify" in t_lower:
             obligations = f"The {actor_role} is obligated to defend, indemnify, and hold harmless the {counterparty_role} against specified third-party claims."
@@ -269,17 +304,24 @@ def synthesize_detailed_plain_english_analysis(
         details_list.append("Defense Duty: Obligated party must defend and hold the indemnified party harmless from covered claims.")
         consequences = "If a covered third-party claim is initiated, the indemnifying party must bear the financial defense and liability obligations."
 
-    elif any(k in t_lower for k in ["work made for hire", "intellectual property", "ownership of deliverables", "work product ownership", "copyright"]):
-        what_means = "This clause establishes intellectual property ownership, providing that analysis reports, spreadsheets, deliverables, and custom work product created under the agreement constitute works made for hire belonging exclusively to the client."
-        if "consultant" in t_lower and "client" in t_lower:
+    elif any(k in t_lower for k in ["work made for hire", "intellectual property", "ownership of deliverables", "work product ownership", "custom module", "copyright"]):
+        if "custom module" in t_lower or "custom software" in t_lower or "work made for hire" in t_lower:
+            what_means = "This clause establishes intellectual property ownership, providing that custom modules, deliverables, and bespoke work product created under the agreement constitute works made for hire belonging exclusively to the ordering party."
+        else:
+            what_means = "This clause establishes intellectual property ownership, providing that analysis reports, deliverables, and custom work product created under the agreement constitute works made for hire belonging exclusively to the client."
+        if "provider" in t_lower and "subscriber" in t_lower:
+            obligations = "The Provider agrees that all custom modules and deliverables developed for the Subscriber constitute works made for hire owned by Subscriber."
+        elif "consultant" in t_lower and "client" in t_lower:
             obligations = "The Consultant agrees that all work product created under the agreement is deemed work made for hire and becomes the Client's exclusive intellectual property."
         else:
             obligations = f"The {actor_role} transfers or assigns intellectual property rights in agreed deliverables to the {counterparty_role} as work made for hire."
-        details_list.append("Work Made for Hire: Deliverables are created on a work-made-for-hire basis and vest exclusively in the client.")
+        details_list.append("Work Made for Hire: Custom deliverables are created on a work-made-for-hire basis and vest exclusively in the ordering party.")
 
     elif any(k in t_lower for k in ["invoicing and finance", "fees and payment", "remit payment", "net 30", "invoice date", "invoices are due", "invoicing"]):
         what_means = "This clause establishes the financial payment terms, billing cadence, invoice due dates, and finance charges for overdue balances."
-        if "consultant" in t_lower and "client" in t_lower:
+        if "provider" in t_lower and "subscriber" in t_lower:
+            obligations = "The Subscriber must remit payment for all undisputed invoices within the designated credit window."
+        elif "consultant" in t_lower and "client" in t_lower:
             obligations = "The Client must remit payment for all invoices upon receipt or within the designated payment window."
         else:
             obligations = f"The {actor_role} must remit payment for all invoices within the designated credit window."
@@ -296,15 +338,22 @@ def synthesize_detailed_plain_english_analysis(
         obligations = "The Consultant is obligated to perform the agreed deliverables, advisory services, and strategic tasks as authorized by the Client."
         details_list.append("Scope: Strategic management and technical advisory services as agreed in work statements.")
 
-    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue shall be"]):
-        has_subst_law = any(k in t_lower for k in ["governed by the laws", "governing substantive law", "substantive law of"])
-        if has_subst_law:
-            what_means = "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
-            obligations = "Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law."
+    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue shall be", "governed by the laws", "cook county"]):
+        venue_match = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|Delaware|New York|California|England and Wales|India)\b', text, re.IGNORECASE)
+        venue_name = venue_match.group(0).strip() if venue_match else None
+        if venue_name:
+            what_means = f"This clause establishes that the agreement is governed by the laws of {venue_name} and designates the courts of {venue_name} as the exclusive venue for resolving disputes."
+            obligations = f"Both parties agree that legal controversies must be litigated exclusively in the courts located in {venue_name}."
+            details_list.append(f"Governing Law & Venue: Exclusive jurisdiction in {venue_name}.")
         else:
-            what_means = "This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes, designating the agreed court or arbitration venue."
-            obligations = "Both parties agree to submit legal controversies to the designated court venue and consent to personal jurisdiction in that forum."
-        details_list.append("Forum: Exclusive jurisdiction and venue in the designated courts.")
+            has_subst_law = any(k in t_lower for k in ["governed by the laws", "governing substantive law", "substantive law of"])
+            if has_subst_law:
+                what_means = "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
+                obligations = "Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law."
+            else:
+                what_means = "This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes, designating the agreed court or arbitration venue."
+                obligations = "Both parties agree to submit legal controversies to the designated court venue and consent to personal jurisdiction in that forum."
+            details_list.append("Forum: Exclusive jurisdiction and venue in the designated courts.")
 
     elif any(k in t_lower for k in ["demise unto the lessee", "doth hereby demise", "piece or parcel of land", "grant to the lessee a lease", "grant a lease"]):
         what_means = "This clause legally leases the specified property, land parcel, and all attached buildings from the landlord to the tenant for a fixed long-term duration in exchange for designated rent payments."
@@ -356,12 +405,20 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Notice Window / Term: {', '.join(durations)} advance notice required to prevent renewal.")
         consequences = "Failing to provide timely written notice before the deadline binds the parties to an additional full renewal term."
 
-    elif any(k in t_lower for k in ["materially breaches this agreement", "convenience upon", "right to terminate", "notice of termination"]):
-        what_means = "This clause outlines the procedures, notice requirements, cure periods, and conditions under which either party may terminate the agreement."
-        obligations = "A party terminating for cause must deliver formal written notice detailing the breach and provide any required cure period. Termination for convenience requires compliance with advance notice windows."
-        if durations:
-            details_list.append(f"Notice / Cure Period: {', '.join(durations)} written notice required.")
-        consequences = "Upon termination, services cease, accrued unpaid fees become immediately due, and designated post-termination obligations survive."
+    elif any(k in t_lower for k in ["materially breaches", "convenience upon", "right to terminate", "notice of termination", "may terminate this agreement"]):
+        is_pure_convenience = ("convenience" in t_lower or "without cause" in t_lower) and not any(c in t_lower for c in ["breach", "default", "for cause"])
+        if is_pure_convenience:
+            what_means = "This clause permits either party to terminate the agreement for convenience without cause by providing advance written notice."
+            obligations = "Either party may terminate the agreement for convenience by delivering the designated advance written notice to the counterparty."
+            if durations:
+                details_list.append(f"Advance Notice Window: {', '.join(durations)} written notice required for convenience termination.")
+            consequences = ""
+        else:
+            what_means = "This clause outlines the procedures, notice requirements, cure periods, and conditions under which either party may terminate the agreement."
+            obligations = "A party terminating for cause must deliver formal written notice detailing the breach and provide any required cure period. Termination for convenience requires compliance with advance notice windows."
+            if durations:
+                details_list.append(f"Notice / Cure Period: {', '.join(durations)} written notice required.")
+            consequences = "Upon termination, services cease, accrued unpaid fees become immediately due, and designated post-termination obligations survive."
 
     elif any(k in t_lower for k in ["non-compete", "non-solicit", "solicit for employment", "competing business"]):
         what_means = "This clause restricts parties from poaching employees or engaging in competing commercial activities during and after the contractual relationship."

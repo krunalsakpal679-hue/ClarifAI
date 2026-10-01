@@ -220,7 +220,7 @@ class ClauseSerializer(serializers.ModelSerializer):
                     if end == -1:
                         end = len(text)
                     span = text[start:end].strip()
-                    if span and span in text:
+                    if span and span in text and not span.isdigit() and len(span) > 2:
                         cat_evidence = span
                         cat_reason = f"Contains operative {category.lower()} terminology."
                         break
@@ -239,7 +239,7 @@ class ClauseSerializer(serializers.ModelSerializer):
                         if end == -1:
                             end = len(text)
                         span = text[start:end].strip()
-                        if span and span in text:
+                        if span and span in text and not span.isdigit() and len(span) > 2:
                             risk_evidence = span
                             break
 

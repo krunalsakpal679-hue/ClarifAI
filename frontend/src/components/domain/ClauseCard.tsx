@@ -127,6 +127,22 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
       ? clause.why_flagged_hi
       : clause.explanation;
 
+  const getDisplayWhatThisMeans = (
+    structuredMeans: string | undefined,
+    rawSimplified: string | undefined
+  ): string => {
+    if (structuredMeans) return structuredMeans;
+    if (!rawSimplified) return 'No plain-English summary available.';
+    if (rawSimplified.includes('WHAT THIS CLAUSE MEANS:')) {
+      const parts = rawSimplified.split(/WHAT THIS CLAUSE MEANS:\s*/i);
+      if (parts.length > 1) {
+        const section = parts[1].split(/\n\s*[A-Z\s&]+:\s*\n/)[0];
+        return section.trim();
+      }
+    }
+    return rawSimplified.trim();
+  };
+
   return (
     <Card
       elevation="sm"
@@ -225,7 +241,7 @@ export const ClauseCard: React.FC<ClauseCardProps> = ({
                   {lang === 'hi' ? 'इसका क्या अर्थ है (WHAT THIS MEANS)' : 'WHAT THIS MEANS'}
                 </p>
                 <p className="text-xs sm:text-sm text-secondary-900 leading-relaxed font-sans whitespace-pre-line">
-                  {clause.structured_explanation?.what_this_clause_means || simplifiedText || 'No plain-English summary available.'}
+                  {getDisplayWhatThisMeans(clause.structured_explanation?.what_this_clause_means, simplifiedText)}
                 </p>
               </div>
 

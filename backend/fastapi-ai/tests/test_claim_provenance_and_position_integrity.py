@@ -245,3 +245,156 @@ def test_bug_12_clause_2_preserves_compounding_interest_rate(document_b_fixture)
     
     assert "2.0%" in simp_text
     assert "compounding monthly" in simp_text or "per month" in simp_text
+
+
+def test_adversarial_invented_mechanisms_generalization():
+    """
+    Part 3 Generalization: 5 NEW adversarial test clauses covering distinct invented mechanisms.
+    Grounding check must catch ungrounded legal mechanisms and strip or flag them.
+    """
+    # 1. Invented arbitration when source only provides court litigation
+    source_litigation = "1. Litigation. Any dispute arising out of this Agreement shall be resolved exclusively in the state courts of Cook County, Illinois."
+    res1 = verify_and_ground_clause_narrative(
+        source_text=source_litigation,
+        clause_title="Dispute Resolution",
+        what_this_clause_means="This clause mandates binding arbitration before the American Arbitration Association waiving trial rights.",
+        obligations="Both parties must arbitrate disputes in private arbitration.",
+        details_list=["Arbitration: Binding AAA arbitration."],
+        consequences=""
+    )
+    assert "arbitrat" not in res1["what_this_clause_means"].lower()
+    assert len(res1["warnings"]) > 0 or "litigat" in res1["what_this_clause_means"].lower()
+
+    # 2. Invented security deposit when source only specifies monthly rent
+    source_rent = "2. Rent. Tenant shall pay Landlord monthly base rent of $3,500 on the first day of each calendar month."
+    res2 = verify_and_ground_clause_narrative(
+        source_text=source_rent,
+        clause_title="Rent",
+        what_this_clause_means="This clause requires a refundable security deposit of $7,000 to be held in escrow for damages.",
+        obligations="Tenant must remit security deposit prior to occupancy.",
+        details_list=["Deposit: $7,000 security deposit."],
+        consequences="Deposit is forfeited if damage occurs."
+    )
+    assert "security deposit" not in res2["what_this_clause_means"].lower()
+    assert len(res2["warnings"]) > 0 or "$3,500" in str(res2["details_list"])
+
+    # 3. Invented warranty disclaimer when source is a straightforward delivery covenant
+    source_delivery = "3. Delivery. Vendor shall deliver the software installation package within thirty (30) days of execution."
+    res3 = verify_and_ground_clause_narrative(
+        source_text=source_delivery,
+        clause_title="Delivery",
+        what_this_clause_means="This clause disclaims all express and implied warranties including merchantability and fitness for a particular purpose.",
+        obligations="Customer accepts software as-is without any warranties whatsoever.",
+        details_list=["Warranty: Disclaimed."],
+        consequences=""
+    )
+    assert "warranty" not in res3["what_this_clause_means"].lower()
+
+    # 4. Invented assignment restriction when source only governs confidentiality
+    source_conf = "4. Confidentiality. Receiving Party shall maintain Disclosing Party's confidential information in strict confidence."
+    res4 = verify_and_ground_clause_narrative(
+        source_text=source_conf,
+        clause_title="Confidentiality",
+        what_this_clause_means="This clause prohibits either party from assigning or transferring this agreement without prior written consent.",
+        obligations="Parties cannot assign rights or subcontract without authorization.",
+        details_list=["Assignment: Restricted."],
+        consequences=""
+    )
+    assert "assign" not in res4["what_this_clause_means"].lower()
+
+    # 5. Invented force majeure when source only governs termination for convenience
+    source_convenience = "5. Termination. Either party may terminate this Agreement without cause upon sixty (60) days prior written notice."
+    res5 = verify_and_ground_clause_narrative(
+        source_text=source_convenience,
+        clause_title="Termination",
+        what_this_clause_means="This clause excuses non-performance during acts of God, pandemics, war, or force majeure events.",
+        obligations="Parties are relieved from performance during force majeure emergencies.",
+        details_list=["Force Majeure: Excuses delay."],
+        consequences=""
+    )
+    assert "force majeure" not in res5["what_this_clause_means"].lower()
+    assert "acts of god" not in res5["what_this_clause_means"].lower()
+
+
+def test_bug_a_category_evidence_never_numeric_position_index():
+    """
+    Bug A Regression Test: Asserts category.evidence is never purely numeric or a clause index.
+    """
+    numbered_texts = [
+        "1. In consideration of the mutual covenants contained herein, the parties agree as follows.",
+        "2. Payment Terms. Invoices are due net 30 days from receipt.",
+        "3. (a) Intellectual Property. All custom modules constitute work made for hire.",
+        "4. Termination. Either party may terminate for convenience upon sixty (60) days notice.",
+        "a. To pay all existing and future rates and taxes assessed on the premises.",
+        "b. To keep the interior in good and substantial repair."
+    ]
+    for text in numbered_texts:
+        reason, span = extract_category_evidence_span(text, "Payment")
+        assert not span.isdigit(), f"Category evidence span '{span}' is numeric!"
+        assert not re.match(r'^\W*\d+\W*$', span), f"Category evidence span '{span}' is a position number!"
+        assert len(span) > 2, f"Category evidence span '{span}' is too short!"
+
+        r_reason, r_span = extract_risk_evidence_span(text, "Low")
+        assert not r_span.isdigit(), f"Risk evidence span '{r_span}' is numeric!"
+        assert not re.match(r'^\W*\d+\W*$', r_span), f"Risk evidence span '{r_span}' is a position number!"
+
+
+def test_document_a_saas_grounding_and_party_names():
+    """
+    Document A SaaS Service Agreement regression tests:
+    - Clause 1: Category and severity are not 'General' / 'UNKNOWN'.
+    - Clause 3: Mentions work made for hire / custom modules.
+    - Clause 4: Names Provider & Subscriber.
+    - Clause 6: Mentions Cook County, Illinois.
+    - Clause 7: No invented cause, cure period, or fee acceleration.
+    """
+    doc_a_path = Path("c:/ClarifAI- AIPipeline/sample_documents/Document_A_SaaS_Service_Agreement.pdf")
+    if not doc_a_path.exists():
+        pytest.skip("Document A SaaS PDF not available")
+    
+    with open(doc_a_path, "rb") as f:
+        pdf_bytes = f.read()
+    
+    ext = extract_pdf_text_service(pdf_bytes, enable_ocr=False)
+    cleaned = clean_legal_text(ext["full_text"])["cleaned_text"]
+    seg_res = segment_document_clauses(cleaned, pages=ext.get("pages", []))
+    segmented = seg_res["clauses"]
+    
+    rules_res = evaluate_rules(clauses=segmented, text=cleaned)
+    findings = rules_res["findings"]
+    cat_res = categorize_clause_records(segmented, rule_findings=findings)
+    categorized = cat_res["clauses"]
+    risk_res = classify_document_clauses_risk(categorized, rule_findings=findings)
+    classified = risk_res["clauses"]
+    simp_res = simplify_document_clauses(classified, rule_findings=findings)
+    simplified = simp_res.get("clauses") or simp_res.get("simplified_clauses", [])
+    
+    # Clause 1
+    cl1 = simplified[0]
+    assert cl1["category"] != "General"
+    assert cl1["severity"] != "UNKNOWN"
+    
+    # Clause 3 (IP)
+    cl3 = simplified[2]
+    cl3_means = cl3["structured_explanation"]["what_this_clause_means"].lower()
+    assert "work made for hire" in cl3_means or "custom module" in cl3_means
+    
+    # Clause 4 (Indemnification)
+    cl4 = simplified[3]
+    cl4_simp = cl4["simplified_text"].lower()
+    assert "provider" in cl4_simp and "subscriber" in cl4_simp
+    
+    # Clause 6 (Dispute Resolution / Venue)
+    cl6 = simplified[5]
+    cl6_means = cl6["structured_explanation"]["what_this_clause_means"].lower()
+    assert "cook county" in cl6_means or "illinois" in cl6_means
+    
+    # Clause 7 (Termination)
+    cl7 = simplified[6]
+    cl7_simp = cl7["simplified_text"].lower()
+    cl7_means = cl7["structured_explanation"]["what_this_clause_means"].lower()
+    assert "for cause" not in cl7_means
+    assert "cure period" not in cl7_means
+    assert "cure period" not in cl7_simp
+    assert "accrued unpaid fees" not in cl7_simp
+

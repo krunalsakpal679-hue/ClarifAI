@@ -371,8 +371,8 @@ export const ClauseDetailPage: React.FC = () => {
               </p>
               <p className="text-sm leading-relaxed text-primary-950 font-sans whitespace-pre-line">
                 {analysisLanguage === 'hi'
-                  ? (clause.simplified_text_hi || clause.structured_explanation?.what_this_clause_means || clause.simplified_text)
-                  : (clause.structured_explanation?.what_this_clause_means || clause.simplified_text)}
+                  ? (clause.simplified_text_hi || clause.structured_explanation?.what_this_clause_means || (clause.simplified_text && clause.simplified_text.includes('WHAT THIS CLAUSE MEANS:') ? clause.simplified_text.split(/WHAT THIS CLAUSE MEANS:\s*/i)[1].split(/\n\s*[A-Z\s&]+:\s*\n/)[0].trim() : clause.simplified_text))
+                  : (clause.structured_explanation?.what_this_clause_means || (clause.simplified_text && clause.simplified_text.includes('WHAT THIS CLAUSE MEANS:') ? clause.simplified_text.split(/WHAT THIS CLAUSE MEANS:\s*/i)[1].split(/\n\s*[A-Z\s&]+:\s*\n/)[0].trim() : clause.simplified_text))}
               </p>
             </div>
 

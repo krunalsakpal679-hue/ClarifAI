@@ -7,9 +7,7 @@ import os
 import re
 import pytest
 from pathlib import Path
-from fastapi.testclient import TestClient
 
-from app.main import app
 from app.services.pdf_service import extract_pdf_text_service
 from app.services.text_cleaning_service import clean_legal_text
 from app.services.clause_segmentation_service import segment_document_clauses
@@ -369,6 +367,11 @@ def test_document_a_saas_grounding_and_party_names():
     simp_res = simplify_document_clauses(classified, rule_findings=findings)
     simplified = simp_res.get("clauses") or simp_res.get("simplified_clauses", [])
     
+    # Assert full 7-position integrity for Document A (BUG C regression test)
+    assert len(simplified) == 7, f"Expected 7 clauses for Document A, got {len(simplified)}"
+    positions = [c["position"] for c in simplified]
+    assert positions == [1, 2, 3, 4, 5, 6, 7], f"Position sequence has gaps: {positions}"
+
     # Clause 1
     cl1 = simplified[0]
     assert cl1["category"] != "General"
@@ -384,10 +387,21 @@ def test_document_a_saas_grounding_and_party_names():
     cl4_simp = cl4["simplified_text"].lower()
     assert "provider" in cl4_simp and "subscriber" in cl4_simp
     
-    # Clause 6 (Dispute Resolution / Venue)
+    # Clause 5 (Limitation of Liability - BUG C integrity check)
+    cl5 = simplified[4]
+    assert cl5["position"] == 5
+    assert cl5["category"] == "Liability"
+    assert cl5["severity"] in ("High", "Moderate", "high", "moderate")
+    assert len(cl5["simplified_text"]) > 10
+    
+    # Clause 6 (Dispute Resolution / Venue - BUG D regression check)
     cl6 = simplified[5]
     cl6_means = cl6["structured_explanation"]["what_this_clause_means"].lower()
+    cl6_details = " ".join(cl6["structured_explanation"].get("key_details", [])).lower()
     assert "cook county" in cl6_means or "illinois" in cl6_means
+    assert "governed by" not in cl6_means, f"Invented governing law found in jurisdiction-only clause: {cl6_means}"
+    assert "governing law" not in cl6_means, f"Invented governing law found in jurisdiction-only clause: {cl6_means}"
+    assert "governing law" not in cl6_details, f"Invented governing law detail found in jurisdiction-only clause: {cl6_details}"
     
     # Clause 7 (Termination)
     cl7 = simplified[6]
@@ -397,4 +411,111 @@ def test_document_a_saas_grounding_and_party_names():
     assert "cure period" not in cl7_means
     assert "cure period" not in cl7_simp
     assert "accrued unpaid fees" not in cl7_simp
+
+
+def test_governing_law_vs_jurisdiction_adversarial_variants():
+    """
+    BUG D Regression Test:
+    Enforces strict distinction between Governing Law vs Jurisdiction/Venue.
+    Tests:
+    1. Real Cook County sentence (Jurisdiction ONLY) -> No 'governed by' / 'governing law' claims.
+    2. Adversarial 1: Governing Law ONLY (no jurisdiction/venue) -> Substantive law reported, no court venue invented.
+    3. Adversarial 2: BOTH genuinely present -> Both governing law and court venue reported.
+    4. Adversarial 3: NEITHER present (informal escalation) -> Pure dispute procedure reported, no law/venue invented.
+    """
+    # 1. Real Cook County sentence (Jurisdiction ONLY)
+    cook_text = "Any action or proceeding arising out of or relating to this Agreement shall be submitted to the exclusive jurisdiction in Cook County, Illinois."
+    res1 = simplify_single_clause({"text": cook_text, "category": "Dispute Resolution"})
+    means1 = res1["structured_explanation"]["what_this_clause_means"].lower()
+    simp1 = res1["simplified_text"].lower()
+    assert "governed by" not in means1, f"Unexpected 'governed by' in jurisdiction-only clause: {means1}"
+    assert "governing law" not in means1, f"Unexpected 'governing law' in jurisdiction-only clause: {means1}"
+    assert "governed by the laws of cook county" not in simp1, f"Unexpected 'governed by' in simplified text: {simp1}"
+    assert "cook county" in means1 or "illinois" in means1
+    assert "exclusive" in means1 or "jurisdiction" in means1
+
+    # 2. Adversarial 1: Governing Law ONLY
+    gov_only_text = "This Agreement and all claims arising out of or relating to this Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without giving effect to any choice or conflict of law provision or rule."
+    res2 = simplify_single_clause({"text": gov_only_text, "category": "Dispute Resolution"})
+    means2 = res2["structured_explanation"]["what_this_clause_means"].lower()
+    simp2 = res2["simplified_text"].lower()
+    assert "delaware" in means2
+    assert "governed by" in means2 or "governing law" in means2 or "substantive" in means2
+    assert "governing law" in simp2
+    assert "exclusive jurisdiction" not in means2, f"Invented exclusive jurisdiction in governing-law-only clause: {means2}"
+    assert "venue" not in means2, f"Invented venue in governing-law-only clause: {means2}"
+    assert "courts of" not in means2, f"Invented courts in governing-law-only clause: {means2}"
+    assert "litigated exclusively" not in simp2, f"Invented litigation obligation: {simp2}"
+
+    # 3. Adversarial 2: BOTH genuinely present
+    both_text = "This Agreement shall be governed by the laws of the State of New York, and each party irrevocably submits to the exclusive jurisdiction of the state and federal courts located in New York County for any dispute arising out of this Agreement."
+    res3 = simplify_single_clause({"text": both_text, "category": "Dispute Resolution"})
+    means3 = res3["structured_explanation"]["what_this_clause_means"].lower()
+    simp3 = res3["simplified_text"].lower()
+    assert "new york" in means3
+    assert "governed by" in means3 or "governing law" in means3
+    assert "exclusive venue" in means3 or "exclusive jurisdiction" in means3 or "courts" in means3
+    assert "governing law" in simp3
+    assert "jurisdiction" in simp3 or "venue" in simp3
+
+    # 4. Adversarial 3: NEITHER present (informal negotiation escalation)
+    neither_text = "In the event of any dispute, controversy, or claim arising from or relating to this Agreement, the parties shall first consult and negotiate in good faith to resolve the controversy informally within thirty (30) days."
+    res4 = simplify_single_clause({"text": neither_text, "category": "Dispute Resolution"})
+    means4 = res4["structured_explanation"]["what_this_clause_means"].lower()
+    simp4 = res4["simplified_text"].lower()
+    assert "governed by" not in means4, f"Invented governing law in escalation clause: {means4}"
+    assert "governing law" not in means4, f"Invented governing law in escalation clause: {means4}"
+    assert "exclusive jurisdiction" not in means4, f"Invented exclusive jurisdiction in escalation clause: {means4}"
+    assert "venue" not in means4, f"Invented venue in escalation clause: {means4}"
+    assert "dispute" in means4
+
+
+def test_all_sample_documents_clause_completeness_and_no_gaps():
+    """
+    BUG C Regression Test:
+    Asserts every document in sample_documents/ produces exactly N clause entries across
+    segmentation, categorization, risk classification, and simplification with NO silent gaps.
+    """
+    sample_dir = Path("c:/ClarifAI- AIPipeline/sample_documents")
+    if not sample_dir.exists():
+        pytest.skip("sample_documents directory not found")
+
+    pdf_files = list(sample_dir.glob("*.pdf"))
+    assert len(pdf_files) > 0, "No sample PDFs found"
+
+    for pdf_path in sorted(pdf_files):
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        ext = extract_pdf_text_service(pdf_bytes, enable_ocr=False)
+        cleaned = clean_legal_text(ext["full_text"])["cleaned_text"]
+        seg_res = segment_document_clauses(cleaned, pages=ext.get("pages", []))
+        segmented = seg_res["clauses"]
+        n_clauses = len(segmented)
+        assert n_clauses > 0, f"{pdf_path.name} produced 0 segmented clauses!"
+
+        rules_res = evaluate_rules(clauses=segmented, text=cleaned)
+        findings = rules_res["findings"]
+        cat_res = categorize_clause_records(segmented, rule_findings=findings)
+        categorized = cat_res["clauses"]
+        risk_res = classify_document_clauses_risk(categorized, rule_findings=findings)
+        classified = risk_res["clauses"]
+        simp_res = simplify_document_clauses(classified, rule_findings=findings)
+        simplified = simp_res.get("clauses") or simp_res.get("simplified_clauses", [])
+
+        # Strict N = N = N = N assertion
+        assert len(categorized) == n_clauses, f"{pdf_path.name}: categorized count {len(categorized)} != {n_clauses}"
+        assert len(classified) == n_clauses, f"{pdf_path.name}: classified count {len(classified)} != {n_clauses}"
+        assert len(simplified) == n_clauses, f"{pdf_path.name}: simplified count {len(simplified)} != {n_clauses}"
+
+        # Strict position sequence 1..N with no missing numbers
+        expected_positions = list(range(1, n_clauses + 1))
+        actual_positions = [c["position"] for c in simplified]
+        assert actual_positions == expected_positions, f"{pdf_path.name} has position gaps! Expected {expected_positions}, got {actual_positions}"
+
+        # Assert no clause is empty or silently dropped
+        for c in simplified:
+            assert c.get("simplified_text"), f"{pdf_path.name} clause at pos {c.get('position')} has empty simplified_text"
+            assert c.get("structured_explanation"), f"{pdf_path.name} clause at pos {c.get('position')} has empty structured_explanation"
+
 

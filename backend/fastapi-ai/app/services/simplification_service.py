@@ -338,22 +338,44 @@ def synthesize_detailed_plain_english_analysis(
         obligations = "The Consultant is obligated to perform the agreed deliverables, advisory services, and strategic tasks as authorized by the Client."
         details_list.append("Scope: Strategic management and technical advisory services as agreed in work statements.")
 
-    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue shall be", "governed by the laws", "cook county"]):
-        venue_match = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|Delaware|New York|California|England and Wales|India)\b', text, re.IGNORECASE)
-        venue_name = venue_match.group(0).strip() if venue_match else None
-        if venue_name:
-            what_means = f"This clause establishes that the agreement is governed by the laws of {venue_name} and designates the courts of {venue_name} as the exclusive venue for resolving disputes."
-            obligations = f"Both parties agree that legal controversies must be litigated exclusively in the courts located in {venue_name}."
-            details_list.append(f"Governing Law & Venue: Exclusive jurisdiction in {venue_name}.")
-        else:
-            has_subst_law = any(k in t_lower for k in ["governed by the laws", "governing substantive law", "substantive law of"])
-            if has_subst_law:
+    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue", "governed by", "governing law", "laws of", "construed in accordance with", "cook county", "dispute", "controversy", "mediation", "negotiate in good faith", "amicabl"]):
+        geo_match = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|State of Delaware|Delaware|State of New York|New York|State of California|California|England and Wales|India)\b', text, re.IGNORECASE)
+        geo_name = geo_match.group(0).strip() if geo_match else None
+
+        has_gov_law = bool(re.search(r'\b(governed by(?: the laws)?|governing law|substantive law|laws of|construed in accordance with(?: the laws)?|construed under the laws)\b', t_lower))
+        has_juris_venue = bool(re.search(r'\b(exclusive jurisdiction|jurisdiction in|jurisdiction of|venue|courts of|courts located in|forum|binding arbitration|arbitrat|jury trial)\b', t_lower))
+
+        if has_gov_law and has_juris_venue:
+            if geo_name:
+                what_means = f"This clause establishes that the agreement is governed by the laws of {geo_name} and designates the courts of {geo_name} as the exclusive venue for resolving disputes."
+                obligations = f"Both parties agree that the contract is governed by the laws of {geo_name} and legal controversies must be litigated exclusively in the courts located in {geo_name}."
+                details_list.append(f"Governing Law & Venue: Governed by the laws of {geo_name} with exclusive jurisdiction in {geo_name}.")
+            else:
                 what_means = "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
                 obligations = "Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law."
+                details_list.append("Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum.")
+        elif has_juris_venue and not has_gov_law:
+            if geo_name:
+                what_means = f"This clause establishes the exclusive legal forum and jurisdiction in {geo_name}, designating the courts of {geo_name} for resolving contract disputes."
+                obligations = f"Both parties agree that legal controversies must be litigated exclusively in the courts located in {geo_name}."
+                details_list.append(f"Jurisdiction & Venue: Exclusive jurisdiction in {geo_name}.")
             else:
                 what_means = "This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes, designating the agreed court or arbitration venue."
                 obligations = "Both parties agree to submit legal controversies to the designated court venue and consent to personal jurisdiction in that forum."
-            details_list.append("Forum: Exclusive jurisdiction and venue in the designated courts.")
+                details_list.append("Jurisdiction & Venue: Exclusive jurisdiction and venue in the designated courts.")
+        elif has_gov_law and not has_juris_venue:
+            if geo_name:
+                what_means = f"This clause designates the substantive governing law of {geo_name}, establishing that contract interpretation and legal rights are governed by those laws."
+                obligations = f"Both parties agree that this agreement and all related rights and duties are governed by and construed under the laws of {geo_name}."
+                details_list.append(f"Governing Law: Governed by the laws of {geo_name}.")
+            else:
+                what_means = "This clause designates the substantive governing law, establishing that contract interpretation and legal rights are governed by the designated legal jurisdiction."
+                obligations = "Both parties agree to have the agreement and legal rights construed according to the designated substantive governing law."
+                details_list.append("Governing Law: Substantive governing law of the designated jurisdiction.")
+        else:
+            what_means = "This clause establishes the dispute resolution procedure, requiring the parties to attempt informal dispute escalation or alternative dispute resolution before initiating formal proceedings."
+            obligations = "Both parties are obligated to participate in good-faith dispute resolution procedures prior to pursuing further legal remedies."
+            details_list.append("Dispute Resolution: Mandatory pre-litigation escalation and dispute resolution process.")
 
     elif any(k in t_lower for k in ["demise unto the lessee", "doth hereby demise", "piece or parcel of land", "grant to the lessee a lease", "grant a lease"]):
         what_means = "This clause legally leases the specified property, land parcel, and all attached buildings from the landlord to the tenant for a fixed long-term duration in exchange for designated rent payments."

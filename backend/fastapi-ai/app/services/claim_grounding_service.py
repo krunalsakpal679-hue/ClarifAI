@@ -338,23 +338,54 @@ def verify_and_ground_clause_narrative(
     # -------------------------------------------------------------------------
     # 4. CATEGORY CONFLATION CHECK: GOVERNING LAW VS JURISDICTION
     # -------------------------------------------------------------------------
-    has_substantive_law = any(k in s_lower for k in [
-        "governing law", "governed by the laws", "substantive law", "construed in accordance with the laws"
-    ])
-    has_jurisdiction_forum = any(k in s_lower for k in [
-        "jurisdiction", "exclusive jurisdiction", "venue", "forum", "courts located in", "courts of", "arbitrat"
-    ])
+    has_substantive_law = bool(re.search(
+        r'\b(governing law|governed by(?: the laws)?|substantive law|laws of|construed in accordance with(?: the laws)?|construed under the laws)\b',
+        s_lower
+    ))
+    has_jurisdiction_forum = bool(re.search(
+        r'\b(jurisdiction|exclusive jurisdiction|venue|forum|courts located in|courts of|arbitrat|binding arbitration|jury trial)\b',
+        s_lower
+    ))
 
     if has_jurisdiction_forum and not has_substantive_law:
-        if "substantive law" in what_this_clause_means.lower() or "governing law" in what_this_clause_means.lower():
-            # Check for specific forum name in source
-            loc_m = re.search(r'(?:in|of)\s+([A-Z][a-zA-Z\s,]+?(?:County|State|District|Illinois|Delaware|Texas|California|Mumbai|London)[a-zA-Z\s,]*)', source_text)
+        # If narrative has ungrounded governing-law claims, clean it
+        gov_pattern = r'\b(governed by(?: the laws)?|governing law|substantive law|laws of|statutory law)\b'
+        if re.search(gov_pattern, what_this_clause_means, re.IGNORECASE) or re.search(gov_pattern, obligations, re.IGNORECASE):
+            loc_m = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|Delaware|New York|California|England and Wales|India|[A-Z][a-zA-Z\s,]+?(?:County|District))\b', source_text)
             loc_str = f" in {loc_m.group(1).strip()}" if loc_m else ""
             what_this_clause_means = f"This clause establishes the exclusive legal forum and jurisdiction for resolving contract disputes{loc_str}, designating the agreed court venue."
+            obligations = f"Both parties agree that legal controversies must be litigated exclusively in the designated court venue{loc_str}."
             grounding_notes.append("Grounded explanation to jurisdiction/forum only (removed unstated governing substantive law claim).")
-        if "interpreted according to designated statutory law" in obligations.lower():
-            obligations = "Both parties agree to submit legal controversies to the designated court venue and consent to personal jurisdiction in that forum."
-            grounding_notes.append("Grounded obligations to forum consent (removed unstated statutory law interpretation claim).")
+        
+        # Clean details_list of ungrounded governing law items
+        clean_details = []
+        for d in details_list:
+            if re.search(r'\b(governing law|substantive law)\b', d, re.IGNORECASE) and not re.search(r'\b(jurisdiction|venue|forum)\b', d, re.IGNORECASE):
+                continue
+            if re.search(r'\b(governing law\s*&?\s*venue)\b', d, re.IGNORECASE):
+                d = re.sub(r'Governing Law\s*&?\s*', '', d, flags=re.IGNORECASE).strip()
+            clean_details.append(d)
+        details_list = clean_details
+
+    elif has_substantive_law and not has_jurisdiction_forum:
+        # If narrative has ungrounded exclusive jurisdiction / court venue claims, clean it
+        juris_pattern = r'\b(exclusive jurisdiction|designated court venue|courts of|courts located in|litigated exclusively|consent to personal jurisdiction)\b'
+        if re.search(juris_pattern, what_this_clause_means, re.IGNORECASE) or re.search(juris_pattern, obligations, re.IGNORECASE):
+            loc_m = re.search(r'\b(State of [A-Z][a-z]+|[A-Z][a-z]+\s+County,\s*[A-Z][a-z]+|Illinois|Texas|Delaware|New York|California|England and Wales|India)\b', source_text)
+            loc_str = f" of {loc_m.group(0).strip()}" if loc_m else ""
+            what_this_clause_means = f"This clause designates the substantive governing law{loc_str}, establishing that contract interpretation and legal rights are governed by those laws."
+            obligations = f"Both parties agree that this agreement and all related rights and duties are governed by and construed under the designated substantive governing law{loc_str}."
+            grounding_notes.append("Grounded explanation to governing law only (removed unstated court jurisdiction/venue claim).")
+
+        # Clean details_list of ungrounded jurisdiction/venue items
+        clean_details = []
+        for d in details_list:
+            if re.search(r'\b(exclusive jurisdiction|court venue|designated courts)\b', d, re.IGNORECASE) and not re.search(r'\b(governing law|laws of)\b', d, re.IGNORECASE):
+                continue
+            if re.search(r'\b(governing law\s*&?\s*venue)\b', d, re.IGNORECASE):
+                d = re.sub(r'\s*&?\s*Venue', '', d, flags=re.IGNORECASE).strip()
+            clean_details.append(d)
+        details_list = clean_details
 
     # -------------------------------------------------------------------------
     # 5. SPECIFICITY CHECK & GENERIC TEMPLATE REJECTION (Part 2)
@@ -374,6 +405,12 @@ def verify_and_ground_clause_narrative(
             what_this_clause_means = "This clause provides that custom modules and deliverables developed under the agreement constitute works made for hire belonging exclusively to the ordering party."
             obligations = "The developer agrees that created custom work product constitutes work made for hire vesting exclusively in the subscribing party."
             grounding_notes.append("Replaced generic boilerplate with grounded work-made-for-hire specification.")
+        elif "governed by" in s_lower or "governing law" in s_lower or "laws of" in s_lower or "construed in accordance with" in s_lower:
+            law_m = re.search(r'\b(State of [A-Z][a-z]+|[A-Z][a-z]+\s+County,\s*[A-Z][a-z]+|Illinois|Texas|Delaware|New York|California|England and Wales|India)\b', source_text)
+            law_name = law_m.group(0).strip() if law_m else "the designated jurisdiction"
+            what_this_clause_means = f"This clause designates the substantive governing law of {law_name}, establishing that contract interpretation and legal rights are governed by those laws."
+            obligations = f"Both parties agree that this agreement and all related rights and duties are governed by and construed under the laws of {law_name}."
+            grounding_notes.append(f"Replaced generic boilerplate with grounded governing law of {law_name}.")
         elif "jurisdiction" in s_lower or "venue" in s_lower or "county" in s_lower:
             loc_m = re.search(r'(?:in|of)\s+([A-Z][a-zA-Z\s,]+?(?:County|State|District|Illinois|Delaware|Texas|California|Mumbai|London)[a-zA-Z\s,]*)', source_text)
             loc_name = loc_m.group(1).strip() if loc_m else "the designated venue"

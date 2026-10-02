@@ -668,6 +668,17 @@ Rule Signals: {signals_summary}
 
 {untrusted_block}"""
 
+    if not get_groq_api_key() and override_client is None:
+        logger.info(f"GROQ_API_KEY not configured. Bypassing LLM retries for clause '{clause_id}' and running domain plain-English synthesis.")
+        return synthesize_detailed_plain_english_analysis(
+            text=text,
+            severity=severity,
+            category=categories[0] if categories else None,
+            rule_findings=clause_rule_findings,
+            clause_number=clause_number,
+            title=title
+        )
+
     max_retries = 3
     last_exc = None
 
@@ -801,6 +812,11 @@ Rule Signals: {signals_summary}
                 }
 
             if attempt < max_retries:
+                # Fast-break for non-transient configuration/auth errors (e.g. missing API key) to avoid useless retry delay overhead
+                err_msg = str(exc).lower()
+                if "groq_api_key" in err_msg or "auth_failure" in err_msg or "unknown_llm_failure" in err_msg or "model_not_found" in err_msg:
+                    logger.info(f"Non-transient LLM configuration error for clause '{clause_id}': {exc}. Bypassing retries.")
+                    break
                 logger.warning(f"Attempt {attempt}/{max_retries} failed for clause '{clause_id}': {exc}. Retrying in 0.5s...")
                 time.sleep(0.5)
             else:

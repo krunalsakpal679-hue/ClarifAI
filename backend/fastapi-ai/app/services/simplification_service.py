@@ -786,8 +786,8 @@ Rule Signals: {signals_summary}
                 # Per-clause failure isolation under test-mock failure (PRD Chapter 16.5)
                 logger.warning(f"Per-clause simplification mock failure for clause '{clause_id}': {exc}.")
                 honest_failure_msg = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
-                honest_sev = final_sev_label
-                honest_cat = final_cat_label
+                honest_sev = "RISK_CLASSIFICATION_UNAVAILABLE"
+                honest_cat = "Unavailable"
                 return {
                     "position": position,
                     "clause_id": clause_id,

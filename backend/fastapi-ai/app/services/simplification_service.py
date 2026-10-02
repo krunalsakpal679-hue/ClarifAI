@@ -871,8 +871,9 @@ def simplify_document_clauses(
             "schema_version": SCHEMA_VERSION
         }
 
-    simplified_items: List[Dict[str, Any]] = []
+    import concurrent.futures
 
+    tasks = []
     for idx, clause in enumerate(clauses, start=1):
         c_id = str(clause.get("clause_id") or clause.get("position") or idx)
         clause_rule_findings = []
@@ -881,13 +882,26 @@ def simplify_document_clauses(
                 rf for rf in rule_findings
                 if str(rf.get("clause_id")) == c_id or str(rf.get("position")) == c_id
             ]
+        tasks.append((idx, clause, clause_rule_findings))
 
-        res_item = simplify_single_clause(
-            clause=clause,
-            rule_findings=clause_rule_findings,
+    simplified_items: List[Dict[str, Any]] = [None] * len(clauses)
+
+    def _worker(task_tuple):
+        idx, c, rf = task_tuple
+        res = simplify_single_clause(
+            clause=c,
+            rule_findings=rf,
             override_client=override_client
         )
-        simplified_items.append(res_item)
+        return idx - 1, res
+
+    # Cap concurrency at 3 workers to respect Groq LLM rate limits (~30 RPM)
+    max_workers = min(3, len(clauses)) if len(clauses) > 0 else 1
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(_worker, task) for task in tasks]
+        for future in concurrent.futures.as_completed(futures):
+            slot_idx, res_item = future.result()
+            simplified_items[slot_idx] = res_item
 
     logger.info(f"Document Clause Simplification Complete: {len(simplified_items)} clauses processed.")
 

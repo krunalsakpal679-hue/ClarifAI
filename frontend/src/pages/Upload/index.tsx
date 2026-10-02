@@ -218,7 +218,11 @@ export const UploadPage: React.FC = () => {
               <div className="flex items-center justify-between text-xs font-medium text-primary-950">
                 <span className="flex items-center gap-2">
                   <RefreshCw className="w-3.5 h-3.5 animate-spin text-primary-700" aria-hidden="true" />
-                  <span>Uploading contract to secure processing pipeline...</span>
+                  <span>
+                    {uploadProgress >= 100
+                      ? 'Analyzing contract... (extracting clauses & evaluating risk patterns)'
+                      : 'Uploading contract to secure processing pipeline...'}
+                  </span>
                 </span>
                 <span className="font-semibold text-primary-900">{uploadProgress}%</span>
               </div>
@@ -281,7 +285,13 @@ export const UploadPage: React.FC = () => {
             isLoading={isUploading}
             className="w-full sm:w-auto gap-2 shadow-sm"
           >
-            <span>{isUploading ? 'Uploading Document...' : 'Upload & Start Analysis'}</span>
+            <span>
+              {isUploading
+                ? uploadProgress >= 100
+                  ? 'Analyzing Document...'
+                  : 'Uploading Document...'
+                : 'Upload & Start Analysis'}
+            </span>
             {!isUploading && <ArrowRight className="w-4 h-4" aria-hidden="true" />}
           </Button>
         </CardFooter>

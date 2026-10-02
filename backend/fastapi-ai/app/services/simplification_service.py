@@ -532,7 +532,7 @@ def synthesize_detailed_plain_english_analysis(
     consequences = grounding_res["consequences"]
 
     # 5. Formulate Evidence-Grounded Risk Rationale
-    clean_sev_check = str(severity).capitalize() if severity and str(severity).lower() not in ("none", "unavailable", "null", "risk_classification_unavailable") else "RISK_CLASSIFICATION_UNAVAILABLE"
+    clean_sev_check = str(severity).capitalize() if severity and str(severity).lower() not in ("none", "unavailable", "null", "risk_classification_unavailable") else None
     if rule_findings:
         signals = [rf.get("risk_signal") or rf.get("name") or "Risk signal" for rf in rule_findings if rf.get("risk_signal") or rf.get("name")]
         signals_str = ", ".join(sorted(set(signals)))

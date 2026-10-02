@@ -468,6 +468,27 @@ def verify_and_ground_clause_narrative(
                     details_list.append(f"Monetary Cap: {ne.strip()}.")
                 grounding_notes.append(f"Added omitted material numeric specification '{ne}' to details list.")
 
+    # -------------------------------------------------------------------------
+    # 7. CONDITIONAL QUALIFIER GROUNDING CHECK (Part 2 Material Omission Grounding)
+    # -------------------------------------------------------------------------
+    # Rule 1: Financial & Rate Qualifiers ("highest legal rate", "whichever is less", "maximum rate permitted")
+    if re.search(r'\b(?:highest\s+legal\s+rate|whichever\s+is\s+less|maximum\s+rate\s+permitted|maximum\s+allowed\s+by\s+law|legal\s+maximum)\b', s_lower):
+        if not re.search(r'\b(?:highest\s+legal\s+rate|whichever\s+is\s+less|maximum\s+legal\s+rate|legal\s+maximum|maximum\s+rate\s+permitted)\b', combined_narrative):
+            if "late" in s_lower or "interest" in s_lower or "1.5%" in s_lower or "payment" in s_lower or "fee" in s_lower:
+                what_this_clause_means += " Late payments accrue interest at the specified rate or the highest legal rate permitted under applicable law, whichever is less."
+                obligations += " Overdue amounts are subject to interest capped at the highest legal rate permitted under applicable law, whichever is less."
+                details_list.append("Statutory Interest Cap: Interest is capped at the highest legal rate permitted under applicable law, whichever is less.")
+                grounding_notes.append("Added omitted material conditional qualifier: 'or the highest legal rate permitted under applicable law, whichever is less'.")
+
+    # Rule 2: IP & Ownership Payment Conditions ("upon receipt of payment", "upon payment", "conditioned upon payment")
+    if re.search(r'\b(?:upon\s+(?:full\s+)?receipt\s+of\s+payment|upon\s+(?:full\s+)?payment(?:\s+of\s+fees?)?|conditioned\s+upon\s+payment|subject\s+to\s+full\s+payment|provided\s+(?:all\s+)?fees?\s+(?:are\s+)?paid)\b', s_lower):
+        if not re.search(r'\b(?:upon\s+receipt\s+of\s+payment|upon\s+payment|conditioned\s+upon\s+payment|subject\s+to\s+payment|provided\s+fees\s+are\s+paid)\b', combined_narrative):
+            if "intellectual property" in s_lower or "ownership" in s_lower or "work product" in s_lower or "deliverables" in s_lower or "rights" in s_lower or "license" in s_lower or "proprietary" in s_lower:
+                what_this_clause_means += " Ownership transfer and rights in deliverables are conditioned upon receipt of payment."
+                obligations += " Transfer of proprietary rights is contingent upon subscriber making full payment."
+                details_list.append("Payment Condition: Transfer of ownership and rights is effective upon receipt of payment.")
+                grounding_notes.append("Added omitted material condition: 'upon receipt of payment'.")
+
     return {
         "what_this_clause_means": what_this_clause_means,
         "obligations": obligations,

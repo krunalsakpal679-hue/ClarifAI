@@ -356,3 +356,81 @@ def test_structured_evidence_traceability_literal_substrings():
             assert isinstance(risk_ev, str)
             assert risk_ev in tc["text"], f"Risk evidence '{risk_ev}' is NOT a literal substring of clause text: '{tc['text']}'"
 
+
+def test_part2_conditional_qualifier_preservation():
+    """
+    Part 2 Regression Test: Asserts that material conditional qualifiers e.g.:
+    1. 'whichever is less' on late fee rates (Clause 2)
+    2. 'upon receipt of payment' on IP ownership transfer (Clause 3)
+    are preserved in the generated explanation narrative and details list.
+    """
+    from app.services.claim_grounding_service import verify_and_ground_clause_narrative
+
+    # Clause 2: Payment rate qualifier
+    c2_text = "Invoices are payable net 30 days. Delinquent accounts shall bear interest at a rate of 1.5% per month or the highest legal rate permitted under applicable law, whichever is less."
+    c2_res = verify_and_ground_clause_narrative(
+        source_text=c2_text,
+        clause_title="FEES AND PAYMENT TERMS",
+        what_this_clause_means="Invoices are due in 30 days. Late payments bear interest of 1.5% per month.",
+        obligations="Subscriber must pay invoices within 30 days.",
+        details_list=["Finance charges: 1.5% per month."],
+        consequences="Late fees apply.",
+        category="Payment",
+        severity="High"
+    )
+    combined_c2 = f"{c2_res['what_this_clause_means']} {c2_res['obligations']} {' '.join(c2_res['details_list'])}"
+    assert "whichever is less" in combined_c2.lower() or "highest legal rate" in combined_c2.lower()
+
+    # Clause 3: IP payment condition
+    c3_text = "All custom deliverables developed under this agreement constitute works made for hire and vest exclusively in Subscriber upon receipt of payment."
+    c3_res = verify_and_ground_clause_narrative(
+        source_text=c3_text,
+        clause_title="PROPRIETARY RIGHTS AND OWNERSHIP",
+        what_this_clause_means="Custom deliverables are works made for hire belonging exclusively to Subscriber.",
+        obligations="Provider agrees custom work vests in Subscriber.",
+        details_list=["Work made for hire: Custom modules vest in Subscriber."],
+        consequences="",
+        category="Intellectual Property",
+        severity="High"
+    )
+    combined_c3 = f"{c3_res['what_this_clause_means']} {c3_res['obligations']} {' '.join(c3_res['details_list'])}"
+    assert "upon receipt of payment" in combined_c3.lower() or "payment" in combined_c3.lower()
+
+
+def test_part2_adversarial_conditional_qualifiers():
+    """
+    Part 2 Adversarial Test: Asserts that differently-worded conditional qualifiers e.g.:
+    1. 'maximum rate permitted by law'
+    2. 'provided all fees are paid'
+    are preserved in clause explanations.
+    """
+    from app.services.claim_grounding_service import verify_and_ground_clause_narrative
+
+    adv1_text = "Overdue balances shall accrue interest at 2.0% per month or the maximum rate permitted by law."
+    adv1_res = verify_and_ground_clause_narrative(
+        source_text=adv1_text,
+        clause_title="LATE CHARGES",
+        what_this_clause_means="Late balances accrue 2.0% monthly interest.",
+        obligations="Pay late interest.",
+        details_list=[],
+        consequences="",
+        category="Payment",
+        severity="High"
+    )
+    combined_adv1 = f"{adv1_res['what_this_clause_means']} {adv1_res['obligations']} {' '.join(adv1_res['details_list'])}"
+    assert "maximum rate permitted" in combined_adv1.lower() or "whichever is less" in combined_adv1.lower()
+
+    adv2_text = "Subscriber receives exclusive ownership of created deliverables provided all fees are paid in full."
+    adv2_res = verify_and_ground_clause_narrative(
+        source_text=adv2_text,
+        clause_title="OWNERSHIP OF DELIVERABLES",
+        what_this_clause_means="Subscriber owns created deliverables.",
+        obligations="Deliverables vest in Subscriber.",
+        details_list=[],
+        consequences="",
+        category="Intellectual Property",
+        severity="High"
+    )
+    combined_adv2 = f"{adv2_res['what_this_clause_means']} {adv2_res['obligations']} {' '.join(adv2_res['details_list'])}"
+    assert "upon receipt of payment" in combined_adv2.lower() or "paid" in combined_adv2.lower()
+

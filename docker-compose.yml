@@ -99,7 +99,9 @@ services:
       BART_MODEL_NAME: facebook/bart-base
     volumes:
       - ./backend/fastapi-ai/app:/app/app
+      - ./backend/fastapi-ai/tests:/app/tests
       - ./backend/fastapi-ai/training:/app/training:ro
+      - ./sample_documents:/app/sample_documents:ro
     depends_on:
       qdrant:
         condition: service_healthy

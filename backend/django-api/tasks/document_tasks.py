@@ -147,36 +147,69 @@ def process_document(document_id):
             if is_clause_failed:
                 # Per-Clause Failure Isolation: Mark ONLY this clause as FAILED.
                 # Do NOT invent "safe" or silent fallback severity (Ch. 56.10).
+                harmonized_structured_exp = structured_explanation or {}
+                if isinstance(harmonized_structured_exp, dict):
+                    harmonized_structured_exp = dict(harmonized_structured_exp)
+                    risk_obj = dict(harmonized_structured_exp.get('risk') or {})
+                    cat_obj = dict(harmonized_structured_exp.get('category') or {})
+
+                    risk_obj['severity'] = None
+                    if not risk_obj.get('reason') or "balanced commercial terms" in str(risk_obj.get('reason', '')):
+                        risk_obj['reason'] = "Risk classification unavailable for this clause."
+
+                    cat_obj['label'] = None
+                    if not cat_obj.get('reason') or "Standard contractual provision" in str(cat_obj.get('reason', '')):
+                        cat_obj['reason'] = "Category unclassified: provision does not map to standard commercial categories."
+
+                    harmonized_structured_exp['risk'] = risk_obj
+                    harmonized_structured_exp['category'] = cat_obj
+
+                failed_explanation = risk_obj.get('reason') if isinstance(harmonized_structured_exp, dict) and risk_obj.get('reason') else (explanation or "Clause classification/extraction failed during AI pipeline execution.")
+
                 Clause.objects.create(
                     document=document,
                     position=idx,
                     original_text=original_text or f"Clause {idx}",
                     simplified_text=simplified_text or "Clause processing failed.",
-                    explanation=explanation or "Clause classification/extraction failed during AI pipeline execution.",
-                    structured_explanation=structured_explanation,
+                    explanation=failed_explanation,
+                    structured_explanation=harmonized_structured_exp,
                     severity=None,
                     category=None,
                     risk_source=risk_source,
                     status=ClauseStatus.FAILED,
                     rule_findings=rule_findings if isinstance(rule_findings, list) else []
                 )
+
                 logger.warning(f"Clause {idx} for document {document_id} marked as FAILED (isolated failure).")
             else:
                 # Part B.6 Conflict Policy:
                 # Classifier severity is final. Rule findings are preserved in rule_findings JSON array as evidence.
+                harmonized_structured_exp = structured_explanation or {}
+                if isinstance(harmonized_structured_exp, dict):
+                    harmonized_structured_exp = dict(harmonized_structured_exp)
+                    risk_obj = dict(harmonized_structured_exp.get('risk') or {})
+                    cat_obj = dict(harmonized_structured_exp.get('category') or {})
+
+                    risk_obj['severity'] = raw_severity.capitalize() if raw_severity else None
+                    cat_obj['label'] = raw_category
+
+                    harmonized_structured_exp['risk'] = risk_obj
+                    harmonized_structured_exp['category'] = cat_obj
+
                 Clause.objects.create(
                     document=document,
                     position=idx,
                     original_text=original_text,
                     simplified_text=simplified_text,
                     explanation=explanation,
-                    structured_explanation=structured_explanation,
+                    structured_explanation=harmonized_structured_exp,
                     severity=raw_severity,
                     category=raw_category,
                     risk_source=risk_source,
                     status=ClauseStatus.COMPLETE,
                     rule_findings=rule_findings if isinstance(rule_findings, list) else []
                 )
+
 
         # 6. Final Transition to Complete
         document.transition_to(DocumentStatus.COMPLETE)

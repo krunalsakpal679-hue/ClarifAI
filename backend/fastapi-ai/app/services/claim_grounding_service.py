@@ -388,6 +388,35 @@ def verify_and_ground_clause_narrative(
         details_list = clean_details
 
     # -------------------------------------------------------------------------
+    # 4b. LIABILITY CAP POLARITY VALIDATION (Cap vs. Uncapped Exception)
+    # -------------------------------------------------------------------------
+    if ("capped at" in s_lower or "shall not exceed" in s_lower or "aggregate liability" in s_lower or "limitation of liability" in s_lower):
+        has_exceptions = any(k in s_lower for k in ["except for", "excluding", "other than"])
+        is_inverted = any(k in what_this_clause_means.lower() for k in [
+            "neither party is limited", "liability is not capped", "liability is uncapped",
+            "no cap on aggregate liability", "no cap on", "no cap for", "no maximum cap",
+            "no limit on how much", "neither party can limit", "there is no cap",
+            "uncapped liability for all", "removes any limitation", "is not capped",
+            "is not limited", "without a pre-determined", "without a pre‑determined"
+        ])
+        if has_exceptions and is_inverted:
+            cap_m = re.search(r'(?:capped at|limited to|shall not exceed)\s+([^\.\;\,]+)', source_text, re.IGNORECASE)
+            cap_target = cap_m.group(1).strip() if cap_m else "the agreed contract limit"
+            exc_m = re.search(r'(?:except for|excluding|other than)\s+([^\,\;\.]+)', source_text, re.IGNORECASE)
+            exc_target = exc_m.group(1).strip() if exc_m else "carved-out claims"
+
+            what_this_clause_means = (
+                f"WHAT THIS CLAUSE MEANS\n"
+                f"This clause establishes a limitation of liability, capping each party's aggregate financial liability under the agreement at {cap_target}, with {exc_target} remaining as uncapped exceptions.\n\n"
+                f"WHO IS AFFECTED\nBoth contracting parties.\n\n"
+                f"WHAT THEY HAVE TO DO\nNeither party may recover damages exceeding {cap_target}, except for {exc_target} which are excluded from the cap.\n\n"
+                f"IMPORTANT DETAILS\n• Liability Cap: {cap_target}.\n• Uncapped Exceptions: {exc_target}.\n\n"
+                f"WHAT HAPPENS IF THE CONDITION IS NOT MET\nClaims exceeding the cap cannot be recovered unless they fall within the designated uncapped exceptions."
+            )
+            obligations = f"Neither party can recover damages exceeding {cap_target}, except for {exc_target} which are excluded from the cap."
+            grounding_notes.append("Corrected liability cap polarity: general damages are capped, while carved-out exceptions remain uncapped.")
+
+    # -------------------------------------------------------------------------
     # 5. SPECIFICITY CHECK & GENERIC TEMPLATE REJECTION (Part 2)
     # -------------------------------------------------------------------------
     is_generic_boilerplate = (

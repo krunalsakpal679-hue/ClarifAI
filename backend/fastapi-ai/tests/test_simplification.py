@@ -138,11 +138,47 @@ def test_per_clause_failure_isolation():
     assert doc_res["total_clauses"] == 3
     results = doc_res["clauses"]
 
-    # Verify sibling clauses succeed while broken clause falls back isolated
+    # Verify sibling clauses succeed while broken clause falls back isolated to honest failure state
     assert results[0]["status"] == "SUCCESS"
     assert results[1]["status"] == "FAILED_SIMPLIFICATION"
-    assert results[1]["simplified_text"] == "Broken clause 2 text."  # Verbatim fallback
+    assert "AI explanation generation failed for this clause" in results[1]["simplified_text"]
+    assert results[1]["severity"] == "RISK_CLASSIFICATION_UNAVAILABLE"
+    assert results[1]["structured_explanation"]["category"]["label"] == "Unavailable"
     assert results[2]["status"] == "SUCCESS"
+
+
+def test_honest_fallback_on_llm_failure_and_synchronized_state():
+    """
+    Step 4 Requirement: Mock LLM failure must produce honest failure state:
+    - Never generic boilerplate string
+    - Severity and category synchronized to Unavailable state (no confident High label with failed explanation)
+    """
+    clause = {
+        "position": 1,
+        "clause_id": "c1",
+        "text": "The Subscriber shall pay Provider standard fees within 30 days.",
+        "severity": "High",
+        "category": "Payment"
+    }
+
+    failing_mock = MagicMock()
+    failing_mock.chat.completions.create.side_effect = RuntimeError("Groq Connection Refused")
+
+    res = simplify_single_clause(clause=clause, override_client=failing_mock)
+
+    assert res["status"] == "FAILED_SIMPLIFICATION"
+    honest_str = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
+    assert res["simplified_text"] == honest_str
+    assert res["why_flagged"] == honest_str
+
+    # Must NOT produce generic boilerplate
+    assert "This clause defines legal rights, operating procedures" not in res["simplified_text"]
+
+    # Must synchronize severity and category to unavailable rather than confident high
+    assert res["severity"] == "RISK_CLASSIFICATION_UNAVAILABLE"
+    assert res["structured_explanation"]["risk"]["severity"] == "RISK_CLASSIFICATION_UNAVAILABLE"
+    assert res["structured_explanation"]["category"]["label"] == "Unavailable"
+    assert res["structured_explanation"]["what_this_clause_means"] == honest_str
 
 
 def test_simplify_clauses_api_endpoint():

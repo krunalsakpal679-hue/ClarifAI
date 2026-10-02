@@ -657,6 +657,29 @@ class RealAIClient:
             structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
             risk_src = cl.get('risk_source') or simp.get('risk_source')
 
+            # Harmonize structured_explanation with top-level severity and category
+            if isinstance(structured_exp, dict):
+                structured_exp = dict(structured_exp)
+                risk_dict = dict(structured_exp.get('risk') or {})
+                cat_dict = dict(structured_exp.get('category') or {})
+
+                if clause_status == "failed" or not raw_sev:
+                    risk_dict['severity'] = None
+                    if "balanced commercial terms" in str(risk_dict.get('reason', '')):
+                        risk_dict['reason'] = "Risk classification unavailable for this clause."
+                else:
+                    risk_dict['severity'] = raw_sev.capitalize()
+
+                if clause_status == "failed" or not raw_cat:
+                    cat_dict['label'] = None
+                    if "Standard contractual provision" in str(cat_dict.get('reason', '')):
+                        cat_dict['reason'] = "Category unclassified: provision does not map to standard commercial categories."
+                else:
+                    cat_dict['label'] = raw_cat
+
+                structured_exp['risk'] = risk_dict
+                structured_exp['category'] = cat_dict
+
             assembled_clauses.append({
                 "clause_id": f"c-{pos:03d}",
                 "position": pos,
@@ -670,6 +693,7 @@ class RealAIClient:
                 "status": clause_status,
                 "rule_findings": cl.get('rule_findings', [])
             })
+
 
         # Step 11: Enforce Structural Integrity Join Verification (Part 1 Guarantee)
         for i, cl in enumerate(assembled_clauses):

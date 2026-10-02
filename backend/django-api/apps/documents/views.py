@@ -30,6 +30,9 @@ from tasks.document_tasks import process_document
 
 
 
+logger = logging.getLogger(__name__)
+
+
 class DocumentNotReadyException(APIException):
     """
     HTTP 422 Unprocessable Entity returned when querying analysis/clauses of an incomplete document (PRD Ch. 30.8).
@@ -74,6 +77,7 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         try:
             process_document.delay(str(document.id))
         except Exception as exc:
+            logger.warning(f"Celery broker unavailable ({exc}); failing with SERVICE_UNAVAILABLE.")
             document.status = DocumentStatus.FAILED
             document.failure_reason = f"Broker unavailable: {exc}"
             document.save()

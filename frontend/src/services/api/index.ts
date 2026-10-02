@@ -31,9 +31,11 @@ import { mockReportService } from '../mocks/reports';
  * unless VITE_USE_MOCKS is explicitly configured as 'true'.
  * In development/test builds, real services are used when VITE_USE_MOCKS === 'false'.
  */
-export const USE_MOCKS: boolean = import.meta.env.PROD
-  ? import.meta.env.VITE_USE_MOCKS === 'true'
-  : import.meta.env.VITE_USE_MOCKS !== 'false';
+export const USE_MOCKS: boolean = import.meta.env.MODE === 'test'
+  ? true
+  : import.meta.env.PROD
+    ? import.meta.env.VITE_USE_MOCKS === 'true'
+    : import.meta.env.VITE_USE_MOCKS !== 'false';
 
 export const authService: IAuthService = USE_MOCKS ? mockAuthService : apiAuthService;
 

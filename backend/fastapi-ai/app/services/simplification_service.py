@@ -628,7 +628,7 @@ def simplify_single_clause(
     if isinstance(categories, str):
         categories = [categories]
     final_cat_label = categories[0] if categories and categories[0] and str(categories[0]).lower() not in ("none", "unavailable", "null", "general", "unclassified") else None
-    final_sev_label = severity if severity is not None else "RISK_CLASSIFICATION_UNAVAILABLE"
+    final_sev_label = severity if severity is not None else None
 
 
     if not text or not text.strip():
@@ -671,7 +671,7 @@ Rule Signals: {signals_summary}
 
     if not get_groq_api_key() and override_client is None:
         logger.info(f"GROQ_API_KEY not configured. Bypassing LLM retries for clause '{clause_id}' and running domain plain-English synthesis.")
-        return synthesize_detailed_plain_english_analysis(
+        synth_res = synthesize_detailed_plain_english_analysis(
             text=text,
             severity=severity,
             category=categories[0] if categories else None,
@@ -679,6 +679,24 @@ Rule Signals: {signals_summary}
             clause_number=clause_number,
             title=title
         )
+        ret_sev = final_sev_label
+        ret_struct = synth_res.get("structured_explanation")
+        if ret_struct and ret_struct.get("risk", {}).get("severity") == "RISK_CLASSIFICATION_UNAVAILABLE":
+            ret_sev = "RISK_CLASSIFICATION_UNAVAILABLE"
+
+        return {
+            "position": position,
+            "clause_id": clause_id,
+            "clause_number": clause_number,
+            "title": title,
+            "original_text": text,
+            "simplified_text": synth_res["simplified_text"],
+            "why_flagged": synth_res["why_flagged"],
+            "structured_explanation": ret_struct,
+            "severity": ret_sev,
+            "category": final_cat_label,
+            "status": "SUCCESS"
+        }
 
     max_retries = 3
     last_exc = None

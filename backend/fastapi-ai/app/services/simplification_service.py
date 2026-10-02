@@ -19,7 +19,8 @@ from app.services.llm_client import (
     format_untrusted_evidence_block,
     check_for_legal_advice,
     check_for_prompt_injection_leak,
-    validate_untrusted_llm_output
+    validate_untrusted_llm_output,
+    get_groq_api_key
 )
 from app.services.output_validator_service import validate_structured_output
 from app.services.claim_grounding_service import verify_and_ground_clause_narrative

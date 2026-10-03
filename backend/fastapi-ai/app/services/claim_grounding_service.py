@@ -511,22 +511,66 @@ def verify_and_ground_clause_narrative(
             needs_review = True
 
     # -------------------------------------------------------------------------
-    # 6. MATERIAL NUMERIC FACT & COMPLETENESS CHECK
+    # 6. UNIVERSAL MATERIAL NUMERIC & FACTUAL COMPLETENESS CHECK
     # -------------------------------------------------------------------------
-    num_entities = [m.group(0).strip() for m in re.finditer(r'(?:(?:₹|Rs\.?|\$|€|£)\s*[\d,]+(?:\.\d+)?|(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?)', source_text, re.IGNORECASE)]
+    # Universal extraction of amounts, percentages, durations, and ratios across ALL clauses
+    all_num_entities = [
+        m.group(0).strip() for m in re.finditer(
+            r'(?:(?:₹|Rs\.?|\$|€|£|USD|INR)\s*[\d,]+(?:\.\d+)?|'
+            r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?|'
+            r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|sixty|ninety|180|365)\s+(?:days?|months?|years?|hours?|business\s+days?|calendar\s+days?|weeks?|quarters?)\b|'
+            r'\b(?:semi-monthly|bi-weekly|quarterly|annually|monthly|per annum)\b|'
+            r'\b(?:ratio\s+of\s+not\s+less\s+than\s+\d+(?:\.\d+)?\s+to\s+\d+(?:\.\d+)?|\d+(?:\.\d+)?\s+to\s+\d+(?:\.\d+)?)\b)',
+            source_text,
+            re.IGNORECASE
+        )
+    ]
     
     combined_narrative = f"{what_this_clause_means} {obligations} {' '.join(details_list)} {consequences or ''}".lower()
-    for ne in num_entities:
+    for ne in all_num_entities:
         ne_clean = re.sub(r'\s+', ' ', ne.strip().lower())
         core_num = re.search(r'[\d,.]+', ne_clean)
         if core_num and core_num.group(0) not in combined_narrative:
-            if severity in ("High", "Moderate"):
-                warnings.append(f"Material numeric specification '{ne}' is present in source clause but omitted from narrative.")
-                if "late" in s_lower or "interest" in s_lower or "finance" in s_lower:
-                    details_list.append(f"Finance Charges / Overdue Interest: {ne.strip()} on overdue balances.")
-                elif "cap" in s_lower or "liability" in s_lower:
+            # Universal numeric fact preservation
+            if any(c in ne_clean for c in ["$", "₹", "€", "£", "usd", "inr"]):
+                if any(k in s_lower for k in ["salary", "compensation", "wage", "remuneration", "base"]):
+                    details_list.append(f"Salary / Compensation: {ne.strip()}.")
+                elif any(k in s_lower for k in ["principal", "loan", "borrow", "credit facility"]):
+                    details_list.append(f"Principal Amount: {ne.strip()}.")
+                elif any(k in s_lower for k in ["replacement", "equipment", "value"]):
+                    details_list.append(f"Replacement Value / Asset Worth: {ne.strip()}.")
+                elif any(k in s_lower for k in ["cap", "liability", "damages", "aggregate"]):
                     details_list.append(f"Monetary Cap: {ne.strip()}.")
-                grounding_notes.append(f"Added omitted material numeric specification '{ne}' to details list.")
+                else:
+                    details_list.append(f"Financial Amount: {ne.strip()}.")
+            elif "%" in ne_clean:
+                if any(k in s_lower for k in ["interest", "late", "finance charge", "overdue"]):
+                    details_list.append(f"Interest Rate / Surcharge: {ne.strip()}.")
+                elif any(k in s_lower for k in ["bonus", "incentive"]):
+                    details_list.append(f"Bonus / Incentive Target: {ne.strip()}.")
+                elif any(k in s_lower for k in ["match", "401(k)", "401k", "pension"]):
+                    details_list.append(f"Company Match: {ne.strip()}.")
+                elif any(k in s_lower for k in ["uptime", "availability", "service level", "sla"]):
+                    details_list.append(f"Service Uptime Target: {ne.strip()}.")
+                else:
+                    details_list.append(f"Percentage / Rate: {ne.strip()}.")
+            elif any(u in ne_clean for u in ["day", "month", "year", "hour", "week", "quarter", "semi-monthly", "bi-weekly", "quarterly", "annually", "monthly"]):
+                if any(k in s_lower for k in ["payroll", "cadence", "salary"]):
+                    details_list.append(f"Payment Schedule: {ne.strip()}.")
+                elif any(k in s_lower for k in ["term", "duration", "maturity"]):
+                    details_list.append(f"Term / Timeframe: {ne.strip()}.")
+                elif any(k in s_lower for k in ["notice", "cure", "grace"]):
+                    details_list.append(f"Notice / Grace Window: {ne.strip()}.")
+                else:
+                    details_list.append(f"Timeframe: {ne.strip()}.")
+            elif "to" in ne_clean:
+                details_list.append(f"Required Financial Ratio: {ne.strip()}.")
+            else:
+                details_list.append(f"Quantitative Metric: {ne.strip()}.")
+
+            grounding_notes.append(f"Preserved material numeric/quantitative specification '{ne}' in details list.")
+            # Update combined narrative string for subsequent checks
+            combined_narrative = f"{what_this_clause_means} {obligations} {' '.join(details_list)} {consequences or ''}".lower()
 
     # -------------------------------------------------------------------------
     # 7. CONDITIONAL QUALIFIER GROUNDING CHECK (Part 2 Material Omission Grounding)

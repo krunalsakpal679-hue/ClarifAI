@@ -14,23 +14,25 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
-# Regex for explicit legal section markers (e.g. "Section 1.", "Section A.", "Clause 4.2", "Article III", "1.1 ", "1) ", "1. ", "1 LEASED")
+# Regex for explicit legal section markers (e.g. "Section 1.", "Section A.", "Clause 4.2", "Article III", "1.1 ", "1) ", "1. ", "1 LEASED", "{3}", "6 TOTAL")
 REGEX_SECTION_MARKER = re.compile(
     r"^(?:[^\w\(\[\{]*)(?:"
     r"(?:Section|Clause|Article|Paragraph)\s+([0-9]+(?:\.[0-9]+)*|[A-Za-z]+|\b[IVXLCDM]+\b)"
-    r"|([0-9]+(?:\.[0-9]+){1,3})"
-    r"|([0-9]{1,3}\.)"
-    r"|([0-9]{1,3}\s+(?=[A-Z]{3,}))"
+    r"|([0-9]+(?:\.[0-9]+){1,3}(?!\d))"
+    r"|([0-9]{1,3}\.(?!\d))"
+    r"|([0-9]{1,3}(?=\s+[A-Za-z]{3,}))"
+    r"|([0-9]{1,3}(?=[A-Z]{3,}))"
     r"|(\b[IVXLCDM]+\b\.)"
-    r"|([A-Z]\.)"
-    r"|(\([0-9a-zA-Z]{1,3}\))"
-    r")(?:\s*[\:\.\-\–\—]\s*|\s+|$)(.*)$",
+    r"|([A-Z]\.\s+)"
+    r"|(\([0-9]{1,2}\)|\([a-zA-Z]\))"
+    r"|(\{[0-9]{1,2}\})"
+    r")(?:\s*[\:\.\-\–\—\)]\s*|\s+|$)(.*)$",
     re.IGNORECASE
 )
 
 # Regex for common legal headings across all contract and agreement types
 REGEX_LEGAL_HEADING = re.compile(
-    r"^(?:[^\w\(\[\{]*)(?:"
+    r"^(?:[^a-zA-Z0-9]*)(?:"
     r"PAYMENT\s+TERMS|PAYMENT|FEES\s+AND\s+PAYMENT|FEES\s+AND\s+EXPENSES|FEES|COMPENSATION(?:\s+AND\s+PERFORMANCE\s+BONUS)?|"
     r"POSITION\s+AND\s+(?:OPERATIONAL\s+)?DUTIES|DUTIES\s+AND\s+RESPONSIBILITIES|EMPLOYMENT\s+DUTIES|"
     r"PRINCIPAL\s+LOAN\s+COMMITMENT|PRINCIPAL\s+LOAN|INTEREST\s+RATE(?:\s+AND\s+REPAYMENT\s+SCHEDULE)?|"
@@ -43,9 +45,10 @@ REGEX_LEGAL_HEADING = re.compile(
     r"PURCHASE\s+ORDERS(?:\s+AND\s+LEAD\s+TIMES)?|PRICE\s+ADJUSTMENTS(?:\s+AND\s+CURRENCY)?|"
     r"PRODUCT\s+WARRANTY(?:\s+AND\s+DEFECT\s+REMEDIES)?|WARRANTY\s+AND\s+REMEDIES|"
     r"PATENT\s+INFRINGEMENT(?:\s+AND\s+PRODUCT\s+INDEMNIFICATION)?|"
-    r"LEASED\s+EQUIPMENT(?:\s+AND\s+TERM\s+DURATION)?|MONTHLY\s+RENTAL(?:\s+AND\s+SECURITY\s+DEPOSIT)?|"
-    r"EQUIPMENT\s+MAINTENANCE(?:\s+AND\s+REPAIRS)?|MAINTENANCE\s+AND\s+REPAIRS?|"
-    r"INSURANCE(?:\s+AND\s+CASUALTY\s+INDEMNITY)?|TOTAL\s+CASUALTY\s+LOSS(?:\s+AND\s+REPLACEMENT\s+VALUE)?|"
+    r"LEASED\s+EQ(?:UI|U|I)?PMENT(?:\s+AND\s+T[A-Z]+\s+DURATION)?|MONTHLY\s+RENT(?:AL)?(?:\s+AND\s+SECU?RITY\s+DEPOSIT)?|"
+    r"(?:EQ(?:UI|U|I)?PMENT\s+)?MA[I]?NTENAN?CE(?:\s+(?:AND|ANO)\s*REPA[I]?R?S?)?|MA[I]?NTENAN?CE\s+AND\s+REPAIRS?|"
+    r"[I1ln]?NSURAN?CE(?:\s+(?:A[NU]D|AUO)?\s*CASUALTY(?:\s*INDEMNITY|INOENITY)?)?|"
+    r"TOTAL\s*CASUALTY\s*LOSS(?:\s+AND\s+FEPLACEMENTVALUE|\s+AND\s+REPLACEMENT\s+VALUE)?|"
     r"POST-EMPLOYMENT\s+NON-COMPETE(?:\s+COVENANT)?|NON-COMPETE(?:\s+COVENANT)?|"
     r"TERMINATION\s+AND\s+SEVERANCE(?:\s+ENTITLEMENT)?|TERMINATION(?:\s+RIGHTS)?|TERM\s+AND\s+TERMINATION|"
     r"CANCELLATION|EXPIRATION|SURVIVAL|"
@@ -53,7 +56,7 @@ REGEX_LEGAL_HEADING = re.compile(
     r"LIMITATION\s+OF\s+LIABILITY|LIABILITY|DAMAGES\s+CAP|"
     r"INDEMNIFICATION|INDEMNITY|DEFENSE\s+AND\s+INDEMNIFICATION|HOLD\s+HARMLESS|"
     r"INTELLECTUAL\s+PROPERTY(?:\s+ASSIGNMENT)?|INTELLECTUAL\s+PROPERTY\s+RIGHTS|IP\s+RIGHTS|WORK\s+MADE\s+FOR\s+HIRE|OWNERSHIP|"
-    r"GOVERNING\s+LAW(?:\s+AND\s+(?:JURISDICTION|VENUE|COURT\s+VENUE))?|GOVERNING\s+FORUM(?:\s+AND\s+VENUE)?|JURISDICTION|VENUE|"
+    r"GOVER?N(?:ING|ERNG)?\s+LAW(?:\s+(?:A[NU]D|AND|AWO)\s*(?:JURISDICTION|VENUE|COURT\s*VENUE))?|GOVERNING\s+FORUM(?:\s+AND\s+VENUE)?|JURISDICTION|VENUE|"
     r"APPLICABLE\s+LAW(?:\s+AND\s+JUDICIAL\s+JURISDICTION)?|"
     r"DISPUTE\s+RESOLUTION|ARBITRATION|BINDING\s+ARBITRATION(?:\s+AND\s+CLASS\s+ACTION\s+WAIVER)?|"
     r"RENEWAL|TERM\s+AND\s+RENEWAL|EXTENSION|"
@@ -65,7 +68,7 @@ REGEX_LEGAL_HEADING = re.compile(
     r"DEFINITIONS|DEFINED\s+TERMS|INTERPRETATION|"
     r"SCOPE\s+OF\s+SERVICES|SCOPE\s+OF\s+WORK|SERVICES|STATEMENT\s+OF\s+WORK|DELIVERABLES|DUTIES|"
     r"INSURANCE|AUDIT\s+RIGHTS|AUDIT|TAXES|RELATIONSHIP\s+OF\s+PARTIES|MISCELLANEOUS|GENERAL\s+PROVISIONS"
-    r")(?:\s*[\:\.\-\–\—]\s*|\s*$)",
+    r")(?:\s*[\:\.\-\–\—\,\;]\s*|\s*$)",
     re.IGNORECASE
 )
 

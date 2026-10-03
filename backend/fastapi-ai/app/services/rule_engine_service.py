@@ -21,7 +21,7 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
     "R002": {
         "risk_signal": "Early-Termination Penalty",
-        "pattern": re.compile(r"\b(?:early\s+termination\s+(?:fee|penalty|charge)|early\s+cancellation\s+(?:fee|penalty)|liquidated\s+damages\s+for\s+early\s+termination|prepayment\s+(?:fee|penalty|premium)|prepay\s+the\s+outstanding\s+principal\s+subject\s+to)\b", re.IGNORECASE)
+        "pattern": re.compile(r"\b(?:early\s+termination\s+(?:fee|penalty|charge)|early\s+cancellation\s+(?:fee|penalty)|liquidated\s+damages\s+for\s+early\s+termination|prepayment\s+(?:fee|penalty|premium)|prepay\s+(?:the\s+)?(?:outstanding\s+)?principal\s+subject\s+to)\b", re.IGNORECASE)
     },
     "R003": {
         "risk_signal": "Hidden/Add-on Charges",
@@ -30,13 +30,13 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     "R004": {
         "risk_signal": "Late-Payment Penalty",
         "pattern": re.compile(
-            r"\b(?:late\s+payment\s+(?:fee|penalty|interest)|interest\s+(?:at\s+(?:a|the)?\s*rate\s+of|rate\s+of).{0,25}?[0-9]+(?:\.[0-9]+)?%\)?\s*per\s+(?:month|annum|year)|penalty\s+interest|accrues?\s+penalty\s+interest|uncured\s+default\s+accrues|late\s+charge)\b",
+            r"\b(?:late\s+payment\s+(?:fee|penalty|interest)|interest\s+(?:at\s+(?:a|the)?\s*rate\s+of|rate\s+of).{0,25}?[0-9]+(?:\.[0-9]+)?%\)?\s*per\s+(?:month|annum|year)|penalty\s+interest|accrues?\s+penalty\s+interest|uncured\s+default\s+accrues|late\s+charge|default\s+rate\s+of)\b",
             re.IGNORECASE
         )
     },
     "R005": {
         "risk_signal": "Excessive Liability Transfer",
-        "pattern": re.compile(r"\b(?:disclaim(?:s|er)?\s+all\s+liability|no\s+liability\s+whatsoever|liability\s+whatsoever|entire\s+risk|user\s+assumes\s+all\s+risk|liability\s+exceeds?\s+\$0|sole\s+and\s+exclusive\s+remedy|total\s+(?:cumulative\s+)?monetary\s+liability\s+shall\s+not\s+exceed|not\s+exceed\s+the\s+total\s+subscription\s+fees|total\s+casualty\s+loss|replacement\s+valuation\s+of|replacement\s+value)\b", re.IGNORECASE)
+        "pattern": re.compile(r"\b(?:disclaim(?:s|er)?\s+all\s+liability|disclaim(?:er)?\s+of\s+consequential\s+damages|exclude\s+liability\s+for\s+(?:indirect|consequential|incidental)|consequential\s+or\s+incidental\s+damages|no\s+liability\s+whatsoever|liability\s+whatsoever|entire\s+risk|user\s+assumes\s+all\s+risk|liability\s+exceeds?\s+\$0|sole\s+and\s+exclusive\s+remedy|total\s+(?:cumulative\s+)?monetary\s+liability\s+shall\s+not\s+exceed|not\s+exceed\s+the\s+total\s+subscription\s+fees|total\s+casualty\s+loss|replacement\s+valuation\s+of|replacement\s+value)\b", re.IGNORECASE)
     },
     "R006": {
         "risk_signal": "Broad Indemnification",
@@ -51,7 +51,7 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     },
     "R008": {
         "risk_signal": "Unfavorable Termination",
-        "pattern": re.compile(r"\b(?:terminate\s+at\s+any\s+time\s+without\s+cause|immediate\s+termination\s+without\s+notice|terminate\s+for\s+convenience|event\s+of\s+default|immediately\s+due\s+and\s+payable|declare\s+the\s+entire\s+outstanding|acceleration|failure\s+to\s+maintain\s+dscr\s+constitutes\s+an\s+immediate\s+event\s+of\s+default)\b", re.IGNORECASE)
+        "pattern": re.compile(r"\b(?:terminate\s+at\s+any\s+time\s+without\s+cause|immediate\s+termination\s+without\s+notice|terminate\s+for\s+convenience|event\s+of\s+default|immediately\s+due\s+and\s+payable|declare\s+the\s+entire\s+outstanding|acceleration|failure\s+to\s+maintain\s+dscr\s+constitutes\s+an\s+immediate\s+event\s+of\s+default|without\s+presentment,?\s*demand)\b", re.IGNORECASE)
     },
     "R009": {
         "risk_signal": "Unusual Notice Requirement",
@@ -71,7 +71,7 @@ RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     "R012": {
         "risk_signal": "Arbitration/Dispute Restriction",
         "pattern": re.compile(
-            r"\b(?:binding\s+arbitration|waive\s+(?:the\s+)?right\s+to\s+a\s+jury\s+trial|class\s+action\s+waiver|exclusive\s+jurisdiction\s+(?:in|of))\b",
+            r"\b(?:binding\s+arbitration|waive\s+(?:the\s+)?right\s+to\s+a\s+jury\s+trial|class\s+action\s+waiver|submit\s+(?:all\s+)?disputes\s+to\s+arbitration|exclusive\s+jurisdiction\s+(?:in|of)\s+[^.;\n]+?(?:courts?|County|District|State))\b",
             re.IGNORECASE
         )
     },

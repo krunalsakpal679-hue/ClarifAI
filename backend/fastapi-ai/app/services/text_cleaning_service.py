@@ -50,7 +50,7 @@ def clean_legal_text(raw_text: str, preserve_page_markers: bool = True) -> Dict[
     text = raw_text
 
     # 0. Clean OCR Glitch Characters / Unicode Replacement Glyphs
-    text_clean_chars = re.sub(r'[\ufffd\x00-\x08\x0b\x0c\x0e-\x1f]', ' ', text)
+    text_clean_chars = re.sub(r'[\ufffd\x00-\x08\x0b\x0c\x0e-\x1f\u00ad\u2022\u2023\u25e6\u2043\u2219]', ' ', text)
     if text_clean_chars != text:
         rules_applied.append("strip_ocr_glitch_chars")
         text = text_clean_chars

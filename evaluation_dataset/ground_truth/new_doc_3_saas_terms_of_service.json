@@ -1,0 +1,152 @@
+{
+  "document_name": "new_doc_3_saas_terms_of_service.pdf",
+  "document_title": "CLOUD WORKSPACE TERMS OF SERVICE",
+  "document_type": "Terms of Service",
+  "parties": {
+    "provider": "SyncWave Collaboration Platforms Ltd.",
+    "customer": "Customer (Registered Business Users)"
+  },
+  "effective_date": "Unspecified / Ongoing",
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "SUBSCRIPTION GRANT AND ACCESS RIGHTS",
+      "verbatim_text": "Provider grants Customer a non-exclusive, non-transferable, revocable subscription right to access and use the cloud collaboration software solely for internal business operations.",
+      "category": "Intellectual Property",
+      "severity": "Safe",
+      "obligor": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "beneficiary": "Customer",
+      "directionality": "Provider -> Customer",
+      "obligations": [
+        "Customer must use software solely for internal business operations"
+      ],
+      "rights": [
+        "Customer receives non-exclusive, non-transferable, revocable subscription right to access software"
+      ],
+      "conditions": [
+        "Limited to internal business operations"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Non-exclusive, non-transferable, revocable subscription right granted",
+        "Use restricted solely to internal business operations"
+      ]
+    },
+    {
+      "clause_number": "2",
+      "title": "SERVICE AVAILABILITY AND SERVICE CREDITS",
+      "verbatim_text": "Provider targets ninety-nine point nine percent (99.9%) monthly service uptime. If monthly availability falls below 99.9%, Customer is eligible for a five percent (5.0%) service credit per 1% of downtime as Customer's sole and exclusive remedy.",
+      "category": "Liability",
+      "severity": "Moderate",
+      "obligor": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "beneficiary": "Customer",
+      "directionality": "Provider -> Customer",
+      "obligations": [
+        "Provider must target 99.9% monthly service uptime",
+        "Provider must grant 5.0% service credit per 1% downtime if uptime falls below 99.9%"
+      ],
+      "rights": [
+        "Customer has right to 5.0% credit per 1% downtime below 99.9%"
+      ],
+      "conditions": [
+        "Triggered if monthly availability falls below 99.9%"
+      ],
+      "exceptions": [
+        "Service credit is Customer's sole and exclusive remedy for downtime"
+      ],
+      "material_claims": [
+        "99.9% monthly service uptime target",
+        "5.0% service credit per 1% downtime below target",
+        "Service credits are the sole and exclusive remedy for downtime"
+      ]
+    },
+    {
+      "clause_number": "3",
+      "title": "DISCLAIMER OF CONSEQUENTIAL DAMAGES",
+      "verbatim_text": "In no event shall Provider be liable for any indirect, incidental, special, punitive, or consequential damages, including loss of profits, data corruption, or business interruption.",
+      "category": "Liability",
+      "severity": "Moderate",
+      "obligor": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "beneficiary": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "directionality": "Provider Shield",
+      "obligations": [],
+      "rights": [
+        "Provider is exempt from liability for indirect, incidental, special, punitive, or consequential damages"
+      ],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Provider disclaims liability for indirect, incidental, special, punitive, or consequential damages",
+        "Explicitly excludes loss of profits, data corruption, or business interruption"
+      ]
+    },
+    {
+      "clause_number": "4",
+      "title": "AGGREGATE MONETARY LIABILITY LIMITATION",
+      "verbatim_text": "Provider's total cumulative monetary liability arising out of or related to this agreement shall not exceed the total subscription fees actually paid by Customer in the six (6) months preceding the claim.",
+      "category": "Liability",
+      "severity": "High",
+      "obligor": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "beneficiary": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "directionality": "Provider Shield",
+      "obligations": [],
+      "rights": [
+        "Provider's total cumulative monetary liability is capped at subscription fees paid in the preceding 6 months"
+      ],
+      "conditions": [
+        "Liability calculation limited to fees actually paid in 6 months preceding the claim"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Total cumulative monetary liability capped at fees paid in preceding 6 months"
+      ]
+    },
+    {
+      "clause_number": "5",
+      "title": "UNILATERAL MODIFICATION OF TERMS",
+      "verbatim_text": "Provider reserves the right to modify these Terms and subscription pricing upon thirty (30) days notice via email. Continued platform access after the effective date constitutes binding acceptance.",
+      "category": "Termination",
+      "severity": "High",
+      "obligor": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "beneficiary": "SyncWave Collaboration Platforms Ltd. (Provider)",
+      "directionality": "Provider -> Customer",
+      "obligations": [
+        "Provider must provide 30 days notice via email before modifying terms or pricing"
+      ],
+      "rights": [
+        "Provider has unilateral right to modify Terms and pricing",
+        "Continued platform access after effective date binds customer to modifications"
+      ],
+      "conditions": [
+        "30 days notice via email required before changes become effective"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Provider reserves right to unilaterally modify terms and subscription pricing",
+        "Requires 30 days email notice",
+        "Continued use constitutes binding acceptance"
+      ]
+    },
+    {
+      "clause_number": "6",
+      "title": "BINDING ARBITRATION AND CLASS ACTION WAIVER",
+      "verbatim_text": "All disputes arising under these Terms shall be resolved exclusively through final and binding arbitration administered by the American Arbitration Association in San Francisco, California. Both parties waive any right to bring class actions.",
+      "category": "Dispute Resolution",
+      "severity": "Moderate",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Parties must resolve disputes exclusively via binding AAA arbitration in San Francisco, CA",
+        "Both parties waive class action participation"
+      ],
+      "rights": [],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Disputes resolved exclusively via final and binding AAA arbitration in San Francisco, CA",
+        "Both parties waive class action rights"
+      ]
+    }
+  ]
+}

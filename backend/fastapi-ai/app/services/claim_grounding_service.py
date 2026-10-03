@@ -388,6 +388,95 @@ def verify_and_ground_clause_narrative(
         details_list = clean_details
 
     # -------------------------------------------------------------------------
+    # 4b. LIABILITY CAP POLARITY VALIDATION (Cap vs. Uncapped Exception)
+    # -------------------------------------------------------------------------
+    if ("capped at" in s_lower or "shall not exceed" in s_lower or "aggregate liability" in s_lower or "limitation of liability" in s_lower):
+        has_exceptions = any(k in s_lower for k in ["except for", "excluding", "other than"])
+        is_inverted = any(k in what_this_clause_means.lower() for k in [
+            "neither party is limited", "liability is not capped", "liability is uncapped",
+            "no cap on aggregate liability", "no cap on", "no cap for", "no maximum cap",
+            "no limit on how much", "neither party can limit", "there is no cap",
+            "uncapped liability for all", "removes any limitation", "is not capped",
+            "is not limited", "without a pre-determined", "without a pre‑determined"
+        ])
+        if has_exceptions and is_inverted:
+            cap_m = re.search(r'(?:capped at|limited to|shall not exceed)\s+([^\.\;\,]+)', source_text, re.IGNORECASE)
+            cap_target = cap_m.group(1).strip() if cap_m else "the agreed contract limit"
+            exc_m = re.search(r'(?:except for|excluding|other than)\s+([^\,\;\.]+)', source_text, re.IGNORECASE)
+            exc_target = exc_m.group(1).strip() if exc_m else "carved-out claims"
+
+            what_this_clause_means = (
+                f"WHAT THIS CLAUSE MEANS\n"
+                f"This clause establishes a limitation of liability, capping each party's aggregate financial liability under the agreement at {cap_target}, with {exc_target} remaining as uncapped exceptions.\n\n"
+                f"WHO IS AFFECTED\nBoth contracting parties.\n\n"
+                f"WHAT THEY HAVE TO DO\nNeither party may recover damages exceeding {cap_target}, except for {exc_target} which are excluded from the cap.\n\n"
+                f"IMPORTANT DETAILS\n• Liability Cap: {cap_target}.\n• Uncapped Exceptions: {exc_target}.\n\n"
+                f"WHAT HAPPENS IF THE CONDITION IS NOT MET\nClaims exceeding the cap cannot be recovered unless they fall within the designated uncapped exceptions."
+            )
+            obligations = f"Neither party can recover damages exceeding {cap_target}, except for {exc_target} which are excluded from the cap."
+            grounding_notes.append("Corrected liability cap polarity: general damages are capped, while carved-out exceptions remain uncapped.")
+
+    # -------------------------------------------------------------------------
+    # 4c. UNGROUNDED LIABILITY CAP EXCEPTION SANITIZATION
+    # -------------------------------------------------------------------------
+    if ("capped at" in s_lower or "shall not exceed" in s_lower or "aggregate liability" in s_lower or "limitation of liability" in s_lower or "liability cap" in s_lower):
+        ungrounded_exceptions = []
+        if ("indemnification" in what_this_clause_means.lower() or any("indemnification" in d.lower() for d in details_list)) and not any(k in s_lower for k in ["indemnif", "indemnity"]):
+            ungrounded_exceptions.append("indemnification")
+        if ("willful misconduct" in what_this_clause_means.lower() or any("willful misconduct" in d.lower() for d in details_list)) and not any(k in s_lower for k in ["willful misconduct", "intentional misconduct"]):
+            ungrounded_exceptions.append("willful misconduct")
+        if ("breach of confidentiality" in what_this_clause_means.lower() or any("breach of confidentiality" in d.lower() for d in details_list)) and not any(k in s_lower for k in ["confidentiality", "confidential"]):
+            ungrounded_exceptions.append("breach of confidentiality")
+
+        if ungrounded_exceptions:
+            grounded_exceptions = []
+            if any(k in s_lower for k in ["indemnif", "indemnity"]):
+                grounded_exceptions.append("indemnification")
+            if "gross negligence" in s_lower:
+                grounded_exceptions.append("gross negligence")
+            if any(k in s_lower for k in ["willful misconduct", "intentional misconduct"]):
+                grounded_exceptions.append("willful misconduct")
+            if any(k in s_lower for k in ["breach of confidentiality", "confidentiality"]):
+                grounded_exceptions.append("breach of confidentiality")
+
+            if grounded_exceptions:
+                if len(grounded_exceptions) == 1:
+                    grounded_phrase = grounded_exceptions[0]
+                elif len(grounded_exceptions) == 2:
+                    grounded_phrase = f"{grounded_exceptions[0]} or {grounded_exceptions[1]}"
+                else:
+                    grounded_phrase = f"{', '.join(grounded_exceptions[:-1])}, or {grounded_exceptions[-1]}"
+            else:
+                grounded_phrase = None
+
+            new_details = []
+            for d in details_list:
+                if "uncapped exceptions:" in d.lower():
+                    if grounded_phrase:
+                        new_details.append(f"Uncapped Exceptions: Liabilities arising from {grounded_phrase} are excluded from the financial liability cap.")
+                else:
+                    new_details.append(d)
+            details_list = new_details
+
+            if grounded_phrase:
+                what_this_clause_means = re.sub(
+                    r'with liabilities arising from [^\.\n]+? (?:are|remaining) uncapped exceptions',
+                    f'with liabilities arising from {grounded_phrase} remaining uncapped exceptions',
+                    what_this_clause_means,
+                    flags=re.IGNORECASE
+                )
+            else:
+                what_this_clause_means = re.sub(
+                    r', with liabilities arising from [^\.\n]+? (?:are|remaining) uncapped exceptions',
+                    '',
+                    what_this_clause_means,
+                    flags=re.IGNORECASE
+                )
+
+            warnings.append(f"Stripped ungrounded liability cap exception(s): {', '.join(ungrounded_exceptions)}.")
+            grounding_notes.append("Sanitized uncapped liability exceptions against source text.")
+
+    # -------------------------------------------------------------------------
     # 5. SPECIFICITY CHECK & GENERIC TEMPLATE REJECTION (Part 2)
     # -------------------------------------------------------------------------
     is_generic_boilerplate = (
@@ -438,6 +527,27 @@ def verify_and_ground_clause_narrative(
                 elif "cap" in s_lower or "liability" in s_lower:
                     details_list.append(f"Monetary Cap: {ne.strip()}.")
                 grounding_notes.append(f"Added omitted material numeric specification '{ne}' to details list.")
+
+    # -------------------------------------------------------------------------
+    # 7. CONDITIONAL QUALIFIER GROUNDING CHECK (Part 2 Material Omission Grounding)
+    # -------------------------------------------------------------------------
+    # Rule 1: Financial & Rate Qualifiers ("highest legal rate", "whichever is less", "maximum rate permitted")
+    if re.search(r'\b(?:highest\s+legal\s+rate|whichever\s+is\s+less|maximum\s+rate\s+permitted|maximum\s+allowed\s+by\s+law|legal\s+maximum)\b', s_lower):
+        if not re.search(r'\b(?:highest\s+legal\s+rate|whichever\s+is\s+less|maximum\s+legal\s+rate|legal\s+maximum|maximum\s+rate\s+permitted)\b', combined_narrative):
+            if "late" in s_lower or "interest" in s_lower or "1.5%" in s_lower or "payment" in s_lower or "fee" in s_lower:
+                what_this_clause_means += " Late payments accrue interest at the specified rate or the highest legal rate permitted under applicable law, whichever is less."
+                obligations += " Overdue amounts are subject to interest capped at the highest legal rate permitted under applicable law, whichever is less."
+                details_list.append("Statutory Interest Cap: Interest is capped at the highest legal rate permitted under applicable law, whichever is less.")
+                grounding_notes.append("Added omitted material conditional qualifier: 'or the highest legal rate permitted under applicable law, whichever is less'.")
+
+    # Rule 2: IP & Ownership Payment Conditions ("upon receipt of payment", "upon payment", "conditioned upon payment")
+    if re.search(r'\b(?:upon\s+(?:full\s+)?receipt\s+of\s+payment|upon\s+(?:full\s+)?payment(?:\s+of\s+fees?)?|conditioned\s+upon\s+payment|subject\s+to\s+full\s+payment|provided\s+(?:all\s+)?fees?\s+(?:are\s+)?paid)\b', s_lower):
+        if not re.search(r'\b(?:upon\s+receipt\s+of\s+payment|upon\s+payment|conditioned\s+upon\s+payment|subject\s+to\s+payment|provided\s+fees\s+are\s+paid)\b', combined_narrative):
+            if "intellectual property" in s_lower or "ownership" in s_lower or "work product" in s_lower or "deliverables" in s_lower or "rights" in s_lower or "license" in s_lower or "proprietary" in s_lower:
+                what_this_clause_means += " Ownership transfer and rights in deliverables are conditioned upon receipt of payment."
+                obligations += " Transfer of proprietary rights is contingent upon subscriber making full payment."
+                details_list.append("Payment Condition: Transfer of ownership and rights is effective upon receipt of payment.")
+                grounding_notes.append("Added omitted material condition: 'upon receipt of payment'.")
 
     return {
         "what_this_clause_means": what_this_clause_means,

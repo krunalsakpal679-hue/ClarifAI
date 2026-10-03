@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # Network & Internal Security
     FASTAPI_HOST: str = "0.0.0.0"
     FASTAPI_PORT: int = 8000
-    INTERNAL_SERVICE_SECRET: Optional[str] = None
+    INTERNAL_SERVICE_SECRET: Optional[str] = "clarifai_internal_secret_token_2026"
 
     # Groq LLM Cloud Service Settings
     GROQ_API_KEY: Optional[str] = None

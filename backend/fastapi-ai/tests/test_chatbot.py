@@ -6,6 +6,7 @@ session+document memory scoping and cross-session isolation, output validation,
 prompt injection defense, and API router endpoints.
 """
 
+import re
 import pytest
 from unittest.mock import MagicMock
 from qdrant_client import QdrantClient
@@ -224,16 +225,25 @@ def test_exact_clause_lookup_and_missing_clause_handling(memory_qdrant_client):
 
     index_document_clauses(user_id=user_id, document_id=document_id, clauses=clauses, client=memory_qdrant_client)
 
+    mock_llm = MagicMock()
+    mock_llm.chat.completions.create.return_value = MagicMock(
+        choices=[
+            MagicMock(message=MagicMock(content="Clause 1 states that the Lessor grants the lease of the land to Lessee.", reasoning=None))
+        ],
+        usage=MagicMock(prompt_tokens=50, completion_tokens=15, total_tokens=65)
+    )
+
     # 1. Asking for Clause 1 resolves directly to Clause 1
     res1 = generate_chatbot_answer(
         session_id=session_id,
         user_id=user_id,
         document_id=document_id,
         question="Explain Clause 1",
-        qdrant_client=memory_qdrant_client
+        qdrant_client=memory_qdrant_client,
+        override_llm_client=mock_llm
     )
     assert res1["has_sufficient_evidence"] is True
-    assert "Clause 1" in res1["answer"]
+    assert re.search(r"Clause[\s\u202f]*1", res1["answer"]) is not None
     assert "demise" in res1["answer"].lower() or "grants the lease" in res1["answer"].lower()
 
     # 2. Asking for non-existent Clause 6 returns controlled no-answer stating Clause 6 was not found

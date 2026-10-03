@@ -55,8 +55,9 @@ export const ComparisonResultsPage: React.FC = () => {
   }, [effectiveId, analysisLanguage, fetchComparison]);
 
   // Poll while comparison is pending or processing
+  const comparisonStatus = comparison?.status;
   useEffect(() => {
-    if (!comparison || comparison.status === 'complete' || comparison.status === 'failed') {
+    if (!comparisonStatus || comparisonStatus === 'complete' || comparisonStatus === 'failed') {
       return;
     }
     const interval = setInterval(() => {
@@ -65,7 +66,7 @@ export const ComparisonResultsPage: React.FC = () => {
       }
     }, 2500);
     return () => clearInterval(interval);
-  }, [comparison?.status, effectiveId, analysisLanguage, fetchComparison]);
+  }, [comparisonStatus, effectiveId, analysisLanguage, fetchComparison]);
 
   // Group clauses into the 3 categories
   const { changedItems, matchedItems, missingItems } = useMemo(() => {

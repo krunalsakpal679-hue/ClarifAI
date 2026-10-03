@@ -11,6 +11,7 @@ Consolidated under AI-PHASE-LLM-INTEGRATION to use shared llm_client utilities.
 import json
 import logging
 import re
+import time
 from typing import Dict, Any, Optional, List, Tuple
 from app.models.simplification import SimplificationLLMOutput, SimplificationResult
 from app.services.llm_client import (
@@ -18,7 +19,8 @@ from app.services.llm_client import (
     format_untrusted_evidence_block,
     check_for_legal_advice,
     check_for_prompt_injection_leak,
-    validate_untrusted_llm_output
+    validate_untrusted_llm_output,
+    get_groq_api_key
 )
 from app.services.output_validator_service import validate_structured_output
 from app.services.claim_grounding_service import verify_and_ground_clause_narrative
@@ -40,8 +42,13 @@ RULES:
    WHAT THEY HAVE TO DO: Specific rights, duties, and obligations.
    IMPORTANT DETAILS: Key figures, amounts, currencies, notice periods, deadlines, frequencies, and exceptions.
    WHAT HAPPENS IF THE CONDITION IS NOT MET: Concrete contractual consequences or remedies (if stated in the clause).
-6. "why_flagged": Explain factually why the clause was assigned the displayed risk level and category based on detected signals and clause text. If severity is Safe, state: "Standard clause with balanced commercial terms. No high-risk signals detected."
+6. "why_flagged": Explain factually why the clause was assigned the displayed risk level and category based on detected signals and clause text. If severity is Safe, explain the commercial baseline. If risk classification is unavailable or unclassified, state: "Risk classification unavailable for this clause."
 7. Avoid generic boilerplate phrases such as "This clause may create potential obligations or liability exposure." Be clause-specific and evidence-grounded.
+8. Liability Cap Polarity: In limitation of liability clauses with carve-outs (e.g. "Except for indemnity/willful misconduct, liability is capped at..."):
+   - The general rule is that liability IS CAPPED to the specified amount/fees.
+   - The carve-outs (indemnity, willful misconduct) are the uncapped exceptions.
+   - Do NOT invert this relationship by claiming liability in general is uncapped.
+
 
 JSON Output Format:
 {
@@ -131,7 +138,10 @@ def extract_category_evidence_span(text: str, category: Optional[str]) -> Tuple[
 
     else:
         span = _extract_clean_fallback_span(text)
-        reason = "Standard contractual provision."
+        if not category or str(category).lower() in ("none", "unavailable", "null", "unclassified", "general"):
+            reason = "Category unclassified: provision does not map to standard commercial categories."
+        else:
+            reason = f"Provision classified as {category}."
 
     # Guard against pure numbers or single characters leaking into evidence
     if re.match(r'^\W*\d+\W*$', span) or len(span) < 3:
@@ -142,7 +152,7 @@ def extract_category_evidence_span(text: str, category: Optional[str]) -> Tuple[
 
 def extract_risk_evidence_span(
     text: str,
-    severity: str,
+    severity: Optional[str],
     rule_findings: Optional[List[Dict[str, Any]]] = None
 ) -> Tuple[str, str]:
     """
@@ -154,7 +164,7 @@ def extract_risk_evidence_span(
         return "No text provided.", ""
 
     t_lower = text.lower()
-    clean_sev = str(severity).capitalize()
+    clean_sev = str(severity).capitalize() if severity and str(severity).lower() not in ("none", "unavailable", "null", "risk_classification_unavailable") else None
 
     if rule_findings:
         rule_ids = [rf.get("rule_id", "") for rf in rule_findings if "rule_id" in rf]
@@ -168,7 +178,7 @@ def extract_risk_evidence_span(
                 if clean_sev in ("High", "Moderate"):
                     reason = f"Flagged as {clean_sev} risk due to deterministic rule match: {signals_str} ({ids_str})."
                 else:
-                    reason = f"Deterministic rule match ({ids_str}) and Legal-BERT model agreed on {clean_sev} severity."
+                    reason = f"Deterministic rule match ({ids_str}) and Legal-BERT model agreed on {clean_sev or 'standard'} severity."
                 return reason, matched
 
     if "re-entry" in t_lower or "arrears" in t_lower or "re-enter" in t_lower:
@@ -187,19 +197,22 @@ def extract_risk_evidence_span(
             return "Caps maximum recoverable damages, limiting financial recovery in breach scenarios.", m.group(0).strip()
 
     if "indemnif" in t_lower:
-        m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*)', text, re.IGNORECASE)
+        m = re.search(r'(?:indemnify\s+(?:and\s+keep\s+indemnified|and\s+hold\s+harmless)[^\n.,;]*|defend,?\s*indemnify[^\n.,;]*)', text, re.IGNORECASE)
         if m:
             return "Imposes broad indemnity obligations requiring defense and payment of third-party claims.", m.group(0).strip()
 
     clean_span = _extract_clean_fallback_span(text)
+    if not clean_sev:
+        return "Risk classification unavailable for this clause.", clean_span
     if clean_sev in ("High", "Moderate"):
         return f"Flagged as {clean_sev} risk by Legal-BERT classification based on contextual contractual exposure.", clean_span
     elif clean_sev == "Low":
         return "Standard clause with minimal contractual risk. Classified as Low severity by Legal-BERT.", clean_span
     elif clean_sev == "Safe":
-        return "Standard clause with balanced commercial terms. No elevated risk signals detected.", clean_span
+        return "Clause contains standard commercial terms with no elevated risk signals detected.", clean_span
     else:
-        return "Risk classification unavailable.", clean_span
+        return "Risk classification unavailable for this clause.", clean_span
+
 
 
 def synthesize_detailed_plain_english_analysis(
@@ -260,7 +273,7 @@ def synthesize_detailed_plain_english_analysis(
 
     # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes, Rates)
     amounts = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?', text, re.IGNORECASE)
-    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|thirty|sixty|ninety)\s+(?:days?|months?|years?|hours?|business\s+days?)\b', text, re.IGNORECASE)
+    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirty|sixty|ninety)\s+(?:days?|months?|years?|hours?|business\s+days?)\b', text, re.IGNORECASE)
     percentages = [m.group(0).strip() for m in re.finditer(r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?', text, re.IGNORECASE)]
 
     # 3. Grounded Semantic Clause Analysis (Ordered by specific covenant to general)
@@ -277,13 +290,47 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Protection Period: Obligations survive for {', '.join(durations)} following agreement termination.")
         consequences = "Unauthorized disclosure constitutes a material breach of contractual confidentiality covenants."
 
-    elif any(k in t_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement"]):
-        what_means = "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
+    elif any(k in t_lower for k in [
+        "limitation of liability", "liability cap", "damages cap", "damages limitation",
+        "aggregate liability", "total liability", "total monetary liability", "monetary liability",
+        "shall not exceed", "shall exceed", "liability under this agreement"
+    ]) or ((category and category.lower() == "liability") and any(w in t_lower for w in ["cap", "exceed", "limit", "ceiling", "maximum", "total", "aggregate"])):
+        # Dynamically detect specifically present carve-outs/exceptions in this exact clause
+        found_exceptions = []
+        if any(w in t_lower for w in ["indemnif", "indemnity"]):
+            found_exceptions.append("indemnification")
+        if "gross negligence" in t_lower:
+            found_exceptions.append("gross negligence")
+        if any(w in t_lower for w in ["willful misconduct", "intentional misconduct"]):
+            found_exceptions.append("willful misconduct")
+        if any(w in t_lower for w in ["breach of confidentiality", "confidentiality obligations", "confidentiality"]):
+            found_exceptions.append("breach of confidentiality")
+        if any(w in t_lower for w in ["breach of data security", "data security", "security breach"]):
+            found_exceptions.append("breach of data security")
+        if "fraud" in t_lower:
+            found_exceptions.append("fraud")
+        if any(w in t_lower for w in ["intellectual property", "ip infringement"]):
+            found_exceptions.append("intellectual property claims")
+
+        if found_exceptions:
+            if len(found_exceptions) == 1:
+                exc_phrase = found_exceptions[0]
+            elif len(found_exceptions) == 2:
+                exc_phrase = f"{found_exceptions[0]} or {found_exceptions[1]}"
+            else:
+                exc_phrase = f"{', '.join(found_exceptions[:-1])}, or {found_exceptions[-1]}"
+
+            what_means = f"This clause places a strict financial ceiling on general damages recoverable under the agreement, with liabilities arising from {exc_phrase} remaining uncapped exceptions."
+            details_list.append(f"Uncapped Exceptions: Liabilities arising from {exc_phrase} are excluded from the financial liability cap.")
+        else:
+            what_means = "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
         obligations = "Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches."
         if amounts:
             details_list.append(f"Financial Cap: {', '.join(amounts)}.")
         if percentages:
             details_list.append(f"Limit Percentage: {', '.join(percentages)}.")
+        if durations:
+            details_list.append(f"Cap Period / Timeframe: {', '.join(durations)}.")
         consequences = "In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
 
     elif any(k in t_lower for k in ["indemnif", "hold harmless", "defend and indemnify", "third-party claims"]):
@@ -460,14 +507,41 @@ def synthesize_detailed_plain_english_analysis(
         if "late payment" in t_lower or "late fee" in t_lower:
             consequences = "Failure to pay on time incurs late payment penalties or fees as specified in the agreement."
 
+    elif any(k in t_lower for k in ["subscription access", "grants subscriber", "grants user", "license grant", "right to access", "right to use", "non-exclusive right", "access the software", "access to the software"]):
+        what_means = "This clause defines subscription access rights, granting a non-exclusive right to access and use the software or service in accordance with agreement terms."
+        obligations = f"The {actor_role} is granted non-exclusive rights to access the service, subject to compliance with agreement terms."
+        details_list.append("License Scope: Non-exclusive, non-transferable subscription access right.")
+
     else:
-        # Resilient synthesis fallback for unclassified / general operative clauses
-        what_means = f"This clause defines legal rights, operating procedures, and contractual terms governing {title or 'this provision'}."
-        obligations = f"Both parties are obligated to comply with the terms and commitments established in this section of the agreement."
+        what_means = "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+        obligations = "Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause."
         if amounts:
             details_list.append(f"Financial Terms: {', '.join(amounts)}.")
         if durations:
             details_list.append(f"Timeframes: {', '.join(durations)}.")
+
+    if what_means.startswith("AI explanation generation failed"):
+        honest_msg = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
+        return {
+            "simplified_text": honest_msg,
+            "why_flagged": honest_msg,
+            "structured_explanation": {
+                "what_this_clause_means": honest_msg,
+                "risk": {
+                    "severity": "RISK_CLASSIFICATION_UNAVAILABLE",
+                    "reason": "Risk analysis unavailable due to explanation generation failure.",
+                    "evidence": None
+                },
+                "category": {
+                    "label": "Unavailable",
+                    "reason": "Category analysis unavailable due to explanation generation failure.",
+                    "evidence": None
+                },
+                "grounding_warnings": [],
+                "grounding_notes": []
+            },
+            "status": "FAILED_SIMPLIFICATION"
+        }
 
     # 4. Mandatory Claim-Level Provenance & Grounding Verification
     grounding_res = verify_and_ground_clause_narrative(
@@ -486,32 +560,35 @@ def synthesize_detailed_plain_english_analysis(
     consequences = grounding_res["consequences"]
 
     # 5. Formulate Evidence-Grounded Risk Rationale
+    clean_sev_check = str(severity).capitalize() if severity and str(severity).lower() not in ("none", "unavailable", "null", "risk_classification_unavailable") else None
     if rule_findings:
         signals = [rf.get("risk_signal") or rf.get("name") or "Risk signal" for rf in rule_findings if rf.get("risk_signal") or rf.get("name")]
         signals_str = ", ".join(sorted(set(signals)))
         if "re-entry" in t_lower or "arrears" in t_lower:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}. The clause grants the landlord unilateral re-entry and lease forfeiture rights if rent is delayed, exercisable even without prior demand."
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}. The clause grants the landlord unilateral re-entry and lease forfeiture rights if rent is delayed, exercisable even without prior demand."
         elif "vest in the lessor" in t_lower or "sublet" in t_lower:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}. Restricts assignment/subletting without written permission and forces all tenant-constructed buildings to forfeit to the landlord without compensation."
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}. Restricts assignment/subletting without written permission and forces all tenant-constructed buildings to forfeit to the landlord without compensation."
         elif "limitation of liability" in t_lower or "aggregate liability" in t_lower:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}. Caps maximum financial damages and excludes consequential losses, limiting financial recovery in breach scenarios."
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}. Caps maximum financial damages and excludes consequential losses, limiting financial recovery in breach scenarios."
         elif "indemnif" in t_lower or "hold harmless" in t_lower:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}. Imposes broad third-party indemnity and defense burdens that can create significant uncapped financial exposure."
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}. Imposes broad third-party indemnity and defense burdens that can create significant uncapped financial exposure."
         elif "arbitrat" in t_lower:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}. Mandatory binding arbitration eliminates court trial rights and waives class-action remedies."
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}. Mandatory binding arbitration eliminates court trial rights and waives class-action remedies."
         elif "automatic renewal" in t_lower:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}. Auto-renewal automatically locks the party into an additional term unless strict advance written notice is provided."
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}. Auto-renewal automatically locks the party into an additional term unless strict advance written notice is provided."
         else:
-            why_rationale = f"Flagged as {severity} risk due to detected pattern(s): {signals_str}."
-    elif severity in ("High", "Moderate"):
+            why_rationale = f"Flagged as {clean_sev_check or 'elevated'} risk due to detected pattern(s): {signals_str}."
+    elif clean_sev_check in ("High", "Moderate"):
         if "re-entry" in t_lower:
-            why_rationale = f"Flagged as {severity} risk because the clause permits unilateral lease forfeiture and repossession upon payment default."
+            why_rationale = f"Flagged as {clean_sev_check} risk because the clause permits unilateral lease forfeiture and repossession upon payment default."
         elif "vest in the lessor" in t_lower:
-            why_rationale = f"Flagged as {severity} risk because permanent tenant assets forfeit to the landlord without compensation upon lease expiry."
+            why_rationale = f"Flagged as {clean_sev_check} risk because permanent tenant assets forfeit to the landlord without compensation upon lease expiry."
         else:
-            why_rationale = f"Flagged as {severity} risk due to potentially one-sided contractual remedies or liability exposure."
+            why_rationale = f"Flagged as {clean_sev_check} risk due to potentially one-sided contractual remedies or liability exposure."
+    elif clean_sev_check in ("Low", "Safe"):
+        why_rationale = f"Clause contains standard commercial terms with no elevated risk signals detected."
     else:
-        why_rationale = "Standard clause with balanced commercial terms. No high-risk signals detected."
+        why_rationale = "Risk classification unavailable for this clause."
 
     # Assemble Structured Multi-Section Breakdown
     sections = [
@@ -530,24 +607,26 @@ def synthesize_detailed_plain_english_analysis(
     full_plain_summary = "\n\n".join(sections)
 
     # Structured Evidence-Backed Explanation Breakdown
-    cat_reason, cat_evidence = extract_category_evidence_span(text, category)
-    risk_reason, risk_evidence = extract_risk_evidence_span(text, severity, rule_findings)
+    final_cat_label = category if category and str(category).lower() not in ("none", "unavailable", "null", "general", "unclassified") else None
+    cat_reason, cat_evidence = extract_category_evidence_span(text, final_cat_label)
+    risk_reason, risk_evidence = extract_risk_evidence_span(text, clean_sev_check, rule_findings)
 
     structured_explanation = {
         "what_this_clause_means": what_means,
         "risk": {
-            "severity": severity,
+            "severity": clean_sev_check,
             "reason": why_rationale or risk_reason,
-            "evidence": risk_evidence
+            "evidence": risk_evidence if clean_sev_check else None
         },
         "category": {
-            "label": category,
+            "label": final_cat_label,
             "reason": cat_reason,
-            "evidence": cat_evidence
+            "evidence": cat_evidence if final_cat_label else None
         },
         "grounding_warnings": grounding_res.get("warnings", []),
         "grounding_notes": grounding_res.get("grounding_notes", [])
     }
+
 
     return {
         "simplified_text": full_plain_summary,
@@ -570,8 +649,15 @@ def simplify_single_clause(
     clause_number = clause.get("clause_number")
     title = clause.get("title")
     text = clause.get("text") or clause.get("original_text", "")
-    severity = clause.get("final_severity") or clause.get("severity") or "RISK_CLASSIFICATION_UNAVAILABLE"
-    categories = clause.get("categories", [])
+    raw_clause_sev = clause.get("final_severity") or clause.get("severity")
+    severity = str(raw_clause_sev).capitalize() if raw_clause_sev and str(raw_clause_sev).lower() not in ("none", "unavailable", "null", "risk_classification_unavailable") else None
+
+    categories = clause.get("categories") or ([clause.get("category")] if clause.get("category") else [])
+    if isinstance(categories, str):
+        categories = [categories]
+    final_cat_label = categories[0] if categories and categories[0] and str(categories[0]).lower() not in ("none", "unavailable", "null", "general", "unclassified") else None
+    final_sev_label = severity if severity is not None else None
+
 
     if not text or not text.strip():
         logger.warning(f"Simplification received empty text for clause {clause_id}.")
@@ -589,10 +675,11 @@ def simplify_single_clause(
 
     # Filter clause-specific rule findings
     clause_rule_findings: List[Dict[str, Any]] = []
-    if rule_findings:
+    source_rf = rule_findings if rule_findings is not None else clause.get("rule_findings", [])
+    if source_rf:
         clause_rule_findings = [
-            rf for rf in rule_findings
-            if str(rf.get("clause_id")) == clause_id or str(rf.get("position")) == clause_id
+            rf for rf in source_rf
+            if str(rf.get("clause_id")) == clause_id or str(rf.get("position")) == clause_id or "clause_id" not in rf
         ]
 
     signals_summary = "None"
@@ -610,101 +697,8 @@ Rule Signals: {signals_summary}
 
 {untrusted_block}"""
 
-    try:
-        completion_res = generate_llm_completion(
-            prompt=user_prompt,
-            system_prompt=SIMPLIFICATION_SYSTEM_PROMPT,
-            temperature=0.1,
-            max_tokens=600,
-            override_client=override_client
-        )
-
-        content = completion_res.get("content", "").strip()
-
-        # Parse JSON from completion output
-        json_match = re.search(r"\{.*\}", content, re.DOTALL)
-        if not json_match:
-            raise ValueError("LLM completion did not contain valid JSON object.")
-
-        raw_json_dict = json.loads(json_match.group(0))
-
-        # Validate against Pydantic schema using shared validator (Chapter 56.9)
-        validated_llm_out = validate_structured_output(raw_json_dict, SimplificationLLMOutput)
-
-        simplified_text = validated_llm_out["simplified_text"].strip()
-        why_flagged = validated_llm_out["why_flagged"].strip()
-
-        # Safety Check 1 & 2: Prohibit legal advice and prompt injection leak using shared llm_client validator
-        is_safe_sim, err_sim = validate_untrusted_llm_output(simplified_text)
-        if not is_safe_sim:
-            logger.error(f"Clause {clause_id} simplification REJECTED: {err_sim}")
-            raise ValueError(err_sim)
-
-        is_safe_why, err_why = validate_untrusted_llm_output(why_flagged)
-        if not is_safe_why:
-            logger.error(f"Clause {clause_id} why_flagged REJECTED: {err_why}")
-            raise ValueError(err_why)
-
-        logger.info(f"Clause {clause_id} simplification PASSED: severity='{severity}'.")
-        cat_reason, cat_evidence = extract_category_evidence_span(text, categories[0] if categories else None)
-        risk_reason, risk_evidence = extract_risk_evidence_span(text, severity, clause_rule_findings)
-        structured_exp = {
-            "what_this_clause_means": simplified_text,
-            "risk": {
-                "severity": severity,
-                "reason": why_flagged or risk_reason,
-                "evidence": risk_evidence
-            },
-            "category": {
-                "label": categories[0] if categories else None,
-                "reason": cat_reason,
-                "evidence": cat_evidence
-            }
-        }
-        return {
-            "position": position,
-            "clause_id": clause_id,
-            "clause_number": clause_number,
-            "title": title,
-            "original_text": text,
-            "simplified_text": simplified_text,
-            "why_flagged": why_flagged,
-            "structured_explanation": structured_exp,
-            "severity": severity,
-            "status": "SUCCESS"
-        }
-
-    except Exception as exc:
-        if override_client is not None:
-            # Per-clause failure isolation under test-mock failure (PRD Chapter 16.5)
-            logger.warning(f"Per-clause simplification mock failure for clause '{clause_id}': {exc}.")
-            return {
-                "position": position,
-                "clause_id": clause_id,
-                "clause_number": clause_number,
-                "title": title,
-                "original_text": text,
-                "simplified_text": text,
-                "why_flagged": "Clause simplification unavailable.",
-                "structured_explanation": {
-                    "what_this_clause_means": "Clause simplification unavailable.",
-                    "risk": {
-                        "severity": severity,
-                        "reason": "Risk analysis unavailable.",
-                        "evidence": None
-                    },
-                    "category": {
-                        "label": categories[0] if categories else None,
-                        "reason": "Category analysis unavailable.",
-                        "evidence": None
-                    }
-                },
-                "severity": severity,
-                "status": "FAILED_SIMPLIFICATION"
-            }
-
-        logger.warning(f"Per-clause simplification LLM call unavailable for clause '{clause_id}': {exc}. Applying detailed plain-English analysis synthesis.")
-        
+    if not get_groq_api_key() and override_client is None:
+        logger.info(f"GROQ_API_KEY not configured. Bypassing LLM retries for clause '{clause_id}' and running domain plain-English synthesis.")
         synth_res = synthesize_detailed_plain_english_analysis(
             text=text,
             severity=severity,
@@ -713,6 +707,10 @@ Rule Signals: {signals_summary}
             clause_number=clause_number,
             title=title
         )
+        ret_sev = final_sev_label
+        ret_struct = synth_res.get("structured_explanation")
+        if ret_struct and ret_struct.get("risk", {}).get("severity") == "RISK_CLASSIFICATION_UNAVAILABLE":
+            ret_sev = "RISK_CLASSIFICATION_UNAVAILABLE"
 
         return {
             "position": position,
@@ -722,10 +720,202 @@ Rule Signals: {signals_summary}
             "original_text": text,
             "simplified_text": synth_res["simplified_text"],
             "why_flagged": synth_res["why_flagged"],
-            "structured_explanation": synth_res.get("structured_explanation"),
-            "severity": severity,
+            "structured_explanation": ret_struct,
+            "severity": ret_sev,
+            "category": final_cat_label,
             "status": "SUCCESS"
         }
+
+    max_retries = 3
+    last_exc = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            completion_res = generate_llm_completion(
+                prompt=user_prompt,
+                system_prompt=SIMPLIFICATION_SYSTEM_PROMPT,
+                temperature=0.1,
+                max_tokens=600,
+                override_client=override_client
+            )
+
+            content = completion_res.get("content", "").strip()
+
+            # Parse JSON from completion output
+            json_match = re.search(r"\{.*\}", content, re.DOTALL)
+            if not json_match:
+                raise ValueError("LLM completion did not contain valid JSON object.")
+
+            raw_json_dict = json.loads(json_match.group(0))
+
+            # Validate against Pydantic schema using shared validator (Chapter 56.9)
+            validated_llm_out = validate_structured_output(raw_json_dict, SimplificationLLMOutput)
+
+            simplified_text = validated_llm_out["simplified_text"].strip()
+            why_flagged = validated_llm_out["why_flagged"].strip()
+
+            # Safety Check 1 & 2: Prohibit legal advice and prompt injection leak using shared llm_client validator
+            is_safe_sim, err_sim = validate_untrusted_llm_output(simplified_text)
+            if not is_safe_sim:
+                logger.error(f"Clause {clause_id} simplification REJECTED: {err_sim}")
+                raise ValueError(err_sim)
+
+            is_safe_why, err_why = validate_untrusted_llm_output(why_flagged)
+            if not is_safe_why:
+                logger.error(f"Clause {clause_id} why_flagged REJECTED: {err_why}")
+                raise ValueError(err_why)
+
+            logger.info(f"Clause {clause_id} simplification PASSED: severity='{severity}'.")
+
+            # Apply Claim-Level Grounding & Polarity Verification
+            grounding_res = verify_and_ground_clause_narrative(
+                source_text=text,
+                clause_title=title or "",
+                what_this_clause_means=simplified_text,
+                obligations="",
+                details_list=[],
+                consequences="",
+                category=categories[0] if categories else None,
+                severity=severity
+            )
+            grounded_simplified_text = grounding_res["what_this_clause_means"]
+            if grounding_res.get("grounding_notes"):
+                logger.info(f"Clause {clause_id} grounding notes: {grounding_res['grounding_notes']}")
+                simplified_text = grounded_simplified_text
+
+            final_sev_label = str(severity).capitalize() if severity and str(severity).lower() not in ("none", "unavailable", "null", "risk_classification_unavailable") else None
+            final_cat_label = categories[0] if categories and categories[0] and str(categories[0]).lower() not in ("none", "unavailable", "null", "general", "unclassified") else None
+
+            cat_reason, cat_evidence = extract_category_evidence_span(text, final_cat_label)
+            risk_reason, risk_evidence = extract_risk_evidence_span(text, final_sev_label, clause_rule_findings)
+
+            if not final_sev_label:
+                effective_risk_reason = "Risk classification unavailable for this clause."
+            elif why_flagged and "balanced commercial terms" not in why_flagged:
+                effective_risk_reason = why_flagged
+            else:
+                effective_risk_reason = risk_reason
+
+            structured_exp = {
+                "what_this_clause_means": simplified_text,
+                "risk": {
+                    "severity": final_sev_label,
+                    "reason": effective_risk_reason,
+                    "evidence": risk_evidence if final_sev_label else None
+                },
+                "category": {
+                    "label": final_cat_label,
+                    "reason": cat_reason,
+                    "evidence": cat_evidence if final_cat_label else None
+                }
+            }
+
+
+            return {
+                "position": position,
+                "clause_id": clause_id,
+                "clause_number": clause_number,
+                "title": title,
+                "original_text": text,
+                "simplified_text": simplified_text,
+                "why_flagged": why_flagged,
+                "structured_explanation": structured_exp,
+                "severity": final_sev_label,
+                "category": final_cat_label,
+                "status": "SUCCESS"
+            }
+
+
+        except Exception as exc:
+            last_exc = exc
+            if override_client is not None:
+                # Per-clause failure isolation under test-mock failure (PRD Chapter 16.5)
+                logger.warning(f"Per-clause simplification mock failure for clause '{clause_id}': {exc}.")
+                honest_failure_msg = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
+                honest_sev = "RISK_CLASSIFICATION_UNAVAILABLE"
+                honest_cat = "Unavailable"
+                return {
+                    "position": position,
+                    "clause_id": clause_id,
+                    "clause_number": clause_number,
+                    "title": title,
+                    "original_text": text,
+                    "simplified_text": honest_failure_msg,
+                    "why_flagged": honest_failure_msg,
+                    "structured_explanation": {
+                        "what_this_clause_means": honest_failure_msg,
+                        "risk": {
+                            "severity": honest_sev,
+                            "reason": "Risk analysis unavailable due to explanation generation failure.",
+                            "evidence": None
+                        },
+                        "category": {
+                            "label": honest_cat,
+                            "reason": "Category analysis unavailable due to explanation generation failure.",
+                            "evidence": None
+                        }
+                    },
+                    "severity": honest_sev,
+                    "category": honest_cat,
+                    "status": "FAILED_SIMPLIFICATION"
+                }
+
+            if attempt < max_retries:
+                # Fast-break for non-transient configuration/auth errors (e.g. missing API key) to avoid useless retry delay overhead
+                err_msg = str(exc).lower()
+                if "groq_api_key" in err_msg or "auth_failure" in err_msg or "unknown_llm_failure" in err_msg or "model_not_found" in err_msg:
+                    logger.info(f"Non-transient LLM configuration error for clause '{clause_id}': {exc}. Bypassing retries.")
+                    break
+                logger.warning(f"Attempt {attempt}/{max_retries} failed for clause '{clause_id}': {exc}. Retrying in 0.5s...")
+                time.sleep(0.5)
+            else:
+                logger.warning(f"All {max_retries} simplification attempts failed for clause '{clause_id}': {exc}. Checking domain plain-English synthesis.")
+
+    # All retries failed for live execution
+    synth_res = synthesize_detailed_plain_english_analysis(
+        text=text,
+        severity=severity,
+        category=categories[0] if categories else None,
+        rule_findings=clause_rule_findings,
+        clause_number=clause_number,
+        title=title
+    )
+
+    synth_status = synth_res.get("status", "SUCCESS")
+    if synth_status == "FAILED_SIMPLIFICATION":
+        return {
+            "position": position,
+            "clause_id": clause_id,
+            "clause_number": clause_number,
+            "title": title,
+            "original_text": text,
+            "simplified_text": synth_res["simplified_text"],
+            "why_flagged": synth_res["why_flagged"],
+            "structured_explanation": synth_res.get("structured_explanation"),
+            "severity": "RISK_CLASSIFICATION_UNAVAILABLE",
+            "category": "Unavailable",
+            "status": "FAILED_SIMPLIFICATION"
+        }
+
+    ret_sev = final_sev_label
+    ret_struct = synth_res.get("structured_explanation")
+    if ret_struct and ret_struct.get("risk", {}).get("severity") == "RISK_CLASSIFICATION_UNAVAILABLE":
+        ret_sev = "RISK_CLASSIFICATION_UNAVAILABLE"
+
+    return {
+        "position": position,
+        "clause_id": clause_id,
+        "clause_number": clause_number,
+        "title": title,
+        "original_text": text,
+        "simplified_text": synth_res["simplified_text"],
+        "why_flagged": synth_res["why_flagged"],
+        "structured_explanation": ret_struct,
+        "severity": ret_sev,
+        "category": final_cat_label,
+        "status": "SUCCESS"
+    }
+
 
 
 def simplify_document_clauses(
@@ -746,8 +936,9 @@ def simplify_document_clauses(
             "schema_version": SCHEMA_VERSION
         }
 
-    simplified_items: List[Dict[str, Any]] = []
+    import concurrent.futures
 
+    tasks = []
     for idx, clause in enumerate(clauses, start=1):
         c_id = str(clause.get("clause_id") or clause.get("position") or idx)
         clause_rule_findings = []
@@ -756,13 +947,26 @@ def simplify_document_clauses(
                 rf for rf in rule_findings
                 if str(rf.get("clause_id")) == c_id or str(rf.get("position")) == c_id
             ]
+        tasks.append((idx, clause, clause_rule_findings))
 
-        res_item = simplify_single_clause(
-            clause=clause,
-            rule_findings=clause_rule_findings,
+    simplified_items: List[Dict[str, Any]] = [None] * len(clauses)
+
+    def _worker(task_tuple):
+        idx, c, rf = task_tuple
+        res = simplify_single_clause(
+            clause=c,
+            rule_findings=rf,
             override_client=override_client
         )
-        simplified_items.append(res_item)
+        return idx - 1, res
+
+    # Cap concurrency at 3 workers to respect Groq LLM rate limits (~30 RPM)
+    max_workers = min(3, len(clauses)) if len(clauses) > 0 else 1
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(_worker, task) for task in tasks]
+        for future in concurrent.futures.as_completed(futures):
+            slot_idx, res_item = future.result()
+            simplified_items[slot_idx] = res_item
 
     logger.info(f"Document Clause Simplification Complete: {len(simplified_items)} clauses processed.")
 

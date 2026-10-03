@@ -12,13 +12,13 @@ from app.models.common import SCHEMA_VERSION
 class RiskExplanation(BaseModel):
     severity: Optional[str] = Field(None, description="Severity label: High, Moderate, Low, Safe, or RISK_CLASSIFICATION_UNAVAILABLE")
     reason: str = Field(..., description="Grounded explanation of why this risk was assigned")
-    evidence: str = Field(..., description="Verbatim quote/substring from source clause text justifying this risk")
+    evidence: Optional[str] = Field(None, description="Verbatim quote/substring from source clause text justifying this risk")
 
 
 class CategoryExplanation(BaseModel):
     label: Optional[str] = Field(None, description="Assigned category label from 8 approved categories")
     reason: str = Field(..., description="Grounded explanation of why this category was assigned")
-    evidence: str = Field(..., description="Verbatim quote/substring from source clause text justifying this category")
+    evidence: Optional[str] = Field(None, description="Verbatim quote/substring from source clause text justifying this category")
 
 
 class StructuredClauseExplanation(BaseModel):

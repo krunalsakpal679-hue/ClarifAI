@@ -62,8 +62,8 @@ def test_output_point_1_simplification_hallucination_defense():
         override_client=mock_llm_client
     )
 
-    # Hallucination rejected -> falls back safely to original text without crashing
-    assert res["simplified_text"] == clause_text
+    # Hallucination rejected -> falls back safely to honest failure state without crashing
+    assert "AI explanation generation failed for this clause" in res["simplified_text"]
     assert res["status"] == "FAILED_SIMPLIFICATION"
 
 
@@ -84,7 +84,7 @@ def test_output_point_2_why_flagged_explanation_hallucination_defense():
         override_client=mock_llm_client
     )
 
-    assert res["simplified_text"] == clause_text
+    assert "AI explanation generation failed for this clause" in res["simplified_text"]
     assert res["status"] == "FAILED_SIMPLIFICATION"
 
 

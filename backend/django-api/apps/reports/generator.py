@@ -20,17 +20,34 @@ def get_reports_dir():
     return reports_dir
 
 
+import re
+
+
+def normalize_pdf_text(text: str) -> str:
+    """Normalizes non-ASCII hyphens, dashes, quotes, and non-breaking spaces to standard ASCII printable characters."""
+    if not text:
+        return ""
+    # Replace non-breaking hyphens, en-dashes, em-dashes, figure dashes e.g. \u2011, \u2013 with standard ASCII '-'
+    text = re.sub(r'[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]', '-', text)
+    # Replace non-breaking spaces with standard space
+    text = re.sub(r'[\u00a0\u202f\u2007]', ' ', text)
+    # Replace curly quotes / apostrophes with standard ASCII quotes
+    text = text.replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"')
+    return text
+
+
 def _safe_str(text: str, has_unicode: bool, fallback: str = "") -> str:
     """Safeguards ReportLab against Latin-1 encoding crashes when no Unicode font is present."""
     if not text:
-        return fallback or ""
+        return normalize_pdf_text(fallback) or ""
+    text = normalize_pdf_text(text)
     if has_unicode:
         return text
     try:
         text.encode('latin-1')
         return text
     except UnicodeEncodeError:
-        return fallback or ""
+        return normalize_pdf_text(fallback) or ""
 
 
 def get_pdf_font(language='en'):

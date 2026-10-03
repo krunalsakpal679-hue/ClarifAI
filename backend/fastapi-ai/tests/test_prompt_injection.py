@@ -95,8 +95,8 @@ def test_call_site_1_simplification_prompt_injection_defense():
 
         res = simplify_single_clause(clause=clause_dict, override_client=mock_llm_client)
 
-        # Prompt injection detected in output -> falls back safely to original verbatim text without executing command
-        assert res["simplified_text"] == fixture["text"]
+        # Prompt injection detected in output -> falls back safely to honest failure state without executing command
+        assert "AI explanation generation failed for this clause" in res["simplified_text"]
         assert res["status"] == "FAILED_SIMPLIFICATION"
 
 

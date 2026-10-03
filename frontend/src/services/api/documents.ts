@@ -35,6 +35,7 @@ export const realDocumentService: IDocumentService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 120000,
       signal,
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total && onProgress) {

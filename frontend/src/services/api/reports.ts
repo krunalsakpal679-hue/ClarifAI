@@ -39,6 +39,18 @@ export const realReportService: IReportService = {
     const response = await apiClient.get<Blob>(`/api/reports/${reportId}/download/`, {
       responseType: 'blob',
     });
-    return response.data;
+    const blob = response.data;
+    if (blob.type === 'application/json') {
+      const text = await blob.text();
+      try {
+        const json = JSON.parse(text);
+        const msg = json.error?.message || json.detail || json.message || 'Report download failed';
+        throw new Error(msg);
+      } catch (e) {
+        if (e instanceof Error && e.message !== 'Report download failed') throw e;
+        throw new Error(text || 'Report download failed');
+      }
+    }
+    return blob;
   },
 };

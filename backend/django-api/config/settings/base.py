@@ -178,6 +178,7 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'True').lower() in ('true', '1', 'yes')
 # Default Task Timeout: Hard limit = 600s (10 min), Soft limit = 540s (9 min)
 # Note: Flagged as tunable once real AI processing latency is measured in Phase 7-8.
 CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', 600))
@@ -187,9 +188,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', 540))
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Internal AI Service Adapter Configuration (PRD Part B.3, Ch. 49.3, Ch. 56.19)
-AI_SERVICE_USE_MOCK = os.getenv('AI_SERVICE_USE_MOCK', 'True').lower() == 'true'
+AI_SERVICE_USE_MOCK = os.getenv('AI_SERVICE_USE_MOCK', 'False').lower() == 'true'
 AI_SERVICE_BASE_URL = os.getenv('AI_SERVICE_BASE_URL', 'http://localhost:8001')
-AI_SERVICE_SECRET = os.getenv('AI_SERVICE_SECRET', '')
+AI_SERVICE_SECRET = os.getenv('AI_SERVICE_SECRET', 'clarifai_internal_secret_token_2026')
 AI_SERVICE_TIMEOUT = int(os.getenv('AI_SERVICE_TIMEOUT', 300))
 
 

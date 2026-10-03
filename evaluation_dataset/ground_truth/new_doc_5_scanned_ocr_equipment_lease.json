@@ -1,0 +1,154 @@
+{
+  "document_name": "new_doc_5_scanned_ocr_equipment_lease.pdf",
+  "document_title": "HEAVY INDUSTRIAL EQUIPMENT LEASE AGREEMENT",
+  "document_type": "Equipment Lease Agreement",
+  "parties": {
+    "lessor": "Titan Rigging & Machinery Rentals Inc.",
+    "lessee": "Crestview Heavy Construction LLC"
+  },
+  "effective_date": "December 1, 2026",
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "LEASED EQUIPMENT AND TERM DURATION",
+      "verbatim_text": "Lessor leases to Lessee two (2) CAT 336 Hydraulic Excavators for a fixed operational term of twenty-four (24) months commencing on December 1, 2026.",
+      "category": "Renewal",
+      "severity": "Safe",
+      "obligor": "Titan Rigging & Machinery Rentals Inc. (Lessor)",
+      "beneficiary": "Crestview Heavy Construction LLC (Lessee)",
+      "directionality": "Lessor -> Lessee",
+      "obligations": [
+        "Lessor must lease two (2) CAT 336 Hydraulic Excavators to Lessee for 24 months commencing December 1, 2026"
+      ],
+      "rights": [
+        "Lessee receives possession and operational use of two CAT 336 Hydraulic Excavators"
+      ],
+      "conditions": [
+        "24-month term commences December 1, 2026"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Lease of two (2) CAT 336 Hydraulic Excavators",
+        "Fixed operational term of twenty-four (24) months starting December 1, 2026"
+      ]
+    },
+    {
+      "clause_number": "2",
+      "title": "MONTHLY RENTAL AND SECURITY DEPOSIT",
+      "verbatim_text": "Lessee shall pay monthly rent of fourteen thousand five hundred dollars ($14,500) per unit, due on the first day of each month. Lessee shall remit a thirty thousand dollar ($30,000) security deposit.",
+      "category": "Payment",
+      "severity": "Safe",
+      "obligor": "Crestview Heavy Construction LLC (Lessee)",
+      "beneficiary": "Titan Rigging & Machinery Rentals Inc. (Lessor)",
+      "directionality": "Lessee -> Lessor",
+      "obligations": [
+        "Lessee must pay monthly rent of $14,500 per unit on the first day of each month",
+        "Lessee must remit $30,000 security deposit"
+      ],
+      "rights": [
+        "Lessor receives $14,500/month per excavator and $30,000 security deposit"
+      ],
+      "conditions": [
+        "Rent payable on the first day of each calendar month"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Monthly rent of $14,500 per unit due on the first day of each month",
+        "Security deposit of $30,000 required"
+      ]
+    },
+    {
+      "clause_number": "3",
+      "title": "EQUIPMENT MAINTENANCE AND REPAIRS",
+      "verbatim_text": "Lessee assumes full responsibility for all preventive maintenance, lubrication, track repairs, and daily inspections in accordance with manufacturer operating specifications.",
+      "category": "Liability",
+      "severity": "Moderate",
+      "obligor": "Crestview Heavy Construction LLC (Lessee)",
+      "beneficiary": "Titan Rigging & Machinery Rentals Inc. (Lessor)",
+      "directionality": "Lessee -> Lessor",
+      "obligations": [
+        "Lessee must perform all preventive maintenance, lubrication, track repairs, and daily inspections per manufacturer specifications"
+      ],
+      "rights": [
+        "Lessor is relieved of routine maintenance and repair costs"
+      ],
+      "conditions": [
+        "Must comply with manufacturer operating specifications"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Lessee bears full responsibility for preventive maintenance, lubrication, track repairs, and daily inspections",
+        "Must adhere to manufacturer operating specifications"
+      ]
+    },
+    {
+      "clause_number": "4",
+      "title": "INSURANCE AND CASUALTY INDEMNITY",
+      "verbatim_text": "Lessee must maintain commercial general liability insurance of not less than two million dollars ($2,000,000) and indemnify Lessor against any workplace property loss or bodily injury claims.",
+      "category": "Liability",
+      "severity": "High",
+      "obligor": "Crestview Heavy Construction LLC (Lessee)",
+      "beneficiary": "Titan Rigging & Machinery Rentals Inc. (Lessor)",
+      "directionality": "Lessee -> Lessor",
+      "obligations": [
+        "Lessee must maintain >= $2,000,000 commercial general liability insurance",
+        "Lessee must indemnify Lessor against workplace property loss and bodily injury claims"
+      ],
+      "rights": [
+        "Lessor is indemnified and protected by $2,000,000 CGL insurance policy"
+      ],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Mandatory commercial general liability insurance of at least $2,000,000",
+        "Lessee must indemnify Lessor against property loss and bodily injury claims"
+      ]
+    },
+    {
+      "clause_number": "5",
+      "title": "TOTAL CASUALTY LOSS AND REPLACEMENT VALUE",
+      "verbatim_text": "In the event of total destruction or theft of any unit, Lessee shall pay Lessor the agreed replacement valuation of three hundred eighty thousand dollars ($380,000) per excavator within thirty (30) days.",
+      "category": "Liability",
+      "severity": "High",
+      "obligor": "Crestview Heavy Construction LLC (Lessee)",
+      "beneficiary": "Titan Rigging & Machinery Rentals Inc. (Lessor)",
+      "directionality": "Lessee -> Lessor",
+      "obligations": [
+        "Lessee must pay agreed replacement valuation of $380,000 per excavator within 30 days of total destruction or theft"
+      ],
+      "rights": [
+        "Lessor is guaranteed $380,000 replacement value per unit on total loss"
+      ],
+      "conditions": [
+        "Triggered in the event of total destruction or theft of any unit",
+        "Payable within 30 days"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Agreed replacement valuation is $380,000 per excavator",
+        "Triggered upon total destruction or theft",
+        "Payment must be made within thirty (30) days"
+      ]
+    },
+    {
+      "clause_number": "6",
+      "title": "GOVERNING LAW AND COURT VENUE",
+      "verbatim_text": "This Lease shall be governed by the laws of the State of Ohio. All legal proceedings shall be litigated exclusively in the state courts situated in Franklin County, Ohio.",
+      "category": "Dispute Resolution",
+      "severity": "Safe",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Litigate legal proceedings exclusively in state courts of Franklin County, Ohio"
+      ],
+      "rights": [],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Governed by the laws of the State of Ohio",
+        "Exclusive venue in Franklin County, Ohio state courts"
+      ]
+    }
+  ]
+}

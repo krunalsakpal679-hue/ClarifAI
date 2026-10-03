@@ -1,0 +1,159 @@
+{
+  "document_name": "new_doc_4_lettered_supplier_agreement.pdf",
+  "document_title": "STRATEGIC COMPONENT SUPPLY AGREEMENT",
+  "document_type": "Supply Agreement",
+  "parties": {
+    "buyer": "Pinnacle Automotive Systems Corp.",
+    "supplier": "Kinetix Precision Parts GmbH"
+  },
+  "effective_date": "Unspecified / Ongoing",
+  "clauses": [
+    {
+      "clause_number": "Section A",
+      "title": "Purchase Orders and Lead Times",
+      "verbatim_text": "Supplier shall manufacture and deliver precision sensor assemblies pursuant to Buyer purchase orders with a guaranteed production lead time of forty-five (45) business days.",
+      "category": "Payment",
+      "severity": "Safe",
+      "obligor": "Kinetix Precision Parts GmbH (Supplier)",
+      "beneficiary": "Pinnacle Automotive Systems Corp. (Buyer)",
+      "directionality": "Supplier -> Buyer",
+      "obligations": [
+        "Supplier must manufacture and deliver precision sensor assemblies",
+        "Supplier must adhere to 45 business days guaranteed production lead time"
+      ],
+      "rights": [
+        "Buyer receives manufactured sensor assemblies within 45 business days of PO"
+      ],
+      "conditions": [
+        "Triggered upon Buyer issuing purchase orders"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Supplier manufactures and delivers precision sensor assemblies pursuant to Buyer purchase orders",
+        "Guaranteed production lead time is forty-five (45) business days"
+      ]
+    },
+    {
+      "clause_number": "Section B",
+      "title": "Price Adjustments and Currency",
+      "verbatim_text": "Unit component prices remain fixed for initial twelve months. Annual price increases shall not exceed five percent (5.0%) and require sixty (60) days advance documented cost justification.",
+      "category": "Payment",
+      "severity": "Moderate",
+      "obligor": "Kinetix Precision Parts GmbH (Supplier)",
+      "beneficiary": "Pinnacle Automotive Systems Corp. (Buyer)",
+      "directionality": "Supplier -> Buyer",
+      "obligations": [
+        "Supplier must keep unit component prices fixed for initial 12 months",
+        "Supplier must cap annual price increases at 5.0% and provide 60 days advance documented cost justification"
+      ],
+      "rights": [
+        "Buyer is protected by fixed prices for 12 months and 5% cap on annual increases"
+      ],
+      "conditions": [
+        "Price increases allowed only after initial 12 months and require 60 days advance documented cost justification"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Unit component prices fixed for initial 12 months",
+        "Annual price increases capped at 5.0%",
+        "Requires 60 days advance documented cost justification"
+      ]
+    },
+    {
+      "clause_number": "Section C",
+      "title": "Product Warranty and Defect Remedies",
+      "verbatim_text": "Supplier warrants that all delivered components are free from manufacturing defects for twenty-four (24) months from delivery date. Supplier shall repair or replace non-conforming parts within fourteen (14) calendar days.",
+      "category": "Liability",
+      "severity": "Safe",
+      "obligor": "Kinetix Precision Parts GmbH (Supplier)",
+      "beneficiary": "Pinnacle Automotive Systems Corp. (Buyer)",
+      "directionality": "Supplier -> Buyer",
+      "obligations": [
+        "Supplier warrants components free from defects for 24 months from delivery",
+        "Supplier must repair or replace non-conforming parts within 14 calendar days"
+      ],
+      "rights": [
+        "Buyer receives 24-month defect warranty and 14-day replacement/repair remedy"
+      ],
+      "conditions": [
+        "Warranty period is 24 months from delivery date"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "24-month manufacturing defect warranty from delivery date",
+        "Supplier must repair or replace defective parts within 14 calendar days"
+      ]
+    },
+    {
+      "clause_number": "Section D",
+      "title": "Patent Infringement and Product Indemnification",
+      "verbatim_text": "Supplier agrees to defend and indemnify Buyer, its affiliates, and customers from and against any third-party claims alleging patent infringement or personal injury arising from component manufacturing defects.",
+      "category": "Liability",
+      "severity": "High",
+      "obligor": "Kinetix Precision Parts GmbH (Supplier)",
+      "beneficiary": "Pinnacle Automotive Systems Corp. (Buyer)",
+      "directionality": "Supplier -> Buyer",
+      "obligations": [
+        "Supplier must defend and indemnify Buyer, affiliates, and customers against third-party patent infringement and personal injury claims"
+      ],
+      "rights": [
+        "Buyer, affiliates, and customers receive full indemnity and defense from Supplier"
+      ],
+      "conditions": [
+        "Applies to claims alleging patent infringement or personal injury arising from component manufacturing defects"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Supplier must defend and indemnify Buyer, affiliates, and customers",
+        "Covers third-party patent infringement claims and personal injury claims from manufacturing defects"
+      ]
+    },
+    {
+      "clause_number": "Section E",
+      "title": "Agreement Term and Termination Rights",
+      "verbatim_text": "Either party may terminate this agreement without cause upon ninety (90) days prior written notice. Either party may terminate immediately without notice upon the insolvency or bankruptcy of the other party.",
+      "category": "Termination",
+      "severity": "Moderate",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Party terminating without cause must give 90 days prior written notice"
+      ],
+      "rights": [
+        "Either party may terminate without cause on 90 days notice",
+        "Either party may terminate immediately without notice upon insolvency or bankruptcy of the other"
+      ],
+      "conditions": [
+        "Immediate termination permitted upon insolvency or bankruptcy"
+      ],
+      "exceptions": [
+        "Notice requirement waived for insolvency or bankruptcy"
+      ],
+      "material_claims": [
+        "Termination without cause on 90 days prior written notice",
+        "Immediate termination without notice upon insolvency or bankruptcy"
+      ]
+    },
+    {
+      "clause_number": "Section F",
+      "title": "Applicable Law and Judicial Jurisdiction",
+      "verbatim_text": "This Agreement shall be interpreted and governed in all respects in accordance with the substantive laws of England and Wales, with exclusive jurisdiction in the High Court of Justice in London.",
+      "category": "Dispute Resolution",
+      "severity": "Safe",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Submit to exclusive jurisdiction of High Court of Justice in London"
+      ],
+      "rights": [],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Governed by substantive laws of England and Wales",
+        "Exclusive jurisdiction in the High Court of Justice in London"
+      ]
+    }
+  ]
+}

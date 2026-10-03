@@ -1,0 +1,159 @@
+{
+  "document_name": "new_doc_1_employment_agreement.pdf",
+  "document_title": "EXECUTIVE EMPLOYMENT AGREEMENT",
+  "document_type": "Employment Agreement",
+  "parties": {
+    "employer": "Vanguard Biometrics Inc.",
+    "executive": "Dr. Marcus Vance"
+  },
+  "effective_date": "November 1, 2026",
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "POSITION AND OPERATIONAL DUTIES",
+      "verbatim_text": "Executive shall serve as Chief Technology Officer reporting directly to the Chief Executive Officer and the Board of Directors, rendering full-time professional services in biometric cryptography.",
+      "category": "General",
+      "severity": "Safe",
+      "obligor": "Dr. Marcus Vance (Executive)",
+      "beneficiary": "Vanguard Biometrics Inc. (Company)",
+      "directionality": "Executive -> Company",
+      "obligations": [
+        "Executive must serve full-time as Chief Technology Officer in biometric cryptography",
+        "Executive must report directly to CEO and Board of Directors"
+      ],
+      "rights": [
+        "Company receives full-time executive services and reporting"
+      ],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Executive serves as Chief Technology Officer (CTO)",
+        "Executive reports directly to CEO and Board of Directors",
+        "Executive renders full-time professional services in biometric cryptography"
+      ]
+    },
+    {
+      "clause_number": "2",
+      "title": "COMPENSATION AND PERFORMANCE BONUS",
+      "verbatim_text": "Company shall pay Executive an annual base salary of two hundred forty thousand dollars ($240,000), payable in semi-monthly installments. Executive is eligible for an annual discretionary performance bonus of up to thirty percent (30%) of base salary upon meeting corporate milestones.",
+      "category": "Payment",
+      "severity": "Safe",
+      "obligor": "Vanguard Biometrics Inc. (Company)",
+      "beneficiary": "Dr. Marcus Vance (Executive)",
+      "directionality": "Company -> Executive",
+      "obligations": [
+        "Company must pay base salary of $240,000 per year in semi-monthly installments"
+      ],
+      "rights": [
+        "Executive is eligible for up to 30% discretionary performance bonus based on meeting corporate milestones"
+      ],
+      "conditions": [
+        "Bonus is contingent on meeting corporate milestones and remains discretionary"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Annual base salary is $240,000 payable semi-monthly",
+        "Discretionary performance bonus up to 30% of base salary upon meeting corporate milestones"
+      ]
+    },
+    {
+      "clause_number": "3",
+      "title": "INTELLECTUAL PROPERTY ASSIGNMENT",
+      "verbatim_text": "All inventions, cryptographic algorithms, source code, and patentable discoveries conceived, developed, or reduced to practice by Executive during the term of employment shall belong exclusively to Company as works made for hire.",
+      "category": "Intellectual Property",
+      "severity": "Moderate",
+      "obligor": "Dr. Marcus Vance (Executive)",
+      "beneficiary": "Vanguard Biometrics Inc. (Company)",
+      "directionality": "Executive -> Company",
+      "obligations": [
+        "Executive assigns all inventions, algorithms, code, and discoveries to Company as works made for hire"
+      ],
+      "rights": [
+        "Company owns exclusive rights to all IP conceived/developed during employment"
+      ],
+      "conditions": [
+        "Applies to IP conceived, developed, or reduced to practice during employment term"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "All inventions, algorithms, source code, and patentable discoveries belong exclusively to Company",
+        "Assigned as works made for hire during employment term"
+      ]
+    },
+    {
+      "clause_number": "4",
+      "title": "POST-EMPLOYMENT NON-COMPETE COVENANT",
+      "verbatim_text": "During employment and for eighteen (18) months following termination, Executive shall not directly or indirectly engage in, advise, or invest in any competing biometric identity verification business anywhere in North America.",
+      "category": "Confidentiality",
+      "severity": "High",
+      "obligor": "Dr. Marcus Vance (Executive)",
+      "beneficiary": "Vanguard Biometrics Inc. (Company)",
+      "directionality": "Executive -> Company",
+      "obligations": [
+        "Executive must not engage in, advise, or invest in competing biometric identity verification business in North America for 18 months post-termination"
+      ],
+      "rights": [
+        "Company is protected from post-employment competition by Executive"
+      ],
+      "conditions": [
+        "Restriction applies during employment and for 18 months after termination across North America"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Non-compete covenant lasts during employment plus 18 months post-termination",
+        "Covers competing biometric identity verification businesses",
+        "Geographic scope is North America"
+      ]
+    },
+    {
+      "clause_number": "5",
+      "title": "TERMINATION AND SEVERANCE ENTITLEMENT",
+      "verbatim_text": "Either party may terminate employment without cause upon thirty (30) days written notice. If Company terminates Executive without Cause, Executive shall receive six (6) months of base salary continuation as severance, conditioned upon Executive executing an effective general release of claims.",
+      "category": "Termination",
+      "severity": "Moderate",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Terminating party must provide 30 days written notice for termination without cause",
+        "Company must pay 6 months base salary continuation if terminating without cause",
+        "Executive must execute an effective general release of claims to receive severance"
+      ],
+      "rights": [
+        "Either party has right to terminate without cause on 30 days notice",
+        "Executive has right to 6 months severance if terminated without cause"
+      ],
+      "conditions": [
+        "Severance payout is strictly conditioned upon Executive signing an effective general release of claims"
+      ],
+      "exceptions": [
+        "Severance only paid if Company terminates without Cause; not paid on voluntary resignation or termination for cause"
+      ],
+      "material_claims": [
+        "Termination without cause requires 30 days written notice by either party",
+        "Termination by Company without Cause entitles Executive to 6 months base salary severance continuation",
+        "Severance is conditioned on signing an effective general release of claims"
+      ]
+    },
+    {
+      "clause_number": "6",
+      "title": "GOVERNING LAW AND JURISDICTION",
+      "verbatim_text": "This Agreement shall be construed and governed in accordance with the substantive laws of the Commonwealth of Massachusetts. The state courts located in Suffolk County, Massachusetts shall have exclusive jurisdiction over any controversy.",
+      "category": "Dispute Resolution",
+      "severity": "Safe",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Litigate any controversy exclusively in Suffolk County, Massachusetts state courts"
+      ],
+      "rights": [],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Governed by substantive laws of the Commonwealth of Massachusetts",
+        "Exclusive jurisdiction in state courts of Suffolk County, Massachusetts"
+      ]
+    }
+  ]
+}

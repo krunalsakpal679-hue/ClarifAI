@@ -1,0 +1,159 @@
+{
+  "document_name": "new_doc_2_commercial_loan_agreement.pdf",
+  "document_title": "COMMERCIAL TERM LOAN AGREEMENT",
+  "document_type": "Loan Agreement",
+  "parties": {
+    "lender": "First Horizon Commercial Bank",
+    "borrower": "Starlight Hospitality Group LLC"
+  },
+  "effective_date": "October 15, 2026",
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "PRINCIPAL LOAN COMMITMENT",
+      "verbatim_text": "Lender agrees to disburse to Borrower a single-draw commercial term loan in the aggregate principal amount of three million five hundred thousand dollars ($3,500,000) for hotel facility expansion.",
+      "category": "Payment",
+      "severity": "Safe",
+      "obligor": "First Horizon Commercial Bank (Lender)",
+      "beneficiary": "Starlight Hospitality Group LLC (Borrower)",
+      "directionality": "Lender -> Borrower",
+      "obligations": [
+        "Lender must disburse single-draw loan of $3,500,000 to Borrower for hotel facility expansion"
+      ],
+      "rights": [
+        "Borrower has right to receive $3,500,000 term loan disbursement"
+      ],
+      "conditions": [
+        "Single-draw disbursement specifically designated for hotel facility expansion"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Single-draw commercial term loan of $3,500,000",
+        "Disbursement purpose is hotel facility expansion"
+      ]
+    },
+    {
+      "clause_number": "2",
+      "title": "INTEREST RATE AND REPAYMENT SCHEDULE",
+      "verbatim_text": "Borrower shall pay interest on unpaid principal at a fixed rate of seven point two five percent (7.25%) per annum, payable in monthly installments over a maturity period of sixty (60) months. Uncured default accrues penalty interest at twelve point zero percent (12.0%) per annum.",
+      "category": "Payment",
+      "severity": "Moderate",
+      "obligor": "Starlight Hospitality Group LLC (Borrower)",
+      "beneficiary": "First Horizon Commercial Bank (Lender)",
+      "directionality": "Borrower -> Lender",
+      "obligations": [
+        "Borrower must pay fixed 7.25% per annum interest in monthly installments over 60 months maturity",
+        "Borrower must pay penalty interest of 12.0% per annum on uncured default"
+      ],
+      "rights": [
+        "Lender receives 7.25% monthly interest and 12.0% default penalty interest"
+      ],
+      "conditions": [
+        "12.0% default rate triggered only upon uncured default"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Fixed interest rate of 7.25% per annum payable in monthly installments",
+        "Loan maturity period is 60 months",
+        "Penalty interest rate is 12.0% per annum upon uncured default"
+      ]
+    },
+    {
+      "clause_number": "3",
+      "title": "FINANCIAL COVENANTS AND DEBT SERVICE",
+      "verbatim_text": "Borrower covenants to maintain a minimum Debt Service Coverage Ratio (DSCR) of not less than 1.25x tested at the end of each fiscal quarter. Failure to maintain DSCR constitutes an immediate Event of Default.",
+      "category": "Payment",
+      "severity": "High",
+      "obligor": "Starlight Hospitality Group LLC (Borrower)",
+      "beneficiary": "First Horizon Commercial Bank (Lender)",
+      "directionality": "Borrower -> Lender",
+      "obligations": [
+        "Borrower must maintain minimum Debt Service Coverage Ratio (DSCR) of >= 1.25x tested quarterly"
+      ],
+      "rights": [
+        "Lender can declare immediate Event of Default if DSCR falls below 1.25x"
+      ],
+      "conditions": [
+        "Tested quarterly at the end of each fiscal quarter"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Minimum Debt Service Coverage Ratio (DSCR) of 1.25x",
+        "DSCR tested at the end of each fiscal quarter",
+        "Failure to maintain DSCR is an immediate Event of Default"
+      ]
+    },
+    {
+      "clause_number": "4",
+      "title": "PREPAYMENT PREMIUMS",
+      "verbatim_text": "Borrower may prepay the outstanding principal subject to a prepayment fee of three percent (3.0%) in Year 1, two percent (2.0%) in Year 2, one percent (1.0%) in Year 3, and zero percent thereafter.",
+      "category": "Payment",
+      "severity": "Moderate",
+      "obligor": "Starlight Hospitality Group LLC (Borrower)",
+      "beneficiary": "First Horizon Commercial Bank (Lender)",
+      "directionality": "Borrower -> Lender",
+      "obligations": [
+        "Borrower must pay sliding prepayment fee if electing to prepay principal"
+      ],
+      "rights": [
+        "Borrower has right to prepay outstanding principal balance",
+        "Lender receives prepayment fee: 3.0% in Year 1, 2.0% in Year 2, 1.0% in Year 3, 0% thereafter"
+      ],
+      "conditions": [
+        "Prepayment fees: 3.0% in Year 1, 2.0% in Year 2, 1.0% in Year 3, 0% in Year 4+"
+      ],
+      "exceptions": [
+        "No prepayment fee after Year 3 (zero percent thereafter)"
+      ],
+      "material_claims": [
+        "Prepayment permitted subject to fee schedule",
+        "3.0% fee in Year 1, 2.0% in Year 2, 1.0% in Year 3",
+        "0% prepayment penalty after Year 3"
+      ]
+    },
+    {
+      "clause_number": "5",
+      "title": "ACCELERATION AND REMEDIES ON DEFAULT",
+      "verbatim_text": "Upon the occurrence of any Event of Default, Lender may declare the entire outstanding principal balance, accrued unpaid interest, and all related fees immediately due and payable without presentment or demand.",
+      "category": "Liability",
+      "severity": "High",
+      "obligor": "Starlight Hospitality Group LLC (Borrower)",
+      "beneficiary": "First Horizon Commercial Bank (Lender)",
+      "directionality": "Borrower -> Lender",
+      "obligations": [
+        "Borrower must immediately pay entire principal balance, accrued interest, and fees upon default acceleration"
+      ],
+      "rights": [
+        "Lender has right to accelerate entire outstanding debt without presentment or demand upon Event of Default"
+      ],
+      "conditions": [
+        "Triggered upon the occurrence of any Event of Default"
+      ],
+      "exceptions": [],
+      "material_claims": [
+        "Lender can declare entire principal, accrued interest, and fees immediately due upon Event of Default",
+        "No presentment or demand required for acceleration"
+      ]
+    },
+    {
+      "clause_number": "6",
+      "title": "GOVERNING FORUM AND VENUE",
+      "verbatim_text": "This Agreement and all promissory obligations shall be governed by the laws of the State of New York, and Borrower consents to personal jurisdiction in the courts of New York County, New York.",
+      "category": "Dispute Resolution",
+      "severity": "Safe",
+      "obligor": "Both Parties",
+      "beneficiary": "Both Parties",
+      "directionality": "Mutual",
+      "obligations": [
+        "Borrower submits to personal jurisdiction in New York County, New York courts"
+      ],
+      "rights": [],
+      "conditions": [],
+      "exceptions": [],
+      "material_claims": [
+        "Governed by the laws of the State of New York",
+        "Personal jurisdiction in courts of New York County, New York"
+      ]
+    }
+  ]
+}

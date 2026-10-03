@@ -1,7 +1,7 @@
 {
   "total_documents": 5,
   "total_clauses_evaluated": 30,
-  "category_accuracy": 46.67,
+  "category_accuracy": 43.33,
   "severity_accuracy": 40.0,
   "no_invention_rate": 100.0,
   "low_omission_rate": 6.67,
@@ -19,11 +19,11 @@
         {
           "clause_number": "1",
           "title": "POSITION AND OPERATIONAL DUTIES",
-          "gt_category": "General",
+          "gt_category": "Unclassified",
           "predicted_categories": [
             "payment"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Safe",
           "predicted_severity": "Safe",
           "severity_correct": true,
@@ -157,7 +157,7 @@
           "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
         }
       ],
-      "category_accuracy": 0.8333333333333334,
+      "category_accuracy": 0.6666666666666666,
       "severity_accuracy": 0.5
     },
     {

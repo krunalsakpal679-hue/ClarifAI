@@ -128,12 +128,14 @@ def evaluate_clause_match(gt_clause: Dict[str, Any], pipeline_clause: Dict[str, 
             lbl = str(cat_struct.get("label")).replace("ClauseCategoryEnum.", "").replace("_", " ").strip().lower()
             pipe_cat_names.append(lbl)
 
+    # Strict category comparison
     category_correct = False
-    if gt_cat in ("general", "misc", "other", ""):
-        # General clauses are considered matched if pipeline assigned any standard category or empty
-        category_correct = True
+    if gt_cat in ("unclassified", "none", ""):
+        # Unclassified ground truth is correct only if pipeline produced no category or unclassified
+        category_correct = (len(pipe_cat_names) == 0 or all(c in ("unclassified", "none", "") for c in pipe_cat_names))
     else:
-        category_correct = any(gt_cat == cat or gt_cat in cat or cat in gt_cat for cat in pipe_cat_names)
+        # Standard PRD category match: must be an exact match with one of the predicted categories
+        category_correct = (gt_cat in pipe_cat_names)
 
     # Extract pipeline severity
     pipe_sev = str(pipeline_clause.get("severity", "")).strip().lower()

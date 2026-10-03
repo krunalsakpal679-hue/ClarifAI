@@ -238,42 +238,42 @@ def synthesize_detailed_plain_english_analysis(
     t_lower = text.lower()
 
     # 1. Dynamic Extraction of Contracting Parties
-    if any(k in t_lower for k in ["provider", "subscriber"]):
-        affected_parties = "The Provider and the Subscriber."
-        actor_role = "Subscriber"
-        counterparty_role = "Provider"
-    elif any(k in t_lower for k in ["lessee", "lessor", "tenant", "landlord"]):
-        affected_parties = "The Landlord (Lessor) and the Tenant (Lessee)."
-        actor_role = "Tenant (Lessee)"
-        counterparty_role = "Landlord (Lessor)"
-    elif any(k in t_lower for k in ["consultant", "advisor"]) and any(k in t_lower for k in ["client", "customer", "company"]):
-        affected_parties = "The Consultant and the Client."
-        actor_role = "Consultant"
-        counterparty_role = "Client"
-    elif any(k in t_lower for k in ["customer", "client"]) and any(k in t_lower for k in ["vendor", "contractor", "company"]):
-        affected_parties = "The Customer (Client) and the Vendor (Service Provider)."
-        actor_role = "Customer"
-        counterparty_role = "Vendor"
+    if any(k in t_lower for k in ["borrower", "lender"]):
+        affected_parties = "The Borrower and the Lender."
+        actor_role = "Borrower"
+        counterparty_role = "Lender"
     elif any(k in t_lower for k in ["employer", "employee"]):
         affected_parties = "The Employer and the Employee."
         actor_role = "Employee"
         counterparty_role = "Employer"
+    elif any(k in t_lower for k in ["lessee", "lessor", "tenant", "landlord"]):
+        affected_parties = "The Landlord (Lessor) and the Tenant (Lessee)."
+        actor_role = "Tenant (Lessee)"
+        counterparty_role = "Landlord (Lessor)"
+    elif any(k in t_lower for k in ["buyer", "seller", "purchaser", "supplier", "distributor"]):
+        affected_parties = "The Buyer and the Seller (Supplier)."
+        actor_role = "Buyer"
+        counterparty_role = "Seller"
+    elif any(k in t_lower for k in ["consultant", "advisor"]) and any(k in t_lower for k in ["client", "customer", "company"]):
+        affected_parties = "The Consultant and the Client."
+        actor_role = "Consultant"
+        counterparty_role = "Client"
+    elif any(k in t_lower for k in ["customer", "client", "user", "subscriber"]) and any(k in t_lower for k in ["vendor", "contractor", "company", "provider", "service provider"]):
+        affected_parties = "The Customer/Subscriber and the Service Provider."
+        actor_role = "Customer"
+        counterparty_role = "Service Provider"
     elif any(k in t_lower for k in ["disclosing party", "receiving party"]):
         affected_parties = "The Disclosing Party and the Receiving Party."
         actor_role = "Receiving Party"
         counterparty_role = "Disclosing Party"
-    elif any(k in t_lower for k in ["borrower", "lender"]):
-        affected_parties = "The Borrower and the Lender."
-        actor_role = "Borrower"
-        counterparty_role = "Lender"
     else:
         affected_parties = "The designated contracting parties."
         actor_role = "Obligated Party"
         counterparty_role = "Counterparty"
 
     # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes, Rates)
-    amounts = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?', text, re.IGNORECASE)
-    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirty|sixty|ninety)\s+(?:days?|months?|years?|hours?|business\s+days?)\b', text, re.IGNORECASE)
+    amounts = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:per\s+(?:annum|month|year)|annually|monthly))?', text, re.IGNORECASE)
+    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirty|sixty|ninety|180|365)\s+(?:days?|months?|years?|hours?|business\s+days?|calendar\s+days?)\b', text, re.IGNORECASE)
     percentages = [m.group(0).strip() for m in re.finditer(r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?', text, re.IGNORECASE)]
 
     # 3. Grounded Semantic Clause Analysis (Ordered by specific covenant to general)
@@ -289,6 +289,24 @@ def synthesize_detailed_plain_english_analysis(
         if durations:
             details_list.append(f"Protection Period: Obligations survive for {', '.join(durations)} following agreement termination.")
         consequences = "Unauthorized disclosure constitutes a material breach of contractual confidentiality covenants."
+
+    elif any(k in t_lower for k in [
+        "principal amount", "disbursement", "interest rate", "fixed interest", "floating interest",
+        "loan agreement", "repayment schedule", "maturity date", "prepayment penalty", "acceleration",
+        "debt service coverage", "leverage ratio"
+    ]) or (category and category.lower() == "payment" and any(k in t_lower for k in ["principal", "interest", "borrower", "lender", "loan"])):
+        what_means = "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility."
+        obligations = f"The {actor_role} must pay principal installments and accrued interest to the {counterparty_role} strictly according to schedule."
+        if amounts:
+            details_list.append(f"Principal / Repayment Amount: {', '.join(amounts)}.")
+        if percentages:
+            details_list.append(f"Interest Rate / Surcharge: {', '.join(percentages)}.")
+        if durations:
+            details_list.append(f"Repayment Window / Maturity: {', '.join(durations)}.")
+        if any(k in t_lower for k in ["prepayment penalty", "prepayment fee", "prepay"]):
+            details_list.append("Prepayment Terms: Prepayment is subject to specific notice requirements and premium fees.")
+        if any(k in t_lower for k in ["accelerat", "immediate repayment", "event of default"]):
+            consequences = "A default allows the lender to accelerate the total outstanding balance, making all principal and interest immediately due and payable."
 
     elif any(k in t_lower for k in [
         "limitation of liability", "liability cap", "damages cap", "damages limitation",
@@ -351,7 +369,7 @@ def synthesize_detailed_plain_english_analysis(
         details_list.append("Defense Duty: Obligated party must defend and hold the indemnified party harmless from covered claims.")
         consequences = "If a covered third-party claim is initiated, the indemnifying party must bear the financial defense and liability obligations."
 
-    elif any(k in t_lower for k in ["work made for hire", "intellectual property", "ownership of deliverables", "work product ownership", "custom module", "copyright"]):
+    elif any(k in t_lower for k in ["work made for hire", "intellectual property", "ownership of deliverables", "work product ownership", "custom module", "copyright", "proprietary rights"]):
         if "custom module" in t_lower or "custom software" in t_lower or "work made for hire" in t_lower:
             what_means = "This clause establishes intellectual property ownership, providing that custom modules, deliverables, and bespoke work product created under the agreement constitute works made for hire belonging exclusively to the ordering party."
         else:
@@ -364,7 +382,17 @@ def synthesize_detailed_plain_english_analysis(
             obligations = f"The {actor_role} transfers or assigns intellectual property rights in agreed deliverables to the {counterparty_role} as work made for hire."
         details_list.append("Work Made for Hire: Custom deliverables are created on a work-made-for-hire basis and vest exclusively in the ordering party.")
 
-    elif any(k in t_lower for k in ["invoicing and finance", "fees and payment", "remit payment", "net 30", "invoice date", "invoices are due", "invoicing"]):
+    elif any(k in t_lower for k in ["base salary", "annual compensation", "health insurance", "fringe benefits", "bonus target", "stock options"]):
+        what_means = "This clause defines employee compensation, regular salary payments, payroll schedules, and fringe benefits eligibility."
+        obligations = f"The {counterparty_role} is obligated to pay the agreed base compensation and provide employment benefits to the {actor_role}."
+        if amounts:
+            details_list.append(f"Salary / Compensation: {', '.join(amounts)}.")
+        if durations:
+            details_list.append(f"Payroll Cadence / Benefits Window: {', '.join(durations)}.")
+        if percentages:
+            details_list.append(f"Bonus / Incentive Percentage: {', '.join(percentages)}.")
+
+    elif any(k in t_lower for k in ["invoicing and finance", "fees and payment", "remit payment", "net 30", "invoice date", "invoices are due", "invoicing", "purchase price"]):
         what_means = "This clause establishes the financial payment terms, billing cadence, invoice due dates, and finance charges for overdue balances."
         if "provider" in t_lower and "subscriber" in t_lower:
             obligations = "The Subscriber must remit payment for all undisputed invoices within the designated credit window."
@@ -380,13 +408,13 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Finance Charges / Overdue Interest: {', '.join(percentages)} on overdue balances.")
         consequences = "Late payments accrue interest penalties and finance charges on unpaid balances past the due date."
 
-    elif any(k in t_lower for k in ["engagement and deliverables", "consultant shall render", "scope of services", "scope of work", "render strategic"]):
-        what_means = "This clause defines the engagement scope, specifying that the consultant provides strategic management and technical advisory services under agreed statements of work."
-        obligations = "The Consultant is obligated to perform the agreed deliverables, advisory services, and strategic tasks as authorized by the Client."
-        details_list.append("Scope: Strategic management and technical advisory services as agreed in work statements.")
+    elif any(k in t_lower for k in ["engagement and deliverables", "consultant shall render", "scope of services", "scope of work", "render strategic", "duties and position"]):
+        what_means = "This clause defines the engagement scope, job responsibilities, and performance deliverables agreed upon by the parties."
+        obligations = f"The {actor_role} is obligated to perform the agreed deliverables, advisory services, and professional tasks as authorized by the {counterparty_role}."
+        details_list.append("Scope: Performance of agreed professional tasks, deliverables, and responsibilities.")
 
-    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue", "governed by", "governing law", "laws of", "construed in accordance with", "cook county", "dispute", "controversy", "mediation", "negotiate in good faith", "amicabl"]):
-        geo_match = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|State of Delaware|Delaware|State of New York|New York|State of California|California|England and Wales|India)\b', text, re.IGNORECASE)
+    elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue", "governed by", "governing law", "laws of", "construed in accordance with", "cook county", "travis county", "dispute", "controversy", "mediation", "negotiate in good faith", "amicabl"]):
+        geo_match = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|State of Delaware|Delaware|State of New York|New York|State of California|California|State of Washington|Washington|England and Wales|India)\b', text, re.IGNORECASE)
         geo_name = geo_match.group(0).strip() if geo_match else None
 
         has_gov_law = bool(re.search(r'\b(governed by(?: the laws)?|governing law|substantive law|laws of|construed in accordance with(?: the laws)?|construed under the laws)\b', t_lower))
@@ -424,17 +452,15 @@ def synthesize_detailed_plain_english_analysis(
             obligations = "Both parties are obligated to participate in good-faith dispute resolution procedures prior to pursuing further legal remedies."
             details_list.append("Dispute Resolution: Mandatory pre-litigation escalation and dispute resolution process.")
 
-    elif any(k in t_lower for k in ["demise unto the lessee", "doth hereby demise", "piece or parcel of land", "grant to the lessee a lease", "grant a lease"]):
+    elif any(k in t_lower for k in ["demise unto the lessee", "doth hereby demise", "piece or parcel of land", "grant to the lessee a lease", "grant a lease", "leased premises"]):
         what_means = "This clause legally leases the specified property, land parcel, and all attached buildings from the landlord to the tenant for a fixed long-term duration in exchange for designated rent payments."
         obligations = "The landlord grants exclusive legal possession and rights of easement over the premises to the tenant for the agreed term. In exchange, the tenant is obligated to pay the reserved rent according to the agreed schedule."
         if amounts:
             details_list.append(f"Rent: {', '.join(amounts)} payable in scheduled installments.")
         if durations:
             details_list.append(f"Lease Term: {', '.join(durations)}.")
-        if "sector 18" in t_lower:
-            details_list.append("Location: 1,500 square meters situated at Sector 18, including all buildings and easements.")
         if "in advance" in t_lower:
-            details_list.append("Payment Timing: Payable in advance on the first day of each quarter.")
+            details_list.append("Payment Timing: Payable in advance on the first day of each payment cycle.")
 
     elif any(k in t_lower for k in ["lessee hereby covenants", "lessee hereby for himself", "covenants with the lessor", "to pay the reserved rent"]):
         what_means = "This clause establishes the tenant's ongoing operational and financial commitments during the lease, including rent payments, tax responsibilities, and ongoing building maintenance."
@@ -442,8 +468,6 @@ def synthesize_detailed_plain_english_analysis(
         details_list.append("Deductions: Rent must be paid cleanly without any set-off or deductions.")
         details_list.append("Taxes & Rates: Tenant is fully responsible for all municipal taxes, rates, and outgoings.")
         details_list.append("Maintenance Standard: Buildings must be maintained in tenantable repair, normal wear and tear excepted.")
-        if "fifth year" in t_lower or "every 5 years" in t_lower or "5 years" in t_lower:
-            details_list.append("Repainting Cycle: Exterior wood and ironwork must be repainted every fifth (5th) year.")
 
     elif any(k in t_lower for k in ["lessor doth hereby covenant", "peaceably hold and enjoy", "peaceably possess and enjoy", "quiet enjoyment", "good right, full power and absolute authority"]):
         what_means = "This clause provides the tenant with a covenant of quiet enjoyment, guaranteeing uninterrupted occupancy of the leased premises without interference from the landlord."
@@ -489,7 +513,7 @@ def synthesize_detailed_plain_english_analysis(
                 details_list.append(f"Notice / Cure Period: {', '.join(durations)} written notice required.")
             consequences = "Upon termination, services cease, accrued unpaid fees become immediately due, and designated post-termination obligations survive."
 
-    elif any(k in t_lower for k in ["non-compete", "non-solicit", "solicit for employment", "competing business"]):
+    elif any(k in t_lower for k in ["non-compete", "non-solicit", "solicit for employment", "competing business", "restraint of trade"]):
         what_means = "This clause restricts parties from poaching employees or engaging in competing commercial activities during and after the contractual relationship."
         obligations = f"The {actor_role} agrees not to recruit, solicit, or hire employees of the other party, nor engage in directly competing business within designated territories."
         if durations:
@@ -512,6 +536,12 @@ def synthesize_detailed_plain_english_analysis(
         obligations = f"The {actor_role} is granted non-exclusive rights to access the service, subject to compliance with agreement terms."
         details_list.append("License Scope: Non-exclusive, non-transferable subscription access right.")
 
+    elif any(k in t_lower for k in ["personal data", "gdpr", "data protection", "data controller", "data processor", "privacy policy"]):
+        what_means = "This clause governs data privacy, information security measures, and regulatory compliance regarding the processing of personal data."
+        obligations = f"Both parties must maintain appropriate technical safeguards and comply with applicable privacy regulations."
+        if durations:
+            details_list.append(f"Data Retention / Breach Notification: {', '.join(durations)}.")
+
     else:
         what_means = "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
         obligations = "Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause."
@@ -519,6 +549,8 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Financial Terms: {', '.join(amounts)}.")
         if durations:
             details_list.append(f"Timeframes: {', '.join(durations)}.")
+        if percentages:
+            details_list.append(f"Rates & Percentages: {', '.join(percentages)}.")
 
     if what_means.startswith("AI explanation generation failed"):
         honest_msg = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
@@ -606,13 +638,20 @@ def synthesize_detailed_plain_english_analysis(
 
     full_plain_summary = "\n\n".join(sections)
 
+    # Assemble comprehensive grounded clause explanation combining what_means, key details and consequences
+    grounded_clause_summary = what_means
+    if details_list:
+        grounded_clause_summary = f"{what_means} " + " ".join(details_list)
+    if consequences and consequences not in grounded_clause_summary:
+        grounded_clause_summary = f"{grounded_clause_summary} {consequences}"
+
     # Structured Evidence-Backed Explanation Breakdown
     final_cat_label = category if category and str(category).lower() not in ("none", "unavailable", "null", "general", "unclassified") else None
     cat_reason, cat_evidence = extract_category_evidence_span(text, final_cat_label)
     risk_reason, risk_evidence = extract_risk_evidence_span(text, clean_sev_check, rule_findings)
 
     structured_explanation = {
-        "what_this_clause_means": what_means,
+        "what_this_clause_means": grounded_clause_summary,
         "risk": {
             "severity": clean_sev_check,
             "reason": why_rationale or risk_reason,
@@ -626,7 +665,6 @@ def synthesize_detailed_plain_english_analysis(
         "grounding_warnings": grounding_res.get("warnings", []),
         "grounding_notes": grounding_res.get("grounding_notes", [])
     }
-
 
     return {
         "simplified_text": full_plain_summary,
@@ -707,7 +745,7 @@ Rule Signals: {signals_summary}
             clause_number=clause_number,
             title=title
         )
-        ret_sev = final_sev_label
+        ret_sev = final_sev_label or "RISK_CLASSIFICATION_UNAVAILABLE"
         ret_struct = synth_res.get("structured_explanation")
         if ret_struct and ret_struct.get("risk", {}).get("severity") == "RISK_CLASSIFICATION_UNAVAILABLE":
             ret_sev = "RISK_CLASSIFICATION_UNAVAILABLE"

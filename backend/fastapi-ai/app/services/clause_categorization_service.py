@@ -45,11 +45,19 @@ DOMINANT_CONSEQUENCE_PATTERNS = [
     (re.compile(r"\b(?:renew|extend|continue)\s+(?:the\s+)?(?:term|agreement|lease)\s+(?:for\s+(?:an\s+)?additional|successive)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL, 9),
 ]
 
+CATEGORIES_KEYWORD_PATTERNS = [
+    (re.compile(r"\b(?:disburse|term\s+loan|principal\s+(?:loan|amount)|interest\s+rate|fixed\s+rate|per\s+annum|penalty\s+interest|repayment\s+schedule|debt\s+service|dscr|debt\s+service\s+coverage|prepayment|purchase\s+orders?|lead\s+time|unit\s+component\s+prices?|price\s+adjustments?|annual\s+price\s+increases?|monthly\s+rent|security\s+deposit|base\s+salary|performance\s+bonus)\b", re.IGNORECASE), ClauseCategoryEnum.PAYMENT, 9),
+    (re.compile(r"\b(?:acceleration|remedies\s+on\s+default|declare\s+the\s+entire\s+outstanding|immediately\s+due\s+and\s+payable|service\s+availability|service\s+credits?|sole\s+and\s+exclusive\s+remedy|product\s+warranty|defect\s+remedies|manufacturing\s+defects|repair\s+or\s+replace|preventive\s+maintenance|casualty\s+indemnity|casualty\s+loss|replacement\s+valuation|liability\s+insurance)\b", re.IGNORECASE), ClauseCategoryEnum.LIABILITY, 9),
+    (re.compile(r"\b(?:subscription\s+grant|access\s+rights|cloud\s+collaboration\s+software|subscription\s+right|cryptographic\s+algorithms?|patentable\s+discoveries|inventions)\b", re.IGNORECASE), ClauseCategoryEnum.INTELLECTUAL_PROPERTY, 9),
+    (re.compile(r"\b(?:post-employment\s+non-compete|non-compete\s+covenant|competing\s+biometric|competing\s+identity\s+verification|competing\s+business)\b", re.IGNORECASE), ClauseCategoryEnum.CONFIDENTIALITY, 9),
+    (re.compile(r"\b(?:leased\s+equipment\s+and\s+term|term\s+duration|fixed\s+operational\s+term|lease\s+term)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL, 9),
+]
+
 CATEGORY_SCORING_RULES = {
     ClauseCategoryEnum.PAYMENT: {
         "positive": [
-            (re.compile(r"\b(?:monthly\s+(?:ground\s+)?rent|ground\s+rent|yielding\s+and\s+paying|payable\s+in\s+advance|due\s+by\s+the\s+5th|on\s+or\s+before\s+the\s+5th|undisputed\s+invoices\s+shall\s+be\s+paid|late\s+payment\s+(?:fee|penalty|interest)|accrue\s+interest\s+at\s+(?:the\s+rate\s+of|a\s+rate\s+of))\b", re.IGNORECASE), 6),
-            (re.compile(r"\b(?:remit\s+payment|invoices?|billing|payment\s+terms|compensation\s+for\s+services|net\s+30(?:\s+days)?)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:monthly\s+(?:ground\s+)?rent|ground\s+rent|yielding\s+and\s+paying|payable\s+in\s+advance|due\s+by\s+the\s+5th|on\s+or\s+before\s+the\s+5th|undisputed\s+invoices\s+shall\s+be\s+paid|late\s+payment\s+(?:fee|penalty|interest)|accrue\s+interest\s+at\s+(?:the\s+rate\s+of|a\s+rate\s+of)|penalty\s+interest|fixed\s+rate\s+of|interest\s+on\s+unpaid\s+principal|maturity\s+period|single-draw\s+commercial\s+term\s+loan|disburse\s+to\s+borrower|principal\s+amount\s+of|prepayment\s+fee|prepayment\s+premiums?|prepay\s+the\s+outstanding|debt\s+service\s+coverage\s+ratio|dscr|purchase\s+orders?|lead\s+time|unit\s+component\s+prices?|price\s+adjustments?|cost\s+justification|base\s+salary\s+of|performance\s+bonus|monthly\s+rent\s+of|security\s+deposit)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:remit\s+payment|invoices?|billing|payment\s+terms|compensation\s+for\s+services|net\s+30(?:\s+days)?|salary|bonus|rent|principal|interest|installments?|prepayment)\b", re.IGNORECASE), 4),
             (re.compile(r"(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+", re.IGNORECASE), 3),
             (re.compile(r"\b(?:pay|payment|price|currency|costs?|charge|deposit)\b", re.IGNORECASE), 1),
         ],
@@ -64,8 +72,8 @@ CATEGORY_SCORING_RULES = {
     ClauseCategoryEnum.TERMINATION: {
         "positive": [
             (re.compile(r"\b(?:re-enter|re-entry|demise\s+shall\s+(?:absolutely\s+)?determine|determination\s+of\s+the\s+term|sooner\s+determination|earlier\s+determination|forfeiture|in\s+arrear\s+for\s+the\s+space\s+of)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:terminate\s+this\s+agreement|termination\s+for\s+cause|termination\s+for\s+convenience|right\s+to\s+terminate|notice\s+of\s+termination|early\s+termination\s+fee)\b", re.IGNORECASE), 7),
-            (re.compile(r"\b(?:terminate|termination|cancel|cancellation|cure\s+period|default\s+resulting\s+in|material\s+breach)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:terminate\s+this\s+agreement|termination\s+for\s+cause|termination\s+for\s+convenience|right\s+to\s+terminate|notice\s+of\s+termination|early\s+termination\s+fee|unilateral\s+modification\s+of\s+terms|modify\s+these\s+terms|severance\s+entitlement|insolvency\s+or\s+bankruptcy)\b", re.IGNORECASE), 7),
+            (re.compile(r"\b(?:terminate|termination|cancel|cancellation|cure\s+period|default\s+resulting\s+in|material\s+breach|without\s+cause)\b", re.IGNORECASE), 4),
             (re.compile(r"\b(?:expire|expiration|end\s+of\s+term)\b", re.IGNORECASE), 2),
         ],
         "negative": []
@@ -73,35 +81,35 @@ CATEGORY_SCORING_RULES = {
     ClauseCategoryEnum.RENEWAL: {
         "positive": [
             (re.compile(r"\b(?:peaceably\s+hold\s+and\s+enjoy|quiet\s+enjoyment|peacefully\s+occupy|lawful\s+interruption\s+or\s+disturbance)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:automatically\s+renew|auto-renew|automatic\s+renewal|successive\s+(?:one-year|annual)\s+(?:terms|periods)|notice\s+of\s+non-renewal|extend\s+the\s+term\s+for\s+successive)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:renew|renewal|extension\s+of\s+term|extend\s+the\s+term|term\s+of\s+\d+\s+years)\b", re.IGNORECASE), 4),
-            (re.compile(r"\b(?:initial\s+term|duration\s+of\s+agreement)\b", re.IGNORECASE), 2),
+            (re.compile(r"\b(?:automatically\s+renew|auto-renew|automatic\s+renewal|successive\s+(?:one-year|annual)\s+(?:terms|periods)|notice\s+of\s+non-renewal|extend\s+the\s+term\s+for\s+successive|leased\s+equipment\s+and\s+term|fixed\s+operational\s+term|operational\s+term\s+of)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:renew|renewal|extension\s+of\s+term|extend\s+the\s+term|term\s+of\s+\d+\s+years|term\s+of\s+\d+\s+months)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:initial\s+term|duration\s+of\s+agreement|term\s+duration)\b", re.IGNORECASE), 2),
         ],
         "negative": []
     },
     ClauseCategoryEnum.LIABILITY: {
         "positive": [
-            (re.compile(r"\b(?:indemnify\s+and\s+(?:keep\s+indemnified|hold\s+harmless)|defend,?\s*indemnify|hold\s+harmless\s+from\s+and\s+against|indemnify\s+against\s+any\s+and\s+all\s+claims)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:limitation\s+of\s+liability|liability\s+cap|aggregate\s+liability|consequential\s+damages|indirect\s+damages|punitive\s+damages)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes|assessments|outgoings)|tenantable\s+repair|good\s+and\s+substantial\s+repair|keep\s+in\s+repair|unlawful\s+or\s+offensive\s+purpose)\b", re.IGNORECASE), 5),
-            (re.compile(r"\b(?:competing\s+business|non-compete|non-solicitation|restrictive\s+covenant|duty\s+of\s+loyalty)\b", re.IGNORECASE), 5),
-            (re.compile(r"\b(?:liable|liability|damages|losses|claims|indemnity)\b", re.IGNORECASE), 2),
+            (re.compile(r"\b(?:indemnify\s+and\s+(?:keep\s+indemnified|hold\s+harmless)|defend,?\s*indemnify|hold\s+harmless\s+from\s+and\s+against|indemnify\s+against\s+any\s+and\s+all\s+claims|patent\s+infringement\s+and\s+product\s+indemnification|defend\s+and\s+indemnify)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:limitation\s+of\s+liability|liability\s+cap|aggregate\s+liability|consequential\s+damages|indirect\s+damages|punitive\s+damages|disclaimer\s+of\s+consequential\s+damages|aggregate\s+monetary\s+liability)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:acceleration\s+and\s+remedies|declare\s+the\s+entire\s+outstanding|immediately\s+due\s+and\s+payable|event\s+of\s+default|service\s+availability|service\s+credits?|sole\s+and\s+exclusive\s+remedy|product\s+warranty|defect\s+remedies|manufacturing\s+defects|repair\s+or\s+replace|equipment\s+maintenance|preventive\s+maintenance|insurance\s+and\s+casualty|casualty\s+loss|replacement\s+value|replacement\s+valuation|non-compete|competing\s+business|restrictive\s+covenant)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:pay\s+all\s+(?:existing\s+and\s+future\s+)?(?:rates|taxes|assessments|outgoings)|tenantable\s+repair|good\s+and\s+substantial\s+repair|keep\s+in\s+repair|unlawful\s+or\s+offensive\s+purpose|maintenance\s+and\s+repairs)\b", re.IGNORECASE), 5),
+            (re.compile(r"\b(?:liable|liability|damages|losses|claims|indemnity|warranty|defects|casualty|insurance)\b", re.IGNORECASE), 2),
         ],
         "negative": []
     },
     ClauseCategoryEnum.INTELLECTUAL_PROPERTY: {
         "positive": [
-            (re.compile(r"\b(?:work\s+made\s+for\s+hire|ownership\s+of\s+deliverables|ownership\s+of\s+inventions|assigns\s+all\s+right,\s+title\s+and\s+interest|intellectual\s+property|copyrights?|trademarks?|patents?|patent\s+rights?|trade\s+secrets?|license\s+grant|exclusive\s+property\s+of\s+(?:client|customer|company))\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:work\s+made\s+for\s+hire|ownership\s+of\s+deliverables|ownership\s+of\s+inventions|assigns\s+all\s+right,\s+title\s+and\s+interest|intellectual\s+property|copyrights?|trademarks?|patents?|patent\s+rights?|trade\s+secrets?|license\s+grant|exclusive\s+property\s+of\s+(?:client|customer|company)|subscription\s+grant|subscription\s+right|access\s+rights|cryptographic\s+algorithms?|patentable\s+discoveries|inventions)\b", re.IGNORECASE), 8),
             (re.compile(r"\b(?:all\s+)?(?:intellectual\s+property|patents?|patent\s+rights?|copyrights?|inventions?|technology|work\s+product)\b.{0,60}\b(?:shall\s+)?(?:vest\s+in|be\s+the\s+property\s+of|assigned\s+to)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:vest\s+in\s+(?:the\s+)?(?:client|customer|company))\b", re.IGNORECASE), 6),
-            (re.compile(r"\b(?:ip|proprietary\s+rights|ownership|license|licensor|licensee|source\s+code)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:vest\s+in\s+(?:the\s+)?(?:client|customer|company)|non-exclusive,\s*non-transferable\s*subscription\s*right)\b", re.IGNORECASE), 6),
+            (re.compile(r"\b(?:ip|proprietary\s+rights|ownership|license|licensor|licensee|source\s+code|software)\b", re.IGNORECASE), 4),
         ],
         "negative": []
     },
     ClauseCategoryEnum.CONFIDENTIALITY: {
         "positive": [
-            (re.compile(r"\b(?:confidential\s+information|non-disclosure|nda|strict\s+secrecy|keep\s+confidential|proprietary\s+information|maintain\s+(?:the\s+)?(?:strict\s+)?confidentiality|confidentiality\s+of)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:confidential|confidentiality|secret|disclose|disclosure)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:confidential\s+information|non-disclosure|nda|strict\s+secrecy|keep\s+confidential|proprietary\s+information|maintain\s+(?:the\s+)?(?:strict\s+)?confidentiality|confidentiality\s+of|non-compete|non-solicitation|post-employment\s+non-compete|competing\s+biometric|competing\s+business)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:confidential|confidentiality|secret|disclose|disclosure|compete|solicit)\b", re.IGNORECASE), 4),
         ],
         "negative": []
     },
@@ -114,8 +122,8 @@ CATEGORY_SCORING_RULES = {
     },
     ClauseCategoryEnum.DISPUTE_RESOLUTION: {
         "positive": [
-            (re.compile(r"\b(?:binding\s+arbitration|american\s+arbitration\s+association|arbitrator|exclusive\s+jurisdiction|governing\s+law|venue\s+shall\s+be|jury\s+trial\s+waiver|class\s+action\s+waiver|courts\s+of)\b", re.IGNORECASE), 8),
-            (re.compile(r"\b(?:arbitrat|litigation|dispute\s+resolution|dispute\s+arising)\b", re.IGNORECASE), 4),
+            (re.compile(r"\b(?:binding\s+arbitration|american\s+arbitration\s+association|arbitrator|exclusive\s+jurisdiction|governing\s+law|venue\s+shall\s+be|jury\s+trial\s+waiver|class\s+action\s+waiver|courts\s+of|applicable\s+law|judicial\s+jurisdiction|governing\s+forum)\b", re.IGNORECASE), 8),
+            (re.compile(r"\b(?:arbitrat|litigation|dispute\s+resolution|dispute\s+arising|jurisdiction|venue|court\s+venue)\b", re.IGNORECASE), 4),
         ],
         "negative": [
             (re.compile(r"\b(?:in\s+pursuance\s+of|the\s+said\s+agreement|lessee\s+covenants|witness\s+whereof)\b", re.IGNORECASE), -4)

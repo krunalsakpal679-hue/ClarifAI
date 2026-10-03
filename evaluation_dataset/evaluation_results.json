@@ -1,13 +1,13 @@
 {
   "total_documents": 5,
   "total_clauses_evaluated": 30,
-  "category_accuracy": 46.67,
-  "severity_accuracy": 40.0,
+  "category_accuracy": 70.0,
+  "severity_accuracy": 50.0,
   "no_invention_rate": 100.0,
-  "low_omission_rate": 6.67,
+  "low_omission_rate": 16.67,
   "directionality_accuracy": 100.0,
-  "conditions_preservation_rate": 33.33,
-  "exceptions_preservation_rate": 90.0,
+  "conditions_preservation_rate": 60.0,
+  "exceptions_preservation_rate": 93.33,
   "per_document_results": [
     {
       "document_name": "new_doc_1_employment_agreement.pdf",
@@ -19,11 +19,11 @@
         {
           "clause_number": "1",
           "title": "POSITION AND OPERATIONAL DUTIES",
-          "gt_category": "General",
+          "gt_category": "Unclassified",
           "predicted_categories": [
             "payment"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Safe",
           "predicted_severity": "Safe",
           "severity_correct": true,
@@ -38,7 +38,7 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Financial Terms: rs,."
         },
         {
           "clause_number": "2",
@@ -53,15 +53,12 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
-          "omitted_claims": [
-            "Annual base salary is $240,000 payable semi-monthly",
-            "Discretionary performance bonus up to 30% of base salary upon meeting corporate milestones"
-          ],
+          "omission_rate": 0.0,
+          "omitted_claims": [],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause defines employee compensation, regular salary payments, payroll schedules, and fringe benefits eligibility. Salary / Compensation: $240,000. Bonus / Incentive Percentage: (30%)."
         },
         {
           "clause_number": "3",
@@ -83,7 +80,7 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes intellectual property ownership, providing that analysis reports, deliverables, and custom work product created under the agreement constitute works made for hire belonging exclusively to the client."
+          "what_this_clause_means": "This clause establishes intellectual property ownership, providing that analysis reports, deliverables, and custom work product created under the agreement constitute works made for hire belonging exclusively to the client. Work Made for Hire: Custom deliverables are created on a work-made-for-hire basis and vest exclusively in the ordering party."
         },
         {
           "clause_number": "4",
@@ -131,7 +128,7 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": false,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause defines employee compensation, regular salary payments, payroll schedules, and fringe benefits eligibility."
         },
         {
           "clause_number": "6",
@@ -146,18 +143,17 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.5,
           "omitted_claims": [
-            "Governed by substantive laws of the Commonwealth of Massachusetts",
-            "Exclusive jurisdiction in state courts of Suffolk County, Massachusetts"
+            "Governed by substantive laws of the Commonwealth of Massachusetts"
           ],
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
+          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes. Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum."
         }
       ],
-      "category_accuracy": 0.8333333333333334,
+      "category_accuracy": 0.6666666666666666,
       "severity_accuracy": 0.5
     },
     {
@@ -180,47 +176,48 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.5,
           "omitted_claims": [
-            "Single-draw commercial term loan of $3,500,000",
             "Disbursement purpose is hotel facility expansion"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. Principal / Repayment Amount: $3,500,000."
         },
         {
           "clause_number": "2",
           "title": "INTEREST RATE AND REPAYMENT SCHEDULE",
           "gt_category": "Payment",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
           "gt_severity": "Moderate",
-          "predicted_severity": "Safe",
+          "predicted_severity": "High",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.3333333333333333,
           "omitted_claims": [
-            "Fixed interest rate of 7.25% per annum payable in monthly installments",
-            "Loan maturity period is 60 months",
-            "Penalty interest rate is 12.0% per annum upon uncured default"
+            "Loan maturity period is 60 months"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. Interest Rate / Surcharge: (7.25%) per annum, (12.0%) per annum."
         },
         {
           "clause_number": "3",
           "title": "FINANCIAL COVENANTS AND DEBT SERVICE",
           "gt_category": "Payment",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
           "gt_severity": "High",
-          "predicted_severity": "Low",
-          "severity_correct": false,
+          "predicted_severity": "High",
+          "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
           "omission_rate": 1.0,
@@ -232,50 +229,51 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. A default allows the lender to accelerate the total outstanding balance, making all principal and interest immediately due and payable."
         },
         {
           "clause_number": "4",
           "title": "PREPAYMENT PREMIUMS",
           "gt_category": "Payment",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
           "gt_severity": "Moderate",
-          "predicted_severity": "Safe",
+          "predicted_severity": "High",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.3333333333333333,
           "omitted_claims": [
-            "Prepayment permitted subject to fee schedule",
-            "3.0% fee in Year 1, 2.0% in Year 2, 1.0% in Year 3",
             "0% prepayment penalty after Year 3"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
-          "exceptions_preserved": false,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. Interest Rate / Surcharge: (3.0%), (2.0%), (1.0%). Prepayment Terms: Prepayment is subject to specific notice requirements and premium fees."
         },
         {
           "clause_number": "5",
           "title": "ACCELERATION AND REMEDIES ON DEFAULT",
           "gt_category": "Liability",
-          "predicted_categories": [],
+          "predicted_categories": [
+            "termination"
+          ],
           "category_correct": false,
           "gt_severity": "High",
-          "predicted_severity": "Safe",
-          "severity_correct": false,
+          "predicted_severity": "High",
+          "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.5,
           "omitted_claims": [
-            "Lender can declare entire principal, accrued interest, and fees immediately due upon Event of Default",
             "No presentment or demand required for acceleration"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. A default allows the lender to accelerate the total outstanding balance, making all principal and interest immediately due and payable."
         },
         {
           "clause_number": "6",
@@ -295,11 +293,11 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes that the agreement is governed by the laws of State of New York and designates the courts of State of New York as the exclusive venue for resolving disputes."
+          "what_this_clause_means": "This clause establishes that the agreement is governed by the laws of State of New York and designates the courts of State of New York as the exclusive venue for resolving disputes. Governing Law & Venue: Governed by the laws of State of New York with exclusive jurisdiction in State of New York."
         }
       ],
-      "category_accuracy": 0.3333333333333333,
-      "severity_accuracy": 0.3333333333333333
+      "category_accuracy": 0.8333333333333334,
+      "severity_accuracy": 0.6666666666666666
     },
     {
       "document_name": "new_doc_3_saas_terms_of_service.pdf",
@@ -312,8 +310,10 @@
           "clause_number": "1",
           "title": "SUBSCRIPTION GRANT AND ACCESS RIGHTS",
           "gt_category": "Intellectual Property",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "intellectual property"
+          ],
+          "category_correct": true,
           "gt_severity": "Safe",
           "predicted_severity": "Safe",
           "severity_correct": true,
@@ -326,29 +326,30 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines subscription access rights, granting a non-exclusive right to access and use the software or service in accordance with agreement terms."
+          "what_this_clause_means": "This clause defines subscription access rights, granting a non-exclusive right to access and use the software or service in accordance with agreement terms. License Scope: Non-exclusive, non-transferable subscription access right."
         },
         {
           "clause_number": "2",
           "title": "SERVICE AVAILABILITY AND SERVICE CREDITS",
           "gt_category": "Liability",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "liability"
+          ],
+          "category_correct": true,
           "gt_severity": "Moderate",
-          "predicted_severity": "Safe",
+          "predicted_severity": "High",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.6666666666666666,
           "omitted_claims": [
             "99.9% monthly service uptime target",
-            "5.0% service credit per 1% downtime below target",
             "Service credits are the sole and exclusive remedy for downtime"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": false,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
+          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Rates & Percentages: (99.9%), 99.9%, (5.0%), 1%."
         },
         {
           "clause_number": "3",
@@ -382,8 +383,8 @@
           ],
           "category_correct": true,
           "gt_severity": "High",
-          "predicted_severity": "Low",
-          "severity_correct": false,
+          "predicted_severity": "High",
+          "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
           "omission_rate": 1.0,
@@ -393,7 +394,7 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
+          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages. In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
         },
         {
           "clause_number": "5",
@@ -440,11 +441,11 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the exclusive legal forum and jurisdiction in California, designating the courts of California for resolving contract disputes."
+          "what_this_clause_means": "This clause establishes the exclusive legal forum and jurisdiction in California, designating the courts of California for resolving contract disputes. Jurisdiction & Venue: Exclusive jurisdiction in California."
         }
       ],
-      "category_accuracy": 0.6666666666666666,
-      "severity_accuracy": 0.3333333333333333
+      "category_accuracy": 1.0,
+      "severity_accuracy": 0.5
     },
     {
       "document_name": "new_doc_4_lettered_supplier_agreement.pdf",
@@ -457,8 +458,10 @@
           "clause_number": "Section A",
           "title": "Purchase Orders and Lead Times",
           "gt_category": "Payment",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
           "gt_severity": "Safe",
           "predicted_severity": "Safe",
           "severity_correct": true,
@@ -487,23 +490,24 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.6666666666666666,
           "omitted_claims": [
             "Unit component prices fixed for initial 12 months",
-            "Annual price increases capped at 5.0%",
             "Requires 60 days advance documented cost justification"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
+          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages. Limit Percentage: (5.0%). Cap Period / Timeframe: twelve months. In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
         },
         {
           "clause_number": "Section C",
           "title": "Product Warranty and Defect Remedies",
           "gt_category": "Liability",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "liability"
+          ],
+          "category_correct": true,
           "gt_severity": "Safe",
           "predicted_severity": "Safe",
           "severity_correct": true,
@@ -524,23 +528,22 @@
           "title": "Patent Infringement and Product Indemnification",
           "gt_category": "Liability",
           "predicted_categories": [
-            "intellectual property"
+            "liability"
           ],
-          "category_correct": false,
+          "category_correct": true,
           "gt_severity": "High",
           "predicted_severity": "High",
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.5,
           "omitted_claims": [
-            "Supplier must defend and indemnify Buyer, affiliates, and customers",
             "Covers third-party patent infringement claims and personal injury claims from manufacturing defects"
           ],
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines indemnity obligations, specifying who is financially responsible for defending lawsuits, paying legal defense expenses, and satisfying damages if a third party files a lawsuit."
+          "what_this_clause_means": "This clause defines indemnity obligations, specifying who is financially responsible for defending lawsuits, paying legal defense expenses, and satisfying damages if a third party files a lawsuit. Defense Duty: Obligated party must defend and hold the indemnified party harmless from covered claims. If a covered third-party claim is initiated, the indemnifying party must bear the financial defense and liability obligations."
         },
         {
           "clause_number": "Section E",
@@ -575,18 +578,17 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 1.0,
+          "omission_rate": 0.5,
           "omitted_claims": [
-            "Governed by substantive laws of England and Wales",
-            "Exclusive jurisdiction in the High Court of Justice in London"
+            "Governed by substantive laws of England and Wales"
           ],
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes."
+          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes. Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum."
         }
       ],
-      "category_accuracy": 0.5,
+      "category_accuracy": 1.0,
       "severity_accuracy": 0.5
     },
     {

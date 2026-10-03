@@ -290,10 +290,38 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Protection Period: Obligations survive for {', '.join(durations)} following agreement termination.")
         consequences = "Unauthorized disclosure constitutes a material breach of contractual confidentiality covenants."
 
-    elif any(k in t_lower for k in ["limitation of liability", "liability cap", "damages cap", "aggregate liability", "total liability under this agreement"]):
-        if any(c in t_lower for c in ["indemnif", "willful misconduct", "gross negligence"]):
-            what_means = "This clause places a strict financial ceiling on general damages recoverable under the agreement, with liabilities arising from indemnification, gross negligence, or willful misconduct remaining uncapped exceptions."
-            details_list.append("Uncapped Exceptions: Liabilities arising from indemnification, gross negligence, or willful misconduct are excluded from the financial liability cap.")
+    elif any(k in t_lower for k in [
+        "limitation of liability", "liability cap", "damages cap", "damages limitation",
+        "aggregate liability", "total liability", "total monetary liability", "monetary liability",
+        "shall not exceed", "shall exceed", "liability under this agreement"
+    ]) or ((category and category.lower() == "liability") and any(w in t_lower for w in ["cap", "exceed", "limit", "ceiling", "maximum", "total", "aggregate"])):
+        # Dynamically detect specifically present carve-outs/exceptions in this exact clause
+        found_exceptions = []
+        if any(w in t_lower for w in ["indemnif", "indemnity"]):
+            found_exceptions.append("indemnification")
+        if "gross negligence" in t_lower:
+            found_exceptions.append("gross negligence")
+        if any(w in t_lower for w in ["willful misconduct", "intentional misconduct"]):
+            found_exceptions.append("willful misconduct")
+        if any(w in t_lower for w in ["breach of confidentiality", "confidentiality obligations", "confidentiality"]):
+            found_exceptions.append("breach of confidentiality")
+        if any(w in t_lower for w in ["breach of data security", "data security", "security breach"]):
+            found_exceptions.append("breach of data security")
+        if "fraud" in t_lower:
+            found_exceptions.append("fraud")
+        if any(w in t_lower for w in ["intellectual property", "ip infringement"]):
+            found_exceptions.append("intellectual property claims")
+
+        if found_exceptions:
+            if len(found_exceptions) == 1:
+                exc_phrase = found_exceptions[0]
+            elif len(found_exceptions) == 2:
+                exc_phrase = f"{found_exceptions[0]} or {found_exceptions[1]}"
+            else:
+                exc_phrase = f"{', '.join(found_exceptions[:-1])}, or {found_exceptions[-1]}"
+
+            what_means = f"This clause places a strict financial ceiling on general damages recoverable under the agreement, with liabilities arising from {exc_phrase} remaining uncapped exceptions."
+            details_list.append(f"Uncapped Exceptions: Liabilities arising from {exc_phrase} are excluded from the financial liability cap.")
         else:
             what_means = "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages."
         obligations = "Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches."

@@ -417,6 +417,66 @@ def verify_and_ground_clause_narrative(
             grounding_notes.append("Corrected liability cap polarity: general damages are capped, while carved-out exceptions remain uncapped.")
 
     # -------------------------------------------------------------------------
+    # 4c. UNGROUNDED LIABILITY CAP EXCEPTION SANITIZATION
+    # -------------------------------------------------------------------------
+    if ("capped at" in s_lower or "shall not exceed" in s_lower or "aggregate liability" in s_lower or "limitation of liability" in s_lower or "liability cap" in s_lower):
+        ungrounded_exceptions = []
+        if ("indemnification" in what_this_clause_means.lower() or any("indemnification" in d.lower() for d in details_list)) and not any(k in s_lower for k in ["indemnif", "indemnity"]):
+            ungrounded_exceptions.append("indemnification")
+        if ("willful misconduct" in what_this_clause_means.lower() or any("willful misconduct" in d.lower() for d in details_list)) and not any(k in s_lower for k in ["willful misconduct", "intentional misconduct"]):
+            ungrounded_exceptions.append("willful misconduct")
+        if ("breach of confidentiality" in what_this_clause_means.lower() or any("breach of confidentiality" in d.lower() for d in details_list)) and not any(k in s_lower for k in ["confidentiality", "confidential"]):
+            ungrounded_exceptions.append("breach of confidentiality")
+
+        if ungrounded_exceptions:
+            grounded_exceptions = []
+            if any(k in s_lower for k in ["indemnif", "indemnity"]):
+                grounded_exceptions.append("indemnification")
+            if "gross negligence" in s_lower:
+                grounded_exceptions.append("gross negligence")
+            if any(k in s_lower for k in ["willful misconduct", "intentional misconduct"]):
+                grounded_exceptions.append("willful misconduct")
+            if any(k in s_lower for k in ["breach of confidentiality", "confidentiality"]):
+                grounded_exceptions.append("breach of confidentiality")
+
+            if grounded_exceptions:
+                if len(grounded_exceptions) == 1:
+                    grounded_phrase = grounded_exceptions[0]
+                elif len(grounded_exceptions) == 2:
+                    grounded_phrase = f"{grounded_exceptions[0]} or {grounded_exceptions[1]}"
+                else:
+                    grounded_phrase = f"{', '.join(grounded_exceptions[:-1])}, or {grounded_exceptions[-1]}"
+            else:
+                grounded_phrase = None
+
+            new_details = []
+            for d in details_list:
+                if "uncapped exceptions:" in d.lower():
+                    if grounded_phrase:
+                        new_details.append(f"Uncapped Exceptions: Liabilities arising from {grounded_phrase} are excluded from the financial liability cap.")
+                else:
+                    new_details.append(d)
+            details_list = new_details
+
+            if grounded_phrase:
+                what_this_clause_means = re.sub(
+                    r'with liabilities arising from [^\.\n]+? (?:are|remaining) uncapped exceptions',
+                    f'with liabilities arising from {grounded_phrase} remaining uncapped exceptions',
+                    what_this_clause_means,
+                    flags=re.IGNORECASE
+                )
+            else:
+                what_this_clause_means = re.sub(
+                    r', with liabilities arising from [^\.\n]+? (?:are|remaining) uncapped exceptions',
+                    '',
+                    what_this_clause_means,
+                    flags=re.IGNORECASE
+                )
+
+            warnings.append(f"Stripped ungrounded liability cap exception(s): {', '.join(ungrounded_exceptions)}.")
+            grounding_notes.append("Sanitized uncapped liability exceptions against source text.")
+
+    # -------------------------------------------------------------------------
     # 5. SPECIFICITY CHECK & GENERIC TEMPLATE REJECTION (Part 2)
     # -------------------------------------------------------------------------
     is_generic_boilerplate = (

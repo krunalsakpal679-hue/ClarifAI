@@ -49,6 +49,12 @@ def clean_legal_text(raw_text: str, preserve_page_markers: bool = True) -> Dict[
     rules_applied: List[str] = []
     text = raw_text
 
+    # 0. Clean OCR Glitch Characters / Unicode Replacement Glyphs
+    text_clean_chars = re.sub(r'[\ufffd\x00-\x08\x0b\x0c\x0e-\x1f]', ' ', text)
+    if text_clean_chars != text:
+        rules_applied.append("strip_ocr_glitch_chars")
+        text = text_clean_chars
+
     # 1. Normalize Line Endings (\r\n -> \n)
     text_crlf = REGEX_CRLF.sub("\n", text)
     if text_crlf != text:

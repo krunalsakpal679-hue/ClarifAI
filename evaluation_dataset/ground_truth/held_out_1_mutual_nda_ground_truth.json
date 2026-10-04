@@ -1,0 +1,91 @@
+{
+  "doc_id": "held_out_1_mutual_nda",
+  "title": "MUTUAL NONDISCLOSURE AGREEMENT",
+  "party_a": "Apex Dynamics Corp. (Disclosing Party)",
+  "party_b": "Zenith AI Labs LLC (Receiving Party)",
+  "reviewing_party": "Zenith AI Labs LLC",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. SCOPE OF CONFIDENTIAL INFORMATION",
+      "text": "1. SCOPE OF CONFIDENTIAL INFORMATION. Confidential Information encompasses all non-public technical and financial data disclosed by either party, provided it is marked confidential or reasonably understood as confidential.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 2,
+      "title": "2. EXCLUSIONS FROM CONFIDENTIALITY",
+      "text": "2. EXCLUSIONS FROM CONFIDENTIALITY. Confidential Information does not include information that is publicly known, already in the recipient's rightful possession without restriction, or independently developed without reference to the Disclosing Party's data.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Receiving Party",
+      "gt_numbers": [],
+      "gt_exceptions": [
+        "publicly known",
+        "rightful possession",
+        "independently developed"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. STANDARD OF CARE",
+      "text": "3. STANDARD OF CARE. Each party shall protect the other's Confidential Information with the same degree of care it uses for its own confidential assets, but not less than reasonable care.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 4,
+      "title": "4. COMPELLED DISCLOSURE",
+      "text": "4. COMPELLED DISCLOSURE. If Receiving Party is required by valid court order or subpoena to disclose Confidential Information, it shall provide prompt written notice to Disclosing Party to enable protective orders.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Receiving Party",
+      "gt_numbers": [],
+      "gt_exceptions": [
+        "court order",
+        "subpoena"
+      ]
+    },
+    {
+      "position": 5,
+      "title": "5. TERM AND SURVIVAL",
+      "text": "5. TERM AND SURVIVAL. This Agreement remains in effect for two (2) years, and nondisclosure obligations survive for three (3) years following termination, except trade secrets which survive indefinitely.",
+      "gt_category": "Term",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "two (2) years",
+        "three (3) years"
+      ],
+      "gt_exceptions": [
+        "trade secrets which survive indefinitely"
+      ]
+    },
+    {
+      "position": 6,
+      "title": "6. REMEDIES AND INJUNCTIVE RELIEF",
+      "text": "6. REMEDIES AND INJUNCTIVE RELIEF. Unauthorized disclosure causes irreparable harm for which monetary damages are inadequate, entitling Disclosing Party to seek immediate injunctive relief without posting bond.",
+      "gt_category": "Remedies",
+      "gt_severity": "High",
+      "gt_party_bound": "Receiving Party",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 7,
+      "title": "7. GOVERNING LAW AND VENUE",
+      "text": "7. GOVERNING LAW AND VENUE. This Agreement is governed by Delaware law, and all disputes must be brought exclusively in the state or federal courts located in New Castle County, Delaware.",
+      "gt_category": "Governing Law",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    }
+  ]
+}

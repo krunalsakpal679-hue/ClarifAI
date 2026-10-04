@@ -92,34 +92,34 @@ def generate_document_executive_summary(
         # Failure isolation test hook
         summarize_text("Document executive overview verification sentinel text.")
 
-        # 1. Document Title & Party Extraction
+        # 1. Document Title & Party Extraction (Dynamic regex-based, zero hardcoding)
         doc_title = document_title or ""
         all_text = (full_document_text + " " + " ".join([c.get("text", "") for c in clauses_list])).strip()
-        all_text_lower = all_text.lower()
 
-        if "cloud infrastructure consulting agreement" in all_text_lower:
-            doc_title = "Cloud Infrastructure Consulting Agreement"
-            parties_str = "Cascade Robotics Inc. (Client) and Vantage Point Cloud Solutions LLC (Consultant)"
-            scope_summary = "cloud infrastructure design, DevOps automation, and technical advisory services"
-        elif "strategic consulting services agreement" in all_text_lower or "strategic supply-chain" in all_text_lower:
-            doc_title = "Strategic Consulting Services Agreement"
-            parties_str = "Vantage Advisory Partners LLC (Consultant) and Vanguard Manufacturing Group (Client)"
-            scope_summary = "strategic supply-chain advisory and quarterly efficiency assessments"
-        elif "commercial lease agreement" in all_text_lower or "leased premises" in all_text_lower:
-            doc_title = "Commercial Lease Agreement"
-            parties_str = "Vanguard Commercial Properties LLC (Landlord) and Quantum Analytics Inc. (Tenant)"
-            scope_summary = "commercial lease of 2,500 sq ft office space at 450 Artisan Way, Suite 210, Boston, Massachusetts"
-        elif "master services agreement" in all_text_lower or "cloudscale" in all_text_lower or "enterprise solutions global" in all_text_lower:
-            doc_title = "Master Services Agreement, Enterprise Cloud Services"
-            parties_str = "CloudScale Technologies, Inc. (Vendor) and Enterprise Solutions Global Ltd. (Customer)"
-            scope_summary = "enterprise cloud infrastructure and platform services"
+        # Dynamically extract document title if not provided
+        if not doc_title:
+            title_match = re.search(r'([A-Z][A-Za-z0-9\s,\-\–—]{3,60}?\b(?:AGREEMENT|CONTRACT|LEASE|ADDENDUM|POLICY|TERMS OF SERVICE)\b)', all_text, re.IGNORECASE)
+            if title_match:
+                doc_title = title_match.group(1).strip()
+            else:
+                doc_title = "Commercial Agreement"
+
+        # Dynamically extract party names from contract preamble
+        party_pattern = re.search(r'(?:between|by and between|entered into by and between)\s+([A-Z][A-Za-z0-9\s,\.\-–—]+?)\s*(?:\((?:the\s+)?["“\']?([^)"”\']+)["”\']?\))?\s+and\s+([A-Z][A-Za-z0-9\s,\.\-–—]+?)\s*(?:\((?:the\s+)?["“\']?([^)"”\']+)["”\']?\))', all_text, re.IGNORECASE)
+        if party_pattern:
+            p1_name = party_pattern.group(1).strip().rstrip(",")
+            p1_role = party_pattern.group(2)
+            p2_name = party_pattern.group(3).strip().rstrip(",")
+            p2_role = party_pattern.group(4)
+
+            p1_str = f"{p1_name} ({p1_role})" if p1_role else p1_name
+            p2_str = f"{p2_name} ({p2_role})" if p2_role else p2_name
+            parties_str = f"{p1_str} and {p2_str}"
         else:
-            doc_title = doc_title or "Commercial Agreement"
             parties_str = "the contracting parties"
-            scope_summary = "commercial and operational deliverables"
 
-        # Purpose Statement
-        purpose_text = f"This {doc_title} establishes the legal and commercial terms between {parties_str} governing {scope_summary}."
+        # Dynamically summarize purpose statement
+        purpose_text = f"This {doc_title} establishes the legal and commercial terms between {parties_str}."
 
         # 2. Key Figures Table Assembly from Clauses (Part 5.2 / Gate 7)
         key_figures: List[Dict[str, Any]] = []

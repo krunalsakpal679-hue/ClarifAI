@@ -22,14 +22,25 @@ logger = logging.getLogger(__name__)
 
 ALLOWED_SEVERITIES = {'high', 'moderate', 'low', 'safe'}
 ALLOWED_CATEGORIES = {
+    'Scope of Services',
     'Payment',
+    'Confidentiality',
+    'Intellectual Property',
+    'Indemnification',
+    'Limitation of Liability',
+    'Term',
     'Termination',
     'Renewal',
-    'Confidentiality',
-    'Liability',
-    'Intellectual Property',
-    'Privacy',
     'Dispute Resolution',
+    'Governing Law',
+    'Restrictive Covenants',
+    'Property / Premises',
+    'Property Use',
+    'Maintenance',
+    'Alterations',
+    'General / Boilerplate',
+    'Privacy',
+    'Liability',
 }
 
 

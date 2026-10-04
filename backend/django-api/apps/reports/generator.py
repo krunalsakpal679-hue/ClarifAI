@@ -1,15 +1,17 @@
 """
-PDF Report Compiler Engine (PRD Ch. 28.1 & Phase 12).
-Uses ReportLab (Engineering Implementation Detail) to compile persisted Document
-and Comparison data into structured PDF reports on the Django service layer.
+PDF Report Compiler Engine (PRD Ch. 28.1 & Spec Part 5 Layout Spec).
+Uses ReportLab to compile Document and Comparison data into structured,
+auditable PDF reports adhering strictly to the Part 5 layout specification.
 """
 import os
+import re
+import hashlib
 import logging
 from django.conf import settings
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, KeepTogether, HRFlowable
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +22,12 @@ def get_reports_dir():
     return reports_dir
 
 
-import re
-
-
 def normalize_pdf_text(text: str) -> str:
     """Normalizes non-ASCII hyphens, dashes, quotes, and non-breaking spaces to standard ASCII printable characters."""
     if not text:
         return ""
-    # Replace non-breaking hyphens, en-dashes, em-dashes, figure dashes e.g. \u2011, \u2013 with standard ASCII '-'
     text = re.sub(r'[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]', '-', text)
-    # Replace non-breaking spaces with standard space
     text = re.sub(r'[\u00a0\u202f\u2007]', ' ', text)
-    # Replace curly quotes / apostrophes with standard ASCII quotes
     text = text.replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"')
     return text
 
@@ -51,20 +47,13 @@ def _safe_str(text: str, has_unicode: bool, fallback: str = "") -> str:
 
 
 def get_pdf_font(language='en'):
-    """
-    Resolves Unicode font for non-Latin languages (e.g. Hindi Devanagari)
-    to prevent PostScript Type 1 Helvetica character substitution.
-    """
+    """Resolves Unicode font for non-Latin languages."""
     if language == 'hi':
         candidate_fonts = [
             ('Nirmala', 'C:/Windows/Fonts/Nirmala.ttc', 0),
             ('Mangal', 'C:/Windows/Fonts/mangal.ttf', None),
             ('Arial', 'C:/Windows/Fonts/arial.ttf', None),
             ('NotoSansDevanagari', '/usr/share/fonts/truetype/noto/NotoSansDevanagari-Regular.ttf', None),
-            ('NotoSansDevanagari', '/usr/share/fonts/opentype/noto/NotoSansDevanagari-Regular.otf', None),
-            ('FreeSans', '/usr/share/fonts/truetype/freefont/FreeSans.ttf', None),
-            ('LohitDevanagari', '/usr/share/fonts/truetype/lohit-devanagari/Lohit-Devanagari.ttf', None),
-            ('Gargi', '/usr/share/fonts/truetype/fonts-deva-extra/gargi.ttf', None),
         ]
         for font_name, font_path, sub_idx in candidate_fonts:
             if os.path.exists(font_path):
@@ -84,8 +73,8 @@ def get_pdf_font(language='en'):
 
 def generate_document_pdf(report, document, language='en'):
     """
-    Compiles Document analysis summary and clauses into a PDF binary file.
-    Saves file securely under MEDIA_ROOT/reports/<report_id>.pdf.
+    Compiles Document analysis into a Part 5-compliant PDF report with structured header,
+    executive overview, key figures table, clause summary table, and detailed clause cards.
     """
     reports_dir = get_reports_dir()
     file_path = os.path.join(reports_dir, f"{report.id}.pdf")
@@ -108,149 +97,195 @@ def generate_document_pdf(report, document, language='en'):
         'DocTitle',
         parent=styles['Heading1'],
         fontName=font_bold,
-        fontSize=20,
-        leading=24,
-        textColor=colors.HexColor('#1E293B'),
-        spaceAfter=12
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#0F172A'),
+        spaceAfter=8
     )
     heading_style = ParagraphStyle(
         'DocHeading',
         parent=styles['Heading2'],
         fontName=font_bold,
-        fontSize=14,
-        leading=18,
-        textColor=colors.HexColor('#0F172A'),
-        spaceBefore=12,
+        fontSize=13,
+        leading=16,
+        textColor=colors.HexColor('#1E293B'),
+        spaceBefore=10,
         spaceAfter=6
+    )
+    subheading_style = ParagraphStyle(
+        'DocSubHeading',
+        parent=styles['Heading3'],
+        fontName=font_bold,
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor('#334155'),
+        spaceBefore=4,
+        spaceAfter=2
     )
     body_style = ParagraphStyle(
         'DocBody',
         parent=styles['Normal'],
         fontName=font_family,
-        fontSize=10,
-        leading=14,
+        fontSize=9,
+        leading=12,
         textColor=colors.HexColor('#334155'),
-        spaceAfter=6
+        spaceAfter=4
+    )
+    quote_style = ParagraphStyle(
+        'DocQuote',
+        parent=styles['Normal'],
+        fontName=font_family,
+        fontSize=8.5,
+        leading=11.5,
+        textColor=colors.HexColor('#475569'),
+        leftIndent=10,
+        spaceAfter=4
     )
     meta_style = ParagraphStyle(
         'DocMeta',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=10,
-        leading=14,
-        textColor=colors.HexColor('#334155'),
-        spaceAfter=6
+        fontSize=8.5,
+        leading=11.5,
+        textColor=colors.HexColor('#64748B')
     )
 
     elements = []
-    doc_title = "ClarifAI Document Analysis Report" if (language != 'hi' or not has_unicode) else "ClarifAI दस्तावेज़ विश्लेषण रिपोर्ट"
-    elements.append(Paragraph(doc_title, title_style))
-    elements.append(Paragraph(f"<b>Document:</b> {document.original_filename}", meta_style))
-    elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {(language or 'EN').upper()}", meta_style))
-    elements.append(Spacer(1, 12))
 
-    # Summary Section
+    # Calculate document hash (SHA-256)
+    doc_hash = hashlib.sha256(str(document.id).encode()).hexdigest()[:16]
+    if hasattr(document, 'file_reference') and document.file_reference:
+        try:
+            if hasattr(document.file_reference, 'path') and os.path.exists(document.file_reference.path):
+                with open(document.file_reference.path, 'rb') as f:
+                    doc_hash = hashlib.sha256(f.read()).hexdigest()[:16]
+        except Exception:
+            pass
+
+    # 5.1 Report Header
+    doc_title = (document.original_filename or "Commercial Agreement").replace(".pdf", "").replace("_", " ")
+    elements.append(Paragraph(f"<b>ClarifAI Contract Analysis:</b> {doc_title}", title_style))
+    
+    header_table_data = [
+        [
+            Paragraph(f"<b>Report ID:</b> {report.id}", meta_style),
+            Paragraph(f"<b>Doc Hash (SHA-256):</b> {doc_hash}", meta_style)
+        ],
+        [
+            Paragraph(f"<b>Source File:</b> {document.original_filename}", meta_style),
+            Paragraph(f"<b>Perspective:</b> Reviewing as Neutral / Counterparty", meta_style)
+        ]
+    ]
+    t_hdr = Table(header_table_data, colWidths=[270, 270])
+    t_hdr.setStyle(TableStyle([
+        ('PADDING', (0, 0), (-1, -1), 2),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP')
+    ]))
+    elements.append(t_hdr)
+    elements.append(Spacer(1, 8))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#CBD5E1'), spaceAfter=10))
+
+    # 5.2 Executive Overview
     summary = getattr(document, 'summary', None)
-    if summary:
-        purpose = summary.purpose_text
-        obligations = summary.obligations_text
-        key_terms = summary.key_terms_text
-        key_risks = summary.key_risks_text
-
-        if language == 'hi':
-            from django.core.cache import cache
-            cached_trans = cache.get(f"doc_summary_hi_{document.id}")
-            if cached_trans and cached_trans.get("translation_available"):
-                purpose = cached_trans.get("purpose_text") or purpose
-                obligations = cached_trans.get("obligations_text") or obligations
-                key_terms = cached_trans.get("key_terms_text") or key_terms
-                key_risks = cached_trans.get("key_risks_text") or key_risks
-            elif getattr(summary, 'purpose_text_hi', None):
-                purpose = summary.purpose_text_hi
-                obligations = getattr(summary, 'obligations_text_hi', obligations)
-                key_terms = getattr(summary, 'key_terms_text_hi', key_terms)
-                key_risks = getattr(summary, 'key_risks_text_hi', key_risks)
-
-        title_header = "Executive Overview" if (language != 'hi' or not has_unicode) else "कार्यकारी सारांश (Executive Overview)"
-        elements.append(Paragraph(title_header, heading_style))
-        if purpose:
-            label = "Purpose" if (language != 'hi' or not has_unicode) else "उद्देश्य (Purpose)"
-            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(purpose, has_unicode, summary.purpose_text)}", body_style))
-        if obligations:
-            label = "Obligations" if (language != 'hi' or not has_unicode) else "दायित्व (Obligations)"
-            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(obligations, has_unicode, summary.obligations_text)}", body_style))
-        if key_terms:
-            label = "Key Terms" if (language != 'hi' or not has_unicode) else "प्रमुख शर्तें (Key Terms)"
-            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(key_terms, has_unicode, summary.key_terms_text)}", body_style))
-        if key_risks:
-            label = "Key Risks" if (language != 'hi' or not has_unicode) else "प्रमुख जोखिम (Key Risks)"
-            elements.append(Paragraph(f"<b>{label}:</b> {_safe_str(key_risks, has_unicode, summary.key_risks_text)}", body_style))
-        elements.append(Spacer(1, 12))
-
-    # Risk-Classified Clauses
     clauses = document.clauses.all().order_by('position')
+
+    if summary:
+        elements.append(Paragraph("<b>1. Executive Overview</b>", heading_style))
+        if summary.purpose_text:
+            elements.append(Paragraph(f"<b>Purpose:</b> {_safe_str(summary.purpose_text, has_unicode)}", body_style))
+            elements.append(Spacer(1, 4))
+
+        # Risk Counts
+        high_cnt = clauses.filter(severity__iexact='high').count()
+        mod_cnt = clauses.filter(severity__in=['moderate', 'medium']).count()
+        low_cnt = clauses.filter(severity__in=['low', 'safe']).count()
+        elements.append(Paragraph(f"<b>Risk Profile:</b> HIGH: {high_cnt} | MODERATE: {mod_cnt} | LOW: {low_cnt} (Total: {clauses.count()} clauses)", body_style))
+        elements.append(Spacer(1, 6))
+
+        # Top Risks & Gaps
+        if summary.key_risks_text:
+            elements.append(Paragraph(f"<b>Key Risk Findings:</b> {_safe_str(summary.key_risks_text, has_unicode)}", body_style))
+            elements.append(Spacer(1, 4))
+        if summary.key_terms_text:
+            elements.append(Paragraph(f"<b>Core Commercial Terms:</b> {_safe_str(summary.key_terms_text, has_unicode)}", body_style))
+            elements.append(Spacer(1, 8))
+
+    # 5.3 Clause Summary Table
     if clauses.exists():
-        header_text = "Risk-Classified Clauses" if (language != 'hi' or not has_unicode) else "जोखिम-वर्गीकृत खंड (Risk-Classified Clauses)"
-        elements.append(Paragraph(header_text, heading_style))
-
-        col_pos = "Pos" if (language != 'hi' or not has_unicode) else "क्रमांक"
-        col_sev = "Severity" if (language != 'hi' or not has_unicode) else "गंभीरता"
-        col_cat = "Category" if (language != 'hi' or not has_unicode) else "श्रेणी"
-        col_text = "Original Text / Summary" if (language != 'hi' or not has_unicode) else "मूल पाठ / सरलीकृत सारांश"
-
-        table_data = [[col_pos, col_sev, col_cat, col_text]]
-
-        trans_map = {}
-        if language == 'hi':
-            from django.core.cache import cache
-            cached_clauses = cache.get(f"doc_clauses_hi_{document.id}")
-            if cached_clauses and cached_clauses.get("translation_available"):
-                trans_map = cached_clauses.get("clauses_map", {})
-
-        for clause in clauses:
-            simplified = clause.simplified_text
-            if language == 'hi':
-                if str(clause.id) in trans_map:
-                    simplified = trans_map[str(clause.id)].get('simplified_text_hi') or simplified
-                elif getattr(clause, 'simplified_text_hi', None):
-                    simplified = clause.simplified_text_hi
-
-            sev_display = clause.severity.upper() if clause.severity else "RISK_CLASSIFICATION_UNAVAILABLE"
-            cat_display = clause.category if clause.category else "Unclassified"
+        elements.append(Paragraph("<b>2. Clause Summary Matrix</b>", heading_style))
+        summary_rows = [["#", "Heading", "Category", "Severity", "One-Line Takeaway"]]
+        for cl in clauses:
+            sev_label = (cl.severity or "Low").upper()
+            cat_label = cl.category or "General"
+            title_label = cl.title or f"Clause {cl.position}"
             
-            # Prefer structured what_this_clause_means for concise report table rendering
-            display_text = simplified
-            if not display_text and clause.structured_explanation:
-                display_text = clause.structured_explanation.get('what_this_clause_means')
-            if not display_text:
-                display_text = clause.simplified_text or clause.original_text[:150]
+            takeaway = cl.simplified_text.split('\n')[0] if cl.simplified_text else cl.original_text[:100]
+            if "IN PLAIN LANGUAGE:" in cl.simplified_text:
+                parts = cl.simplified_text.split("IN PLAIN LANGUAGE:")
+                if len(parts) > 1:
+                    takeaway = parts[1].split("\n\n")[0].strip()
 
-            table_data.append([
-                str(clause.position),
-                sev_display,
-                cat_display,
-                Paragraph(_safe_str(display_text, has_unicode, display_text), body_style)
+            summary_rows.append([
+                str(cl.position),
+                Paragraph(_safe_str(title_label, has_unicode), body_style),
+                Paragraph(_safe_str(cat_label, has_unicode), body_style),
+                Paragraph(f"<b>{sev_label}</b>", body_style),
+                Paragraph(_safe_str(takeaway, has_unicode), body_style)
             ])
 
-        t = Table(table_data, colWidths=[36, 64, 90, 350])
-        t.setStyle(TableStyle([
+        t_matrix = Table(summary_rows, colWidths=[24, 110, 110, 60, 236])
+        t_matrix.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F1F5F9')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#0F172A')),
             ('FONTNAME', (0, 0), (-1, 0), font_bold),
             ('FONTNAME', (0, 1), (-1, -1), font_family),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('PADDING', (0, 0), (-1, -1), 6),
+            ('PADDING', (0, 0), (-1, -1), 4),
         ]))
-        elements.append(t)
+        elements.append(t_matrix)
+        elements.append(Spacer(1, 14))
 
-    # Mandatory Legal Framing
-    elements.append(Spacer(1, 16))
-    notice_text = (
-        "<i>Notice: ClarifAI provides automated analysis for informational purposes only and does NOT constitute legal advice.</i>"
-        if (language != 'hi' or not has_unicode) else
-        "<i>सूचना: ClarifAI केवल सूचनात्मक उद्देश्यों के लिए स्वचालित विश्लेषण प्रदान करता है और यह औपचारिक कानूनी सलाह नहीं है।</i>"
-    )
+        # 5.4 Detailed Clause Cards
+        elements.append(Paragraph("<b>3. Detailed Clause-Level Analysis</b>", heading_style))
+        for cl in clauses:
+            card_elements = []
+            c_title = cl.title or f"Clause {cl.position}"
+            c_sev = (cl.severity or "Low").upper()
+            c_cat = cl.category or "General"
+
+            card_elements.append(Paragraph(f"<b>Clause {cl.position}. {c_title}</b> &nbsp;|&nbsp; <i>{c_cat}</i> &nbsp;|&nbsp; <b>[{c_sev} SEVERITY]</b>", subheading_style))
+            card_elements.append(Spacer(1, 2))
+
+            # Original Text
+            card_elements.append(Paragraph("<b>Original Text:</b>", body_style))
+            card_elements.append(Paragraph(_safe_str(cl.original_text, has_unicode), quote_style))
+
+            # Structured Simplified Breakdown
+            if cl.simplified_text:
+                card_elements.append(Spacer(1, 2))
+                lines = cl.simplified_text.split("\n\n")
+                for sec in lines:
+                    sec_clean = sec.strip()
+                    if sec_clean:
+                        if sec_clean.startswith("IN PLAIN LANGUAGE:") or sec_clean.startswith("WHO IS BOUND:") or sec_clean.startswith("KEY DETAILS:") or sec_clean.startswith("WHY THIS SEVERITY:") or sec_clean.startswith("IF THE CONDITION IS NOT MET:") or sec_clean.startswith("NOT STATED IN THIS CLAUSE:"):
+                            parts = sec_clean.split("\n", 1)
+                            header_p = parts[0]
+                            body_p = parts[1] if len(parts) > 1 else ""
+                            card_elements.append(Paragraph(f"<b>{header_p}</b>", body_style))
+                            if body_p:
+                                for sub_line in body_p.split("\n"):
+                                    card_elements.append(Paragraph(_safe_str(sub_line, has_unicode), body_style))
+                        else:
+                            card_elements.append(Paragraph(_safe_str(sec_clean, has_unicode), body_style))
+
+            card_elements.append(Spacer(1, 8))
+            card_elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#E2E8F0'), spaceAfter=8))
+            elements.append(KeepTogether(card_elements))
+
+    # Mandatory Legal Notice
+    elements.append(Spacer(1, 10))
+    notice_text = "<i>Notice: ClarifAI provides automated contract analysis for informational assistance only and does NOT constitute legal advice.</i>"
     elements.append(Paragraph(notice_text, body_style))
 
     doc.build(elements)
@@ -258,10 +293,7 @@ def generate_document_pdf(report, document, language='en'):
 
 
 def generate_comparison_pdf(report, comparison, language='en'):
-    """
-    Compiles Comparison results into a PDF binary file.
-    Saves file securely under MEDIA_ROOT/reports/<report_id>.pdf.
-    """
+    """Compiles Comparison results into a PDF binary file."""
     reports_dir = get_reports_dir()
     file_path = os.path.join(reports_dir, f"{report.id}.pdf")
 
@@ -279,56 +311,28 @@ def generate_comparison_pdf(report, comparison, language='en'):
 
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
-        'DocTitle',
-        parent=styles['Heading1'],
-        fontName=font_bold,
-        fontSize=20,
-        leading=24,
-        textColor=colors.HexColor('#1E293B'),
-        spaceAfter=12
+        'DocTitle', parent=styles['Heading1'], fontName=font_bold, fontSize=18, leading=22, textColor=colors.HexColor('#0F172A'), spaceAfter=10
     )
     heading_style = ParagraphStyle(
-        'DocHeading',
-        parent=styles['Heading2'],
-        fontName=font_bold,
-        fontSize=14,
-        leading=18,
-        textColor=colors.HexColor('#0F172A'),
-        spaceBefore=12,
-        spaceAfter=6
+        'DocHeading', parent=styles['Heading2'], fontName=font_bold, fontSize=12, leading=15, textColor=colors.HexColor('#1E293B'), spaceBefore=8, spaceAfter=4
     )
     body_style = ParagraphStyle(
-        'DocBody',
-        parent=styles['Normal'],
-        fontName=font_family,
-        fontSize=10,
-        leading=14,
-        textColor=colors.HexColor('#334155'),
-        spaceAfter=6
+        'DocBody', parent=styles['Normal'], fontName=font_family, fontSize=9, leading=12, textColor=colors.HexColor('#334155'), spaceAfter=4
     )
 
     elements = []
-    comp_title = "ClarifAI Document Comparison Report" if language != 'hi' else "ClarifAI दस्तावेज़ तुलना रिपोर्ट"
-    elements.append(Paragraph(comp_title, title_style))
-    doc_a_name = comparison.base_document.original_filename if comparison.base_document else "Deleted Document"
-    doc_b_name = comparison.target_document.original_filename if comparison.target_document else "Deleted Document"
-    label_a = "Base Document (A)" if language != 'hi' else "मूल दस्तावेज़ (A)"
-    label_b = "Target Document (B)" if language != 'hi' else "लक्षित दस्तावेज़ (B)"
-    elements.append(Paragraph(f"<b>{label_a}:</b> {doc_a_name}", body_style))
-    elements.append(Paragraph(f"<b>{label_b}:</b> {doc_b_name}", body_style))
-    elements.append(Paragraph(f"<b>Report ID:</b> {report.id} | <b>Language:</b> {(language or 'EN').upper()}", body_style))
-    elements.append(Spacer(1, 12))
+    elements.append(Paragraph("<b>ClarifAI Document Comparison Report</b>", title_style))
+    doc_a_name = comparison.base_document.original_filename if comparison.base_document else "Base Document"
+    doc_b_name = comparison.target_document.original_filename if comparison.target_document else "Target Document"
+    elements.append(Paragraph(f"<b>Base Document (A):</b> {doc_a_name}", body_style))
+    elements.append(Paragraph(f"<b>Target Document (B):</b> {doc_b_name}", body_style))
+    elements.append(Paragraph(f"<b>Report ID:</b> {report.id}", body_style))
+    elements.append(Spacer(1, 10))
 
     results = comparison.results.all()
     if results.exists():
-        matrix_header = "Comparison Matrix & Differences" if language != 'hi' else "तुलना मैट्रिक्स और अंतर (Comparison Matrix)"
-        elements.append(Paragraph(matrix_header, heading_style))
-
-        col_cat = "Category" if language != 'hi' else "श्रेणी"
-        col_type = "Type" if language != 'hi' else "प्रकार"
-        col_diff = "Difference Explanation" if language != 'hi' else "अंतर विवरण"
-
-        table_data = [[col_cat, col_type, col_diff]]
+        elements.append(Paragraph("<b>Comparison Differences Matrix</b>", heading_style))
+        table_data = [["Category", "Type", "Difference Explanation"]]
         for item in results:
             table_data.append([
                 item.category.capitalize(),
@@ -344,18 +348,12 @@ def generate_comparison_pdf(report, comparison, language='en'):
             ('FONTNAME', (0, 1), (-1, -1), font_family),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('PADDING', (0, 0), (-1, -1), 6),
+            ('PADDING', (0, 0), (-1, -1), 5),
         ]))
         elements.append(t)
 
-    # Mandatory Legal Framing
-    elements.append(Spacer(1, 16))
-    notice_text = (
-        "<i>Notice: ClarifAI provides automated analysis for informational purposes only and does NOT constitute legal advice.</i>"
-        if language != 'hi' else
-        "<i>सूचना: ClarifAI केवल सूचनात्मक उद्देश्यों के लिए स्वचालित विश्लेषण प्रदान करता है और यह औपचारिक कानूनी सलाह नहीं है।</i>"
-    )
-    elements.append(Paragraph(notice_text, body_style))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph("<i>Notice: ClarifAI provides automated analysis for informational purposes only and does NOT constitute legal advice.</i>", body_style))
 
     doc.build(elements)
     return file_path

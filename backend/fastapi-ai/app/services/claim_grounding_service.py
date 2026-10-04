@@ -59,7 +59,7 @@ INVENTED_REMEDY_PATTERNS = [
 LEGAL_MECHANISM_RULES = [
     {
         "name": "termination_for_cause",
-        "narrative_pattern": re.compile(r'\b(?:terminat\w*\s+for\s+cause|material\s+breach|default\s+termination)\b', re.IGNORECASE),
+        "narrative_pattern": re.compile(r'\b(?:terminat\w*\s+for\s+cause|default\s+termination)\b', re.IGNORECASE),
         "source_required_terms": ["cause", "material breach", "materially breach", "default", "fails to cure", "breach of any"],
         "replacement_phrase": "termination for convenience",
         "note": "Stripped ungrounded 'termination for cause' claim (source only specifies termination for convenience / notice)."
@@ -101,9 +101,9 @@ LEGAL_MECHANISM_RULES = [
     },
     {
         "name": "assignment_restriction",
-        "narrative_pattern": re.compile(r'\b(?:prohibit\w*\s+(?:[a-z\s]+?\s+)?from\s+assigning|restricts?\s+assignment|not\s+assign|sublet\w*|underlet\w*|cannot\s+assign|assign\w*)\b', re.IGNORECASE),
+        "narrative_pattern": re.compile(r'\b(?:prohibit\w*\s+(?:[a-z\s]+?\s+)?from\s+assigning|restricts?\s+assignment|not\s+assign|sublet\w*|underlet\w*|cannot\s+assign)\b', re.IGNORECASE),
         "source_required_terms": ["assign", "transfer", "underlet", "sublet", "sub-let", "convey"],
-        "replacement_phrase": "operational performance",
+        "replacement_phrase": "transfer restriction",
         "note": "Stripped ungrounded 'assignment restriction' claim (absent from source clause)."
     },
     {
@@ -592,6 +592,21 @@ def verify_and_ground_clause_narrative(
                 obligations += " Transfer of proprietary rights is contingent upon subscriber making full payment."
                 details_list.append("Payment Condition: Transfer of ownership and rights is effective upon receipt of payment.")
                 grounding_notes.append("Added omitted material condition: 'upon receipt of payment'.")
+
+    def _clean_narrative_syntax(txt: str) -> str:
+        if not txt:
+            return ""
+        txt = re.sub(r',\s*,+', ',', txt)
+        txt = re.sub(r'\s+,\s*', ', ', txt)
+        txt = re.sub(r'\s+and\s*\.', '.', txt, flags=re.IGNORECASE)
+        txt = re.sub(r',\s*\.', '.', txt)
+        txt = re.sub(r'\s{2,}', ' ', txt)
+        return txt.strip()
+
+    what_this_clause_means = _clean_narrative_syntax(what_this_clause_means)
+    obligations = _clean_narrative_syntax(obligations)
+    consequences = _clean_narrative_syntax(consequences)
+    details_list = [_clean_narrative_syntax(d) for d in details_list if _clean_narrative_syntax(d)]
 
     return {
         "what_this_clause_means": what_this_clause_means,

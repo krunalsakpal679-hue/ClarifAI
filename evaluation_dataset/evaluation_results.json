@@ -34,7 +34,7 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines the employment/engagement position, job responsibilities, reporting structure, and performance deliverables agreed upon by the parties. The Obligated Party is obligated to perform the agreed deliverables, duties, and professional tasks as authorized by the Counterparty. Position / Role: Chief Technology Officer reporting directly to the Chief Executive Officer and the Board of. Subject Domain: Biometric identity verification and cryptography."
+          "what_this_clause_means": "This clause defines the employment position, job responsibilities, reporting structure, and professional duties agreed upon by the parties. The Obligated Party is obligated to perform the agreed executive duties, responsibilities, and professional tasks as authorized by the Counterparty. Position / Role: Chief Technology Officer reporting directly to the Chief Executive Officer and the Board of. Subject Domain: Biometric identity verification and cryptography."
         },
         {
           "clause_number": "2",
@@ -96,7 +96,7 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause restricts parties from poaching employees or engaging in competing commercial activities during and after the contractual relationship. The Obligated Party agrees not to recruit, solicit, or hire employees of the other party, nor engage in directly competing business within designated territories. Geographic Scope / Jurisdiction: North America. Subject Domain: Biometric identity verification and cryptography."
+          "what_this_clause_means": "This clause restricts parties from engaging in directly competing commercial activities during and after the contractual relationship. The Obligated Party agrees not to engage in or advise directly competing business within designated territories. Geographic Scope / Jurisdiction: North America. Subject Domain: Biometric identity verification and cryptography."
         },
         {
           "clause_number": "5",
@@ -610,7 +610,7 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Financial Terms: rs,. Replacement Value: rs,."
+          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Financial Terms: rs. Replacement Value: rs."
         },
         {
           "clause_number": "3",

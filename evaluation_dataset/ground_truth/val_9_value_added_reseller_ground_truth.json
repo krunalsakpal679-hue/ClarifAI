@@ -1,0 +1,52 @@
+{
+  "doc_id": "val_9_value_added_reseller",
+  "title": "VALUE-ADDED RESELLER AND DISTRIBUTION AGREEMENT",
+  "party_a": "CyberShield Core Systems Inc. (Vendor)",
+  "party_b": "Summit Channel Partners LLC (Reseller)",
+  "reviewing_party": "Summit Channel Partners LLC",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. APPOINTMENT OF RESELLER AND TERRITORY",
+      "text": "1. APPOINTMENT OF RESELLER AND TERRITORY. Vendor appoints Reseller as a non-exclusive distributor of products within the Western European commercial territory.",
+      "gt_category": "Scope of Services",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": []
+    },
+    {
+      "position": 2,
+      "title": "2. RESELLER DISCOUNTS AND PAYMENT CADENCE",
+      "text": "2. RESELLER DISCOUNTS AND PAYMENT CADENCE. Reseller receives a thirty percent (30%) discount off list price, remitting net payment within sixty (60) days of invoice.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Reseller",
+      "gt_numbers": [
+        "thirty percent (30%)",
+        "sixty (60) days"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. MINIMUM ANNUAL SALES QUOTA",
+      "text": "3. MINIMUM ANNUAL SALES QUOTA. Reseller shall achieve annual sales of $500,000.00 USD to maintain tier-one partner status and preferential pricing.",
+      "gt_category": "General / Boilerplate",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Reseller",
+      "gt_numbers": [
+        "$500,000.00"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. TERMINATION FOR CAUSE OR INACTIVITY",
+      "text": "4. TERMINATION FOR CAUSE OR INACTIVITY. Vendor may terminate upon sixty (60) days notice if Reseller fails to meet minimum sales quotas for two consecutive quarters.",
+      "gt_category": "Termination",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Vendor",
+      "gt_numbers": [
+        "sixty (60) days"
+      ]
+    }
+  ]
+}

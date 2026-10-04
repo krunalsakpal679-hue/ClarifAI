@@ -18,9 +18,12 @@ from apps.chat.models import ChatMessage, ChatSession, MessageRole
 from apps.documents.models import Document, DocumentStatus
 from services.ai_client.exceptions import AIServiceUnavailableError
 
+from django.test import override_settings
+
 User = get_user_model()
 
 
+@override_settings(AI_SERVICE_USE_MOCK=True)
 class ChatEndpointsTestCase(APITestCase):
 
     def setUp(self):

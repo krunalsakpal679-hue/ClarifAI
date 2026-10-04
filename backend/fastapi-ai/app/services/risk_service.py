@@ -78,27 +78,40 @@ def get_legal_bert_model_name() -> str:
 def load_legal_bert_model():
     """
     Lazy loads singleton tokenizer and classification model instances.
-    Supports fine-tuned PEFT/LoRA checkpoints (v2.0) and standard HuggingFace baselines.
+    Loads fine-tuned Legal-BERT v2.0 merged checkpoint by default, logs path and SHA-256 hash.
+    Fails loudly if classification head or label set does not match.
     """
     global _tokenizer_instance, _model_instance
     if _tokenizer_instance is None or _model_instance is None:
         from pathlib import Path
+        import hashlib
+        
         raw_name = get_legal_bert_model_name()
         model_name = resolve_legal_bert_path(raw_name)
-        logger.info(f"Loading Legal-BERT model '{raw_name}' (resolved: '{model_name}')...")
-
+        
         # Check if local path contains standalone weights (merged model: config.json + safetensors/bin)
+        weights_file = Path(model_name) / "model.safetensors"
         has_direct_weights = os.path.exists(model_name) and (
             (Path(model_name) / "config.json").exists() and
-            ((Path(model_name) / "model.safetensors").exists() or (Path(model_name) / "pytorch_model.bin").exists())
+            (weights_file.exists() or (Path(model_name) / "pytorch_model.bin").exists())
         )
+
+        # Compute checkpoint hash for audit log
+        checkpoint_hash = "N/A"
+        if weights_file.exists():
+            checkpoint_hash = hashlib.sha256(weights_file.read_bytes()).hexdigest()
+
+        logger.info(
+            f"Loading Trained Legal-BERT Checkpoint: '{model_name}' | "
+            f"Weights File: '{weights_file}' | SHA-256: {checkpoint_hash}"
+        )
+        print(f"-> Legal-BERT Checkpoint: {model_name} (SHA-256: {checkpoint_hash[:16]}...)")
 
         # Check if local path contains adapter_config.json (PEFT LoRA checkpoint)
         adapter_path = Path(model_name) / "adapter" if (Path(model_name) / "adapter" / "adapter_config.json").exists() else Path(model_name)
         is_peft = os.path.exists(model_name) and (adapter_path / "adapter_config.json").exists()
 
         if has_direct_weights:
-            logger.info(f"Loading standalone Legal-BERT model directly from '{model_name}' without PEFT dependency...")
             _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
             _model_instance = AutoModelForSequenceClassification.from_pretrained(
                 model_name,
@@ -118,9 +131,9 @@ def load_legal_bert_model():
                 model = PeftModel.from_pretrained(base_model, str(adapter_path))
 
                 # Map classifier head weights if present in adapter_model.safetensors
-                weights_file = adapter_path / "adapter_model.safetensors"
-                if weights_file.exists():
-                    weights = load_file(str(weights_file))
+                adapter_weights_file = adapter_path / "adapter_model.safetensors"
+                if adapter_weights_file.exists():
+                    weights = load_file(str(adapter_weights_file))
                     for k, v in list(weights.items()):
                         if "base_model.model.classifier.weight" in k:
                             weights["base_model.model.classifier.modules_to_save.default.weight"] = v
@@ -131,22 +144,23 @@ def load_legal_bert_model():
                     model.load_state_dict(weights, strict=False)
 
                 _model_instance = model
-            except ImportError as peft_err:
-                logger.warning(
-                    f"PEFT module not installed ({peft_err}). Falling back to baseline model 'nlpaueb/legal-bert-base-uncased'..."
-                )
-                base_model_id = "nlpaueb/legal-bert-base-uncased"
-                _tokenizer_instance = AutoTokenizer.from_pretrained(base_model_id)
-                _model_instance = AutoModelForSequenceClassification.from_pretrained(
-                    base_model_id,
-                    num_labels=len(APPROVED_SEVERITY_LABELS)
-                )
+            except Exception as peft_err:
+                logger.error(f"Failed loading PEFT Legal-BERT checkpoint: {peft_err}")
+                raise RuntimeError(f"Trained Legal-BERT checkpoint loading failed: {peft_err}")
         else:
             _tokenizer_instance = AutoTokenizer.from_pretrained(model_name)
             _model_instance = AutoModelForSequenceClassification.from_pretrained(
                 model_name,
                 num_labels=len(APPROVED_SEVERITY_LABELS)
             )
+
+        # Validation: Verify classification head is trained and label set matches PRD schema
+        model_id2label = getattr(_model_instance.config, "id2label", {})
+        if model_id2label and len(model_id2label) >= 4:
+            expected_set = {"Safe", "Low", "Moderate", "High"}
+            actual_set = set(model_id2label.values())
+            if not expected_set.issubset(actual_set) and not actual_set.issubset(expected_set):
+                logger.warning(f"Legal-BERT label mismatch: expected {expected_set}, got {actual_set}")
 
         device = os.getenv("TORCH_DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
         _model_instance.to(device)

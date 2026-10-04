@@ -11,6 +11,7 @@ and new_doc_3_saas_terms_of_service.pdf SIMULTANEOUSLY in parallel threads exhib
 import concurrent.futures
 import os
 import re
+from pathlib import Path
 import fitz
 import pytest
 
@@ -55,9 +56,10 @@ def process_pdf_pipeline(pdf_path: str):
 
 def test_concurrent_three_document_isolation():
     """Concurrently processes MSA, Employment Agreement, and SaaS ToS and asserts zero cross-contamination."""
-    msa_path = "sample_documents/Sample_Master_Services_Agreement.pdf"
-    emp_path = "evaluation_dataset/documents/new_doc_1_employment_agreement.pdf"
-    saas_path = "evaluation_dataset/documents/new_doc_3_saas_terms_of_service.pdf"
+    repo_root = Path(__file__).resolve().parent.parent.parent.parent
+    msa_path = str(repo_root / "sample_documents" / "Sample_Master_Services_Agreement.pdf")
+    emp_path = str(repo_root / "evaluation_dataset" / "documents" / "new_doc_1_employment_agreement.pdf")
+    saas_path = str(repo_root / "evaluation_dataset" / "documents" / "new_doc_3_saas_terms_of_service.pdf")
 
     assert os.path.exists(msa_path), f"Missing {msa_path}"
     assert os.path.exists(emp_path), f"Missing {emp_path}"

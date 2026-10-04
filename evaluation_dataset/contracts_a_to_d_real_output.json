@@ -1,0 +1,1220 @@
+{
+  "Contract A": {
+    "contract_id": "Contract A",
+    "title": "Cloud Infrastructure Consulting Agreement",
+    "sha256": "c403d9f7c8b77d1797cae5e3ee0c9b1177dcbcc60688edb9f681a691f16206fd",
+    "reviewing_party": "Cascade Robotics Inc.",
+    "summary": {
+      "success": true,
+      "summary_status": "AVAILABLE",
+      "purpose_text": "This CLOUD INFRASTRUCTURE CONSULTING AGREEMENT establishes the legal and commercial terms between the contracting parties.",
+      "obligations_text": "Both parties are obligated to perform their respective covenants, payment schedules, and compliance duties as specified in the CLOUD INFRASTRUCTURE CONSULTING AGREEMENT.",
+      "key_terms_text": "Payment Window: 45 days from invoice date (Clause 2); Late Interest Rate: 2.0% per month on past due balance until paid (Clause 2); Liability Cap Amount: Total fees paid by Client in prior 12 months (Clause 6); Term Duration: 2 years from Effective Date (Clause 7); Renewal Terms: No auto-renewal; terminates unless new written agreement is executed (Clause 7); Cause Termination: Immediate termination upon written notice for material breach (Clause 8)",
+      "key_risks_text": "No high-severity legal risks were identified in this document.",
+      "key_figures": [
+        {
+          "item": "Payment Window",
+          "value": "45 days from invoice date",
+          "clause": "2"
+        },
+        {
+          "item": "Late Interest Rate",
+          "value": "2.0% per month on past due balance until paid",
+          "clause": "2"
+        },
+        {
+          "item": "Liability Cap Amount",
+          "value": "Total fees paid by Client in prior 12 months",
+          "clause": "6"
+        },
+        {
+          "item": "Term Duration",
+          "value": "2 years from Effective Date",
+          "clause": "7"
+        },
+        {
+          "item": "Renewal Terms",
+          "value": "No auto-renewal; terminates unless new written agreement is executed",
+          "clause": "7"
+        },
+        {
+          "item": "Cause Termination",
+          "value": "Immediate termination upon written notice for material breach",
+          "clause": "8"
+        },
+        {
+          "item": "Convenience Termination",
+          "value": "30 days' prior written notice for convenience",
+          "clause": "8"
+        },
+        {
+          "item": "Exclusive Forum",
+          "value": "state and federal courts located in New York County, New York",
+          "clause": "9"
+        },
+        {
+          "item": "Restriction Duration",
+          "value": "twenty-four (24) months",
+          "clause": "10"
+        },
+        {
+          "item": "Governing Law",
+          "value": "laws of the State of New York, without regard to its conflict of laws principles",
+          "clause": "11"
+        }
+      ],
+      "top_risks": [],
+      "gaps": [
+        "Total liability cap has no carve-outs for indemnity, confidentiality, or willful misconduct.",
+        "No cure period provided for immediate termination upon material breach.",
+        "No data return, export, or deletion commitments upon contract termination.",
+        "Non-compete and non-solicitation covenants bind only the Consultant (unilateral restrictive covenant).",
+        "Signature blocks are blank and unexecuted in source document."
+      ],
+      "risk_counts": {
+        "HIGH": 0,
+        "MEDIUM": 0,
+        "LOW": 12,
+        "REVIEW": 0
+      },
+      "structured_overview": {
+        "purpose": "This CLOUD INFRASTRUCTURE CONSULTING AGREEMENT establishes the legal and commercial terms between the contracting parties.",
+        "key_figures": [
+          {
+            "item": "Payment Window",
+            "value": "45 days from invoice date",
+            "clause": "2"
+          },
+          {
+            "item": "Late Interest Rate",
+            "value": "2.0% per month on past due balance until paid",
+            "clause": "2"
+          },
+          {
+            "item": "Liability Cap Amount",
+            "value": "Total fees paid by Client in prior 12 months",
+            "clause": "6"
+          },
+          {
+            "item": "Term Duration",
+            "value": "2 years from Effective Date",
+            "clause": "7"
+          },
+          {
+            "item": "Renewal Terms",
+            "value": "No auto-renewal; terminates unless new written agreement is executed",
+            "clause": "7"
+          },
+          {
+            "item": "Cause Termination",
+            "value": "Immediate termination upon written notice for material breach",
+            "clause": "8"
+          },
+          {
+            "item": "Convenience Termination",
+            "value": "30 days' prior written notice for convenience",
+            "clause": "8"
+          },
+          {
+            "item": "Exclusive Forum",
+            "value": "state and federal courts located in New York County, New York",
+            "clause": "9"
+          },
+          {
+            "item": "Restriction Duration",
+            "value": "twenty-four (24) months",
+            "clause": "10"
+          },
+          {
+            "item": "Governing Law",
+            "value": "laws of the State of New York, without regard to its conflict of laws principles",
+            "clause": "11"
+          }
+        ],
+        "top_risks": [],
+        "gaps": [
+          "Total liability cap has no carve-outs for indemnity, confidentiality, or willful misconduct.",
+          "No cure period provided for immediate termination upon material breach.",
+          "No data return, export, or deletion commitments upon contract termination.",
+          "Non-compete and non-solicitation covenants bind only the Consultant (unilateral restrictive covenant).",
+          "Signature blocks are blank and unexecuted in source document."
+        ],
+        "risk_counts": {
+          "HIGH": 0,
+          "MEDIUM": 0,
+          "LOW": 12,
+          "REVIEW": 0
+        }
+      },
+      "summary_error": null,
+      "model_name": "bart-base-extraction-pipeline",
+      "latency_ms": 6.01,
+      "schema_version": "1.0.0"
+    },
+    "clauses": [
+      {
+        "clause_number": "1",
+        "title": "",
+        "category": "Scope of Services",
+        "severity": "Safe",
+        "original_text": "1. SERVICES\nConsultant shall provide cloud infrastructure design, DevOps automation, and related technical advisory services (the \u201cServices\u201d) as described in one or more Statements of Work executed by both Parties under this Agreement.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nConsultant shall provide cloud infrastructure design, DevOps automation, and technical advisory services under Statements of Work.\n\nWHO IS BOUND:\nConsultant only\n\nKEY DETAILS:\n\u2022 Services Scope: cloud infrastructure design, DevOps automation, and related technical advisory services\n\u2022 Governing Mechanism: Statements of Work executed by both Parties\n\nWHY THIS SEVERITY:\nStandard operational clause defining services scope with low risk exposure.",
+        "severity_reason": "Standard operational clause defining services scope with low risk exposure.",
+        "key_details": [
+          {
+            "label": "Services Scope",
+            "value": "cloud infrastructure design, DevOps automation, and related technical advisory services",
+            "source_quote": "cloud infrastructure design, DevOps automation, and related technical advisory services"
+          },
+          {
+            "label": "Governing Mechanism",
+            "value": "Statements of Work executed by both Parties",
+            "source_quote": "Statements of Work executed by both Parties"
+          }
+        ]
+      },
+      {
+        "clause_number": "2",
+        "title": "",
+        "category": "Payment",
+        "severity": "Safe",
+        "original_text": "2. FEES AND PAYMENT\nClient shall pay all undisputed invoices within forty-five (45) days of the invoice date. Client shall be charged interest at a rate of 2.0% per month on any past due balance until paid in full.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nClient shall pay all undisputed invoices within 45 days of invoice date; past due balances incur interest at 2.0% per month until paid.\n\nWHO IS BOUND:\nClient only\n\nKEY DETAILS:\n\u2022 Payment Window: 45 days from invoice date\n\u2022 Late Interest Rate: 2.0% per month on past due balance until paid\n\u2022 Invoice Scope: Undisputed invoices\n\nWHY THIS SEVERITY:\nModerate risk: Establishes a 45-day payment window with 2.0% monthly late interest charges.\n\nIF THE CONDITION IS NOT MET:\nPast due balances accrue 2.0% monthly interest until paid in full.",
+        "severity_reason": "Moderate risk: Establishes a 45-day payment window with 2.0% monthly late interest charges.",
+        "key_details": [
+          {
+            "label": "Payment Window",
+            "value": "45 days from invoice date",
+            "source_quote": "forty-five (45) days of the invoice date"
+          },
+          {
+            "label": "Late Interest Rate",
+            "value": "2.0% per month on past due balance until paid",
+            "source_quote": "2.0% per month"
+          },
+          {
+            "label": "Invoice Scope",
+            "value": "Undisputed invoices",
+            "source_quote": "undisputed invoices"
+          }
+        ]
+      },
+      {
+        "clause_number": "3",
+        "title": "",
+        "category": "Confidentiality",
+        "severity": "Low",
+        "original_text": "3. CONFIDENTIALITY\nEach Party agrees to protect the other Party\u2019s confidential and proprietary information disclosed under this Agreement and shall not disclose such information to any third party without prior written consent, provided that this obligation shall survive for a period of three (3) years following termination of this Agreement.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nMutual confidentiality: Each party agrees to protect confidential and proprietary information, with obligations surviving for 3 years following termination.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Survival Period: 3 years following termination\n\nWHY THIS SEVERITY:\nLow to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures.",
+        "severity_reason": "Low to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures.",
+        "key_details": [
+          {
+            "label": "Survival Period",
+            "value": "3 years following termination",
+            "source_quote": "survive for a period of three (3) years following termination"
+          }
+        ]
+      },
+      {
+        "clause_number": "4",
+        "title": "",
+        "category": "Intellectual Property",
+        "severity": "Safe",
+        "original_text": "4. INTELLECTUAL PROPERTY\nConsultant hereby assigns all right, title, and interest in and to all deliverables, source code, and documentation created specifically for Client under this Agreement, effective upon full payment of all applicable fees. Consultant retains ownership of any pre-existing tools, frameworks, or methodologies used in performing the Services.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nConsultant assigns all right, title, and interest in deliverables, source code, and documentation effective upon full payment of fees, retaining pre-existing tools and frameworks.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Assigned Deliverables: Deliverables, source code, and documentation\n\u2022 Assignment Condition: Effective upon full payment of all applicable fees\n\u2022 Consultant Retained IP: Consultant retains ownership of pre-existing tools, frameworks, or methodologies\n\nWHY THIS SEVERITY:\nLow for Client / High for Consultant: IP assignment is effective upon full payment of all applicable fees.",
+        "severity_reason": "Low for Client / High for Consultant: IP assignment is effective upon full payment of all applicable fees.",
+        "key_details": [
+          {
+            "label": "Assigned Deliverables",
+            "value": "Deliverables, source code, and documentation",
+            "source_quote": "deliverables, source code, and documentation"
+          },
+          {
+            "label": "Assignment Condition",
+            "value": "Effective upon full payment of all applicable fees",
+            "source_quote": "effective upon full payment of all applicable fees"
+          },
+          {
+            "label": "Consultant Retained IP",
+            "value": "Consultant retains ownership of pre-existing tools, frameworks, or methodologies",
+            "source_quote": "pre-existing tools, frameworks, or methodologies"
+          }
+        ]
+      },
+      {
+        "clause_number": "5",
+        "title": "",
+        "category": "Indemnification",
+        "severity": "Low",
+        "original_text": "5. INDEMNIFICATION\nEach Party shall indemnify and hold harmless the other Party, its officers, directors, and employees from and against any third-party claims arising from its own gross negligence or willful misconduct in connection with this Agreement.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nMutual indemnification: Each Party shall indemnify and hold harmless the other, covering officers, directors, and employees against third-party claims from own gross negligence or willful misconduct.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Indemnity Type: Indemnification and hold harmless protection\n\u2022 Covered Persons: Officers, directors, employees, and staff\n\u2022 Triggering Standard: Own gross negligence or willful misconduct\n\nWHY THIS SEVERITY:\nModerate risk: Allocates third-party defense and indemnity liabilities.",
+        "severity_reason": "Moderate risk: Allocates third-party defense and indemnity liabilities.",
+        "key_details": [
+          {
+            "label": "Indemnity Type",
+            "value": "Indemnification and hold harmless protection",
+            "source_quote": "indemnify and hold harmless"
+          },
+          {
+            "label": "Covered Persons",
+            "value": "Officers, directors, employees, and staff",
+            "source_quote": "officers, directors, and employees"
+          },
+          {
+            "label": "Triggering Standard",
+            "value": "Own gross negligence or willful misconduct",
+            "source_quote": "gross negligence or willful misconduct"
+          }
+        ]
+      },
+      {
+        "clause_number": "6",
+        "title": "",
+        "category": "Limitation of Liability",
+        "severity": "Low",
+        "original_text": "6. LIMITATION OF LIABILITY\nIn no event shall either Party\u2019s total liability under this Agreement exceed the total fees paid by Client in the twelve (12) months preceding the event giving rise to the claim, regardless of the form of action, whether in contract, tort, or otherwise.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nTotal liability is capped at the total fees paid by Client in the twelve months preceding the claim, regardless of action form, with no carve-outs.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Liability Cap Amount: Total fees paid by Client in prior 12 months\n\u2022 Carve-Outs / Exceptions: No carve-outs (applies in contract, tort, or otherwise)\n\nWHY THIS SEVERITY:\nHigh risk for Client: Total liability is capped at fees paid over the prior 12 months with zero carve-outs for indemnity or confidentiality.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 No carve-outs for indemnification, confidentiality breach, or willful misconduct.",
+        "severity_reason": "High risk for Client: Total liability is capped at fees paid over the prior 12 months with zero carve-outs for indemnity or confidentiality.",
+        "key_details": [
+          {
+            "label": "Liability Cap Amount",
+            "value": "Total fees paid by Client in prior 12 months",
+            "source_quote": "total fees paid by Client in the twelve (12) months preceding"
+          },
+          {
+            "label": "Carve-Outs / Exceptions",
+            "value": "No carve-outs (applies in contract, tort, or otherwise)",
+            "source_quote": "whether in contract, tort, or otherwise"
+          }
+        ]
+      },
+      {
+        "clause_number": "7",
+        "title": "",
+        "category": "Term",
+        "severity": "Safe",
+        "original_text": "7. TERM\n\nThis Agreement shall remain in effect for a fixed term of two (2) years from the Effective Date and shall terminate automatically at the end of such term unless the Parties execute a new written agreement extending or renewing its terms.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nFixed term of two years from the Effective Date, terminating automatically unless parties execute a new written agreement extending or renewing.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Term Duration: 2 years from Effective Date\n\u2022 Renewal Terms: No auto-renewal; terminates unless new written agreement is executed\n\nWHY THIS SEVERITY:\nModerate risk: Fixed 2-year term with no automatic renewal.",
+        "severity_reason": "Moderate risk: Fixed 2-year term with no automatic renewal.",
+        "key_details": [
+          {
+            "label": "Term Duration",
+            "value": "2 years from Effective Date",
+            "source_quote": "fixed term of two (2) years from the Effective Date"
+          },
+          {
+            "label": "Renewal Terms",
+            "value": "No auto-renewal; terminates unless new written agreement is executed",
+            "source_quote": "terminate automatically at the end of such term unless the Parties execute a new written agreement"
+          }
+        ]
+      },
+      {
+        "clause_number": "8",
+        "title": "",
+        "category": "Termination",
+        "severity": "Safe",
+        "original_text": "8. TERMINATION\nEither Party may terminate this Agreement immediately upon written notice if the other Party materially breaches any provision of this Agreement. Either Party may also terminate for convenience upon thirty (30) days\u2019 prior written notice.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nEither Party may terminate upon written notice for material breach, or terminate for convenience upon thirty (30) days' prior written notice.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Cause Termination: Immediate termination upon written notice for material breach\n\u2022 Convenience Termination: 30 days' prior written notice for convenience\n\nWHY THIS SEVERITY:\nModerate risk: Allows mutual convenience termination on 30 days' notice and breach termination procedures.",
+        "severity_reason": "Moderate risk: Allows mutual convenience termination on 30 days' notice and breach termination procedures.",
+        "key_details": [
+          {
+            "label": "Cause Termination",
+            "value": "Immediate termination upon written notice for material breach",
+            "source_quote": "immediately upon written notice if the other Party materially breaches"
+          },
+          {
+            "label": "Convenience Termination",
+            "value": "30 days' prior written notice for convenience",
+            "source_quote": "thirty (30) days\u2019 prior written notice"
+          }
+        ]
+      },
+      {
+        "clause_number": "9",
+        "title": "",
+        "category": "Dispute Resolution",
+        "severity": "Safe",
+        "original_text": "9. DISPUTE RESOLUTION\nThe Parties consent to the exclusive jurisdiction of the state and federal courts located in New York County, New York, for the resolution of any dispute, controversy, or claim arising out of or relating to this Agreement.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nThe Parties consent to exclusive jurisdiction of state and federal courts located in New York County, New York, for resolving all disputes.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Exclusive Forum: state and federal courts located in New York County, New York\n\nWHY THIS SEVERITY:\nLow risk: Designates exclusive judicial forum for resolving controversies.",
+        "severity_reason": "Low risk: Designates exclusive judicial forum for resolving controversies.",
+        "key_details": [
+          {
+            "label": "Exclusive Forum",
+            "value": "state and federal courts located in New York County, New York",
+            "source_quote": "state and federal courts located in New York County, New York"
+          }
+        ]
+      },
+      {
+        "clause_number": "10",
+        "title": "",
+        "category": "Restrictive Covenants",
+        "severity": "Low",
+        "original_text": "10. NON-COMPETE AND NON-SOLICITATION\nDuring the term of this Agreement and for twenty-four (24) months thereafter, Consultant shall not engage in competing business with any client introduced by Client, nor solicit for employment any employee of Client who was materially involved in the performance of this Agreement.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nConsultant only: Restricts engaging in competing business activities for twenty-four (24) months following termination as set forth in the agreement.\n\nWHO IS BOUND:\nConsultant only\n\nKEY DETAILS:\n\u2022 Restriction Duration: twenty-four (24) months\n\nWHY THIS SEVERITY:\nHigh risk: Post-termination restrictive covenant imposing competitive and solicitation restrictions.",
+        "severity_reason": "High risk: Post-termination restrictive covenant imposing competitive and solicitation restrictions.",
+        "key_details": [
+          {
+            "label": "Restriction Duration",
+            "value": "twenty-four (24) months",
+            "source_quote": "twenty-four (24) months"
+          }
+        ]
+      },
+      {
+        "clause_number": "11",
+        "title": "",
+        "category": "Governing Law",
+        "severity": "Safe",
+        "original_text": "11. GOVERNING LAW\nThis Agreement shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of laws principles.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nGoverned by and construed in accordance with the laws of the State of New York, without regard to conflict of laws principles.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Governing Law: laws of the State of New York, without regard to its conflict of laws principles\n\nWHY THIS SEVERITY:\nLow risk: Standard choice of law provision establishing applicable substantive law.",
+        "severity_reason": "Low risk: Standard choice of law provision establishing applicable substantive law.",
+        "key_details": [
+          {
+            "label": "Governing Law",
+            "value": "laws of the State of New York, without regard to its conflict of laws principles",
+            "source_quote": "laws of the State of New York, without regard to its conflict of laws principles"
+          }
+        ]
+      },
+      {
+        "clause_number": "12",
+        "title": "",
+        "category": "General / Boilerplate",
+        "severity": "Safe",
+        "original_text": "12. ENTIRE AGREEMENT\nThis Agreement, together with any Statements of Work executed hereunder, constitutes the entire agreement between the Parties with respect to its subject matter and supersedes all prior or contemporaneous understandings, whether written or oral.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nAgreement and Statements of Work constitute the entire agreement between Parties, superseding all prior written or oral understandings.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Integration Scope: Supersedes all prior written or oral understandings\n\nWHY THIS SEVERITY:\nLow risk: Standard integration clause confirming agreement completeness.",
+        "severity_reason": "Low risk: Standard integration clause confirming agreement completeness.",
+        "key_details": [
+          {
+            "label": "Integration Scope",
+            "value": "Supersedes all prior written or oral understandings",
+            "source_quote": "constitutes the entire agreement between the Parties with respect to its subject matter and supersedes all prior or contemporaneous understandings, whether written or oral"
+          }
+        ]
+      }
+    ]
+  },
+  "Contract B": {
+    "contract_id": "Contract B",
+    "title": "Strategic Consulting Services Agreement",
+    "sha256": "e487f6b1c459ea0800c77628f23d43c3d9128e4cfcb741d50957e88b84b6b310",
+    "reviewing_party": "Vanguard Manufacturing Group",
+    "summary": {
+      "success": true,
+      "summary_status": "AVAILABLE",
+      "purpose_text": "This STRATEGIC CONSULTING SERVICES AGREEMENT establishes the legal and commercial terms between Vantage Advisory Partners LLC (Consultant) and Vanguard Manufacturing Group (Client).",
+      "obligations_text": "Both parties are obligated to perform their respective covenants, payment schedules, and compliance duties as specified in the STRATEGIC CONSULTING SERVICES AGREEMENT.",
+      "key_terms_text": "Payment Due Window: Invoices due upon receipt (Clause 2); Interest Grace Period: Balances past due by more than thirty days (Clause 2); Liability Cap Amount: $50,000.00 aggregate cap (Clause 5); Uncapped Exceptions: Gross negligence and breach of confidentiality (Clause 5); Exclusive Forum: state courts located in Travis County, Texas (Clause 6)",
+      "key_risks_text": "No high-severity legal risks were identified in this document.",
+      "key_figures": [
+        {
+          "item": "Payment Due Window",
+          "value": "Invoices due upon receipt",
+          "clause": "2"
+        },
+        {
+          "item": "Interest Grace Period",
+          "value": "Balances past due by more than thirty days",
+          "clause": "2"
+        },
+        {
+          "item": "Liability Cap Amount",
+          "value": "$50,000.00 aggregate cap",
+          "clause": "5"
+        },
+        {
+          "item": "Uncapped Exceptions",
+          "value": "Gross negligence and breach of confidentiality",
+          "clause": "5"
+        },
+        {
+          "item": "Exclusive Forum",
+          "value": "state courts located in Travis County, Texas",
+          "clause": "6"
+        }
+      ],
+      "top_risks": [],
+      "gaps": [
+        "Liability cap contains a drafting double negative ('shall not exceed' preceded by 'shall not'), creating ambiguous liability exposure."
+      ],
+      "risk_counts": {
+        "HIGH": 0,
+        "MEDIUM": 0,
+        "LOW": 7,
+        "REVIEW": 0
+      },
+      "structured_overview": {
+        "purpose": "This STRATEGIC CONSULTING SERVICES AGREEMENT establishes the legal and commercial terms between Vantage Advisory Partners LLC (Consultant) and Vanguard Manufacturing Group (Client).",
+        "key_figures": [
+          {
+            "item": "Payment Due Window",
+            "value": "Invoices due upon receipt",
+            "clause": "2"
+          },
+          {
+            "item": "Interest Grace Period",
+            "value": "Balances past due by more than thirty days",
+            "clause": "2"
+          },
+          {
+            "item": "Liability Cap Amount",
+            "value": "$50,000.00 aggregate cap",
+            "clause": "5"
+          },
+          {
+            "item": "Uncapped Exceptions",
+            "value": "Gross negligence and breach of confidentiality",
+            "clause": "5"
+          },
+          {
+            "item": "Exclusive Forum",
+            "value": "state courts located in Travis County, Texas",
+            "clause": "6"
+          }
+        ],
+        "top_risks": [],
+        "gaps": [
+          "Liability cap contains a drafting double negative ('shall not exceed' preceded by 'shall not'), creating ambiguous liability exposure."
+        ],
+        "risk_counts": {
+          "HIGH": 0,
+          "MEDIUM": 0,
+          "LOW": 7,
+          "REVIEW": 0
+        }
+      },
+      "summary_error": null,
+      "model_name": "bart-base-extraction-pipeline",
+      "latency_ms": 0.27,
+      "schema_version": "1.0.0"
+    },
+    "clauses": [
+      {
+        "clause_number": "1",
+        "title": "",
+        "category": "Scope of Services",
+        "severity": "Safe",
+        "original_text": "1. ENGAGEMENT AND DELIVERABLES\nConsultant shall render strategic supply-chain advisory services and deliver quarterly efficiency assessments as described in attached project schedules.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nConsultant shall render strategic supply-chain advisory services and deliver quarterly efficiency assessments per project schedules.\n\nWHO IS BOUND:\nConsultant only\n\nKEY DETAILS:\n\u2022 Services Scope: strategic supply-chain advisory services and deliver quarterly efficiency assessments\n\u2022 Governing Mechanism: attached project schedules\n\nWHY THIS SEVERITY:\nStandard operational clause defining services scope with low risk exposure.",
+        "severity_reason": "Standard operational clause defining services scope with low risk exposure.",
+        "key_details": [
+          {
+            "label": "Services Scope",
+            "value": "strategic supply-chain advisory services and deliver quarterly efficiency assessments",
+            "source_quote": "strategic supply-chain advisory services and deliver quarterly efficiency assessments"
+          },
+          {
+            "label": "Governing Mechanism",
+            "value": "attached project schedules",
+            "source_quote": "attached project schedules"
+          }
+        ]
+      },
+      {
+        "clause_number": "2",
+        "title": "",
+        "category": "Payment",
+        "severity": "Safe",
+        "original_text": "2. INVOICING AND FINANCE CHARGES\nInvoices are due upon receipt. Any unpaid balances past due by more than thirty days will accrue interest at the rate of two percent (2.0%) per month compounding monthly.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nInvoices are due upon receipt. Unpaid balances past due by more than thirty days accrue 2.0% monthly compounding interest.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Payment Due Window: Invoices due upon receipt\n\u2022 Interest Grace Period: Balances past due by more than thirty days\n\u2022 Finance Charge: 2.0% per month compounding monthly (~26.8% annually)\n\nWHY THIS SEVERITY:\nModerate risk: Immediate invoice payment due upon receipt with 2.0% monthly compounding interest on overdue balances.\n\nIF THE CONDITION IS NOT MET:\nBalances unpaid past 30 days accrue 2.0% monthly compounding interest.",
+        "severity_reason": "Moderate risk: Immediate invoice payment due upon receipt with 2.0% monthly compounding interest on overdue balances.",
+        "key_details": [
+          {
+            "label": "Payment Due Window",
+            "value": "Invoices due upon receipt",
+            "source_quote": "due upon receipt"
+          },
+          {
+            "label": "Interest Grace Period",
+            "value": "Balances past due by more than thirty days",
+            "source_quote": "past due by more than thirty days"
+          },
+          {
+            "label": "Finance Charge",
+            "value": "2.0% per month compounding monthly (~26.8% annually)",
+            "source_quote": "two percent (2.0%) per month compounding monthly"
+          }
+        ]
+      },
+      {
+        "clause_number": "3",
+        "title": "",
+        "category": "Intellectual Property",
+        "severity": "Safe",
+        "original_text": "3. WORK PRODUCT OWNERSHIP\nAll analysis reports, spreadsheets, and custom models prepared for Client shall be deemed work made for hire and become Client's exclusive intellectual property.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nAll analysis reports, spreadsheets, and custom models prepared for Client are deemed work made for hire and become Client's exclusive intellectual property.\n\nWHO IS BOUND:\nClient only\n\nKEY DETAILS:\n\u2022 Legal Basis: Work made for hire (Client's exclusive IP)\n\u2022 Covered Deliverables: Analysis reports, spreadsheets, and custom models\n\nWHY THIS SEVERITY:\nModerate risk: Work-made-for-hire clause without explicit backup assignment or pre-existing IP exclusion.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 No backup assignment or pre-existing IP carve-out specified.",
+        "severity_reason": "Moderate risk: Work-made-for-hire clause without explicit backup assignment or pre-existing IP exclusion.",
+        "key_details": [
+          {
+            "label": "Legal Basis",
+            "value": "Work made for hire (Client's exclusive IP)",
+            "source_quote": "work made for hire and become Client's exclusive intellectual property"
+          },
+          {
+            "label": "Covered Deliverables",
+            "value": "Analysis reports, spreadsheets, and custom models",
+            "source_quote": "analysis reports, spreadsheets, and custom models"
+          }
+        ]
+      },
+      {
+        "clause_number": "4",
+        "title": "",
+        "category": "Indemnification",
+        "severity": "Low",
+        "original_text": "4. INDEMNITY OBLIGATIONS\nConsultant agrees to defend and indemnify Client, its directors, and staff from any third-party loss or claim arising out of Consultant's gross negligence.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nConsultant agrees to defend and indemnify Client, its directors, and staff from any third-party loss or claim arising out of Consultant's gross negligence only.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Indemnity Type: Defense and indemnification protection\n\u2022 Covered Persons: Officers, directors, employees, and staff\n\u2022 Triggering Standard: Own gross negligence or willful misconduct\n\nWHY THIS SEVERITY:\nModerate risk: Allocates third-party defense and indemnity liabilities.",
+        "severity_reason": "Moderate risk: Allocates third-party defense and indemnity liabilities.",
+        "key_details": [
+          {
+            "label": "Indemnity Type",
+            "value": "Defense and indemnification protection",
+            "source_quote": "defend and indemnify"
+          },
+          {
+            "label": "Covered Persons",
+            "value": "Officers, directors, employees, and staff",
+            "source_quote": "directors, and staff"
+          },
+          {
+            "label": "Triggering Standard",
+            "value": "Own gross negligence or willful misconduct",
+            "source_quote": "Consultant's gross negligence"
+          }
+        ]
+      },
+      {
+        "clause_number": "5",
+        "title": "",
+        "category": "Limitation of Liability",
+        "severity": "Low",
+        "original_text": "5. AGGREGATE LIABILITY CAP\nOther than monetary liability resulting from gross negligence or breach of confidentiality, neither party's liability shall not exceed fifty thousand dollars ($50,000).",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nAggregate liability is capped at $50,000, with uncapped exceptions for gross negligence and breach of confidentiality.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Liability Cap Amount: $50,000.00 aggregate cap\n\u2022 Uncapped Exceptions: Gross negligence and breach of confidentiality\n\nWHY THIS SEVERITY:\nHigh risk: Contains a drafting double negative and leaves confidentiality breach uncapped.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 Double negative in drafting ('shall not exceed' preceded by 'shall not').",
+        "severity_reason": "High risk: Contains a drafting double negative and leaves confidentiality breach uncapped.",
+        "key_details": [
+          {
+            "label": "Liability Cap Amount",
+            "value": "$50,000.00 aggregate cap",
+            "source_quote": "fifty thousand dollars ($50,000)"
+          },
+          {
+            "label": "Uncapped Exceptions",
+            "value": "Gross negligence and breach of confidentiality",
+            "source_quote": "gross negligence or breach of confidentiality"
+          }
+        ]
+      },
+      {
+        "clause_number": "6",
+        "title": "",
+        "category": "Dispute Resolution",
+        "severity": "Safe",
+        "original_text": "6. GOVERNING FORUM\nAny dispute or controversy arising out of this contract shall fall under the exclusive jurisdiction of the state courts located in Travis County, Texas.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nAny dispute or controversy arising out of this contract falls under the exclusive jurisdiction of the state courts located in Travis County, Texas.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Exclusive Forum: state courts located in Travis County, Texas\n\nWHY THIS SEVERITY:\nLow risk: Designates exclusive judicial forum for resolving controversies.",
+        "severity_reason": "Low risk: Designates exclusive judicial forum for resolving controversies.",
+        "key_details": [
+          {
+            "label": "Exclusive Forum",
+            "value": "state courts located in Travis County, Texas",
+            "source_quote": "state courts located in Travis County, Texas"
+          }
+        ]
+      },
+      {
+        "clause_number": "7",
+        "title": "",
+        "category": "Confidentiality",
+        "severity": "Low",
+        "original_text": "7. CONFIDENTIALITY COVENANT\nEach party shall hold all non-public commercial and technical information in confidence for three years following expiration of this engagement.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nEach party must hold all non-public commercial and technical information in confidence for three years following expiration of engagement.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Survival Period: 3 years following expiration of engagement\n\nWHY THIS SEVERITY:\nLow to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures.",
+        "severity_reason": "Low to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures.",
+        "key_details": [
+          {
+            "label": "Survival Period",
+            "value": "3 years following expiration of engagement",
+            "source_quote": "in confidence for three years following expiration"
+          }
+        ]
+      }
+    ]
+  },
+  "Contract C": {
+    "contract_id": "Contract C",
+    "title": "Commercial Lease Agreement",
+    "sha256": "85bd5e27f069ea03b7bae3b949c6629e2b6c707fa18f9d948f5a68400dd49956",
+    "reviewing_party": "Quantum Analytics Inc.",
+    "summary": {
+      "success": true,
+      "summary_status": "AVAILABLE",
+      "purpose_text": "This COMMERCIAL LEASE establishes the legal and commercial terms between the contracting parties.",
+      "obligations_text": "Both parties are obligated to perform their respective covenants, payment schedules, and compliance duties as specified in the COMMERCIAL LEASE.",
+      "key_terms_text": "Lease Term: 3 years (Nov 1, 2026 to Oct 31, 2029) (Clause 2); Base Rent: $5,000.00 USD per month (due on or before the 1st) (Clause 3); Security Deposit: $10,000.00 USD due upon execution (Clause 3); Late Fee: Flat 5% fee on overdue balance if paid after the 5th (Clause 3); Governing Law: laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles (Clause 7)",
+      "key_risks_text": "No high-severity legal risks were identified in this document.",
+      "key_figures": [
+        {
+          "item": "Lease Term",
+          "value": "3 years (Nov 1, 2026 to Oct 31, 2029)",
+          "clause": "2"
+        },
+        {
+          "item": "Base Rent",
+          "value": "$5,000.00 USD per month (due on or before the 1st)",
+          "clause": "3"
+        },
+        {
+          "item": "Security Deposit",
+          "value": "$10,000.00 USD due upon execution",
+          "clause": "3"
+        },
+        {
+          "item": "Late Fee",
+          "value": "Flat 5% fee on overdue balance if paid after the 5th",
+          "clause": "3"
+        },
+        {
+          "item": "Governing Law",
+          "value": "laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles",
+          "clause": "7"
+        }
+      ],
+      "top_risks": [],
+      "gaps": [
+        "Section 2 references early termination 'in accordance with the provisions herein', but the lease contains no termination or default clause.",
+        "No limitation of liability cap specified for either party.",
+        "No indemnification protections specified for either party.",
+        "No security deposit return timeframe or condition terms specified.",
+        "Missing standard commercial lease protections: insurance, assignment/subletting, holdover, utilities.",
+        "Signature blocks are blank and unexecuted in source document."
+      ],
+      "risk_counts": {
+        "HIGH": 0,
+        "MEDIUM": 0,
+        "LOW": 7,
+        "REVIEW": 0
+      },
+      "structured_overview": {
+        "purpose": "This COMMERCIAL LEASE establishes the legal and commercial terms between the contracting parties.",
+        "key_figures": [
+          {
+            "item": "Lease Term",
+            "value": "3 years (Nov 1, 2026 to Oct 31, 2029)",
+            "clause": "2"
+          },
+          {
+            "item": "Base Rent",
+            "value": "$5,000.00 USD per month (due on or before the 1st)",
+            "clause": "3"
+          },
+          {
+            "item": "Security Deposit",
+            "value": "$10,000.00 USD due upon execution",
+            "clause": "3"
+          },
+          {
+            "item": "Late Fee",
+            "value": "Flat 5% fee on overdue balance if paid after the 5th",
+            "clause": "3"
+          },
+          {
+            "item": "Governing Law",
+            "value": "laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles",
+            "clause": "7"
+          }
+        ],
+        "top_risks": [],
+        "gaps": [
+          "Section 2 references early termination 'in accordance with the provisions herein', but the lease contains no termination or default clause.",
+          "No limitation of liability cap specified for either party.",
+          "No indemnification protections specified for either party.",
+          "No security deposit return timeframe or condition terms specified.",
+          "Missing standard commercial lease protections: insurance, assignment/subletting, holdover, utilities.",
+          "Signature blocks are blank and unexecuted in source document."
+        ],
+        "risk_counts": {
+          "HIGH": 0,
+          "MEDIUM": 0,
+          "LOW": 7,
+          "REVIEW": 0
+        }
+      },
+      "summary_error": null,
+      "model_name": "bart-base-extraction-pipeline",
+      "latency_ms": 0.88,
+      "schema_version": "1.0.0"
+    },
+    "clauses": [
+      {
+        "clause_number": "1",
+        "title": "",
+        "category": "Property / Premises",
+        "severity": "Safe",
+        "original_text": "1. LEASED PREMISES\nLandlord hereby leases to Tenant, and Tenant hereby leases from Landlord, the commercial real property located at 450 Artisan Way, Suite 210, City of Boston, Commonwealth of Massachusetts, consisting of approximately 2,500 square feet of office space (the \"Premises\").",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nLandlord leases to Tenant commercial real property at 450 Artisan Way, Suite 210, Boston, Massachusetts, consisting of approximately 2,500 sq ft.\n\nWHO IS BOUND:\nLandlord and Tenant\n\nKEY DETAILS:\n\u2022 Premises Size: Approximately 2,500 square feet of office space\n\u2022 Premises Location: 450 Artisan Way, Suite 210, Boston, Massachusetts\n\nWHY THIS SEVERITY:\nLow risk: Identifies the leased physical office space and address.",
+        "severity_reason": "Low risk: Identifies the leased physical office space and address.",
+        "key_details": [
+          {
+            "label": "Premises Size",
+            "value": "Approximately 2,500 square feet of office space",
+            "source_quote": "approximately 2,500 square feet of office space"
+          },
+          {
+            "label": "Premises Location",
+            "value": "450 Artisan Way, Suite 210, Boston, Massachusetts",
+            "source_quote": "450 Artisan Way, Suite 210, City of Boston, Commonwealth of Massachusetts"
+          }
+        ]
+      },
+      {
+        "clause_number": "2",
+        "title": "",
+        "category": "Term",
+        "severity": "Safe",
+        "original_text": "2. TERM\nThe term of this Lease shall be for a period of three (3) years, commencing on November 1, 2026, and terminating on October 31, 2029, unless terminated earlier in accordance with the provisions herein.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nLease term is for a fixed period of three (3) years, commencing on November 1, 2026, and terminating on October 31, 2029.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Lease Term: 3 years (Nov 1, 2026 to Oct 31, 2029)\n\nWHY THIS SEVERITY:\nModerate risk: Fixed 3-year term commitment without explicit termination procedures.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 References early termination but the lease contains no default or termination clause.",
+        "severity_reason": "Moderate risk: Fixed 3-year term commitment without explicit termination procedures.",
+        "key_details": [
+          {
+            "label": "Lease Term",
+            "value": "3 years (Nov 1, 2026 to Oct 31, 2029)",
+            "source_quote": "three (3) years, commencing on November 1, 2026, and terminating on October 31, 2029"
+          }
+        ]
+      },
+      {
+        "clause_number": "3",
+        "title": "",
+        "category": "Payment",
+        "severity": "Safe",
+        "original_text": "3. RENT & FINANCIAL TERMS\nBase Rent: Tenant agrees to pay Landlord a monthly base rent of $5,000.00 USD, due on or before the first day of each calendar month.\nSecurity Deposit: Upon execution of this Lease, Tenant shall deposit with Landlord the sum of $10,000.00 USD as security for the faithful performance of Tenant's obligations.\nLate Fees: Rent paid after the 5th of the month will incur a late fee equal to 5% of the overdue balance.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nTenant agrees to pay monthly base rent of $5,000.00 USD due on the 1st, a $10,000.00 USD deposit upon execution, and a flat 5% late fee if paid after the 5th.\n\nWHO IS BOUND:\nTenant only\n\nKEY DETAILS:\n\u2022 Base Rent: $5,000.00 USD per month (due on or before the 1st)\n\u2022 Security Deposit: $10,000.00 USD due upon execution\n\u2022 Late Fee: Flat 5% fee on overdue balance if paid after the 5th\n\nWHY THIS SEVERITY:\nModerate risk: Fixed financial commitments including monthly rent, deposit, and a flat 5% late fee.\n\nIF THE CONDITION IS NOT MET:\nRent paid after the 5th of the month incurs a flat late fee equal to 5% of the overdue balance.",
+        "severity_reason": "Moderate risk: Fixed financial commitments including monthly rent, deposit, and a flat 5% late fee.",
+        "key_details": [
+          {
+            "label": "Base Rent",
+            "value": "$5,000.00 USD per month (due on or before the 1st)",
+            "source_quote": "$5,000.00 USD"
+          },
+          {
+            "label": "Security Deposit",
+            "value": "$10,000.00 USD due upon execution",
+            "source_quote": "$10,000.00 USD"
+          },
+          {
+            "label": "Late Fee",
+            "value": "Flat 5% fee on overdue balance if paid after the 5th",
+            "source_quote": "late fee equal to 5% of the overdue balance"
+          }
+        ]
+      },
+      {
+        "clause_number": "4",
+        "title": "",
+        "category": "Property Use",
+        "severity": "Safe",
+        "original_text": "4. USE OF PREMISES\nThe Premises shall be used solely for general corporate offices, professional services, software development, and related administrative operations. Tenant shall comply with all local zoning laws, ordinances, and building regulations.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nPremises shall be used solely for corporate offices, professional services, software development, and administration, complying with all local zoning and building rules.\n\nWHO IS BOUND:\nTenant only\n\nKEY DETAILS:\n\u2022 Permitted Use: Corporate offices, professional services, software development, and administration\n\u2022 Compliance Standard: Comply with zoning laws, ordinances, and building regulations\n\nWHY THIS SEVERITY:\nLow risk: Defines permitted commercial occupancy uses and regulatory compliance.",
+        "severity_reason": "Low risk: Defines permitted commercial occupancy uses and regulatory compliance.",
+        "key_details": [
+          {
+            "label": "Permitted Use",
+            "value": "Corporate offices, professional services, software development, and administration",
+            "source_quote": "general corporate offices, professional services, software development, and related administrative operations"
+          },
+          {
+            "label": "Compliance Standard",
+            "value": "Comply with zoning laws, ordinances, and building regulations",
+            "source_quote": "comply with all local zoning laws, ordinances, and building regulations"
+          }
+        ]
+      },
+      {
+        "clause_number": "5",
+        "title": "",
+        "category": "Maintenance",
+        "severity": "Safe",
+        "original_text": "5. MAINTENANCE AND REPAIRS\nLandlord Obligations: Landlord shall maintain, repair, and keep in good order the structural parts of the building, including the foundation, exterior walls, roof, plumbing, and HVAC main lines.\nTenant Obligations: Tenant shall maintain the interior of the Premises in a clean, safe, and sanitary condition, including minor repairs, light fixture replacements, and interior janitorial services.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nLandlord maintains building structure, foundation, exterior walls, roof, plumbing, and HVAC main lines; Tenant maintains interior premises, minor repairs, and janitorial services.\n\nWHO IS BOUND:\nLandlord and Tenant\n\nKEY DETAILS:\n\u2022 Landlord Repair Duties: Structure, foundation, exterior walls, roof, plumbing, and HVAC main lines\n\u2022 Tenant Repair Duties: Interior, clean condition, minor repairs, light fixtures, and janitorial services\n\nWHY THIS SEVERITY:\nModerate risk: Allocates ongoing building and interior repair responsibilities between Landlord and Tenant.",
+        "severity_reason": "Moderate risk: Allocates ongoing building and interior repair responsibilities between Landlord and Tenant.",
+        "key_details": [
+          {
+            "label": "Landlord Repair Duties",
+            "value": "Structure, foundation, exterior walls, roof, plumbing, and HVAC main lines",
+            "source_quote": "structural parts of the building, including the foundation, exterior walls, roof, plumbing, and HVAC main lines"
+          },
+          {
+            "label": "Tenant Repair Duties",
+            "value": "Interior, clean condition, minor repairs, light fixtures, and janitorial services",
+            "source_quote": "interior of the Premises in a clean, safe, and sanitary condition, including minor repairs, light fixture replacements, and interior janitorial services"
+          }
+        ]
+      },
+      {
+        "clause_number": "6",
+        "title": "",
+        "category": "Alterations",
+        "severity": "Safe",
+        "original_text": "6. ALTERATIONS AND IMPROVEMENTS\nTenant shall not make any structural alterations, additions, or improvements to the Premises without the prior written consent of Landlord. Any permanent improvements made by Tenant shall become the property of Landlord upon expiration of the Lease.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nTenant shall not make structural alterations without Landlord's prior written consent; permanent improvements become property of Landlord upon expiration.\n\nWHO IS BOUND:\nTenant only\n\nKEY DETAILS:\n\u2022 Alterations Consent: No structural alterations without Landlord's prior written consent\n\u2022 Improvement Disposition: Permanent improvements become Landlord's property upon lease expiration\n\nWHY THIS SEVERITY:\nModerate risk: Reverts permanent tenant-funded improvements to Landlord upon expiration.",
+        "severity_reason": "Moderate risk: Reverts permanent tenant-funded improvements to Landlord upon expiration.",
+        "key_details": [
+          {
+            "label": "Alterations Consent",
+            "value": "No structural alterations without Landlord's prior written consent",
+            "source_quote": "without the prior written consent of Landlord"
+          },
+          {
+            "label": "Improvement Disposition",
+            "value": "Permanent improvements become Landlord's property upon lease expiration",
+            "source_quote": "become the property of Landlord upon expiration of the Lease"
+          }
+        ]
+      },
+      {
+        "clause_number": "7",
+        "title": "",
+        "category": "Governing Law",
+        "severity": "Safe",
+        "original_text": "7. GOVERNING LAW\nThis Lease shall be governed by, construed, and enforced in accordance with the laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nGoverned by, construed, and enforced in accordance with the laws of the Commonwealth of Massachusetts, without regard to conflict of law principles.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Governing Law: laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles\n\nWHY THIS SEVERITY:\nLow risk: Standard choice of law provision establishing applicable substantive law.",
+        "severity_reason": "Low risk: Standard choice of law provision establishing applicable substantive law.",
+        "key_details": [
+          {
+            "label": "Governing Law",
+            "value": "laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles",
+            "source_quote": "laws of the Commonwealth of Massachusetts, without regard to its conflict of law principles"
+          }
+        ]
+      }
+    ]
+  },
+  "Contract D": {
+    "contract_id": "Contract D",
+    "title": "Master Services Agreement, Enterprise Cloud Services",
+    "sha256": "77e2a83585252a8a653358250edf9af658697ff7aa0c1bbf9096f1189a703dc4",
+    "reviewing_party": "Enterprise Solutions Global Ltd.",
+    "summary": {
+      "success": true,
+      "summary_status": "AVAILABLE",
+      "purpose_text": "This MASTER SERVICES AGREEMENT establishes the legal and commercial terms between the contracting parties.",
+      "obligations_text": "Both parties are obligated to perform their respective covenants, payment schedules, and compliance duties as specified in the MASTER SERVICES AGREEMENT.",
+      "key_terms_text": "Termination Right: Vendor may terminate immediately at will for any or no reason (Clause 2); Prepaid Fee Refund: No refund of prepaid fees (Clause 2); Opt-Out Notice Window: at least sixty (60) days prior to the expiration (Clause 3); Payment Window: Within 15 days of invoice receipt (Clause 4); Late Interest Rate: 1.5% per month compounded monthly (or max legal rate) (Clause 4); Governing Law: State of Delaware (Clause 8)",
+      "key_risks_text": "No high-severity legal risks were identified in this document.",
+      "key_figures": [
+        {
+          "item": "Termination Right",
+          "value": "Vendor may terminate immediately at will for any or no reason",
+          "clause": "2"
+        },
+        {
+          "item": "Prepaid Fee Refund",
+          "value": "No refund of prepaid fees",
+          "clause": "2"
+        },
+        {
+          "item": "Opt-Out Notice Window",
+          "value": "at least sixty (60) days prior to the expiration",
+          "clause": "3"
+        },
+        {
+          "item": "Payment Window",
+          "value": "Within 15 days of invoice receipt",
+          "clause": "4"
+        },
+        {
+          "item": "Late Interest Rate",
+          "value": "1.5% per month compounded monthly (or max legal rate)",
+          "clause": "4"
+        },
+        {
+          "item": "Governing Law",
+          "value": "State of Delaware",
+          "clause": "8"
+        }
+      ],
+      "top_risks": [],
+      "gaps": [
+        "Refers to Annex IV which is not attached to the agreement (dangling cross-reference).",
+        "Refers to Section 7.2 Force Majeure which does not exist in the contract (dangling cross-reference).",
+        "Apportionment dynamically negotiated under UNCITRAL Article 79 rules (UNCITRAL CISG Art 79 is a sales-of-goods provision and is likely mis-cited for services).",
+        "Document contains a pre-printed risk rating ('Overall Risk Classification: HIGH RISK') which is recorded as 'claimed in document' and ignored for objective scoring.",
+        "No limitation of liability cap specified for either party.",
+        "No Vendor indemnity, warranties, SLA, or service credits specified (unilateral customer indemnity).",
+        "Customer possesses no reciprocal termination right or cure period (non-renewal opt-out only).",
+        "No data return, export, or deletion commitments upon contract termination.",
+        "Arbitration clause lacks designated seat/venue, specific procedural rules, and arbitrator count.",
+        "Signature blocks are blank and unexecuted in source document."
+      ],
+      "risk_counts": {
+        "HIGH": 0,
+        "MEDIUM": 0,
+        "LOW": 9,
+        "REVIEW": 0
+      },
+      "structured_overview": {
+        "purpose": "This MASTER SERVICES AGREEMENT establishes the legal and commercial terms between the contracting parties.",
+        "key_figures": [
+          {
+            "item": "Termination Right",
+            "value": "Vendor may terminate immediately at will for any or no reason",
+            "clause": "2"
+          },
+          {
+            "item": "Prepaid Fee Refund",
+            "value": "No refund of prepaid fees",
+            "clause": "2"
+          },
+          {
+            "item": "Opt-Out Notice Window",
+            "value": "at least sixty (60) days prior to the expiration",
+            "clause": "3"
+          },
+          {
+            "item": "Payment Window",
+            "value": "Within 15 days of invoice receipt",
+            "clause": "4"
+          },
+          {
+            "item": "Late Interest Rate",
+            "value": "1.5% per month compounded monthly (or max legal rate)",
+            "clause": "4"
+          },
+          {
+            "item": "Governing Law",
+            "value": "State of Delaware",
+            "clause": "8"
+          }
+        ],
+        "top_risks": [],
+        "gaps": [
+          "Refers to Annex IV which is not attached to the agreement (dangling cross-reference).",
+          "Refers to Section 7.2 Force Majeure which does not exist in the contract (dangling cross-reference).",
+          "Apportionment dynamically negotiated under UNCITRAL Article 79 rules (UNCITRAL CISG Art 79 is a sales-of-goods provision and is likely mis-cited for services).",
+          "Document contains a pre-printed risk rating ('Overall Risk Classification: HIGH RISK') which is recorded as 'claimed in document' and ignored for objective scoring.",
+          "No limitation of liability cap specified for either party.",
+          "No Vendor indemnity, warranties, SLA, or service credits specified (unilateral customer indemnity).",
+          "Customer possesses no reciprocal termination right or cure period (non-renewal opt-out only).",
+          "No data return, export, or deletion commitments upon contract termination.",
+          "Arbitration clause lacks designated seat/venue, specific procedural rules, and arbitrator count.",
+          "Signature blocks are blank and unexecuted in source document."
+        ],
+        "risk_counts": {
+          "HIGH": 0,
+          "MEDIUM": 0,
+          "LOW": 9,
+          "REVIEW": 0
+        }
+      },
+      "summary_error": null,
+      "model_name": "bart-base-extraction-pipeline",
+      "latency_ms": 1.64,
+      "schema_version": "1.0.0"
+    },
+    "clauses": [
+      {
+        "clause_number": "1",
+        "title": "",
+        "category": "Indemnification",
+        "severity": "Low",
+        "original_text": "SECTION 1. CUSTOMER INDEMNIFICATION AND THIRD-PARTY DEFENSE\nCustomer shall defend, indemnify, and hold harmless Vendor, its affiliates, officers, directors, employees, and agents from and against any and all claims, demands, liabilities, damages, losses, costs, and expenses (including reasonable attorneys' fees) arising out of or related to Customer Data or Customer's use of the Services, without limitation.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nCustomer shall defend, indemnify, and hold harmless Vendor, its affiliates, and staff from any and all claims, liabilities, damages, and attorney fees arising from Customer data or use of Services without limitation.\n\nWHO IS BOUND:\nCustomer only\n\nKEY DETAILS:\n\u2022 Indemnity Direction: One-way: Customer indemnifies and defends Vendor and affiliates\n\u2022 Covered Losses: Any and all claims, damages, losses, costs, and reasonable attorney fees (Uncapped)\n\u2022 Indemnity Triggers: Customer Data or Customer's use of the Services\n\nWHY THIS SEVERITY:\nHigh risk for Customer: One-way, broad, and uncapped indemnification burden with mandatory defense duty and attorney fee coverage.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 No reciprocal indemnification from Vendor; liability is entirely uncapped.",
+        "severity_reason": "High risk for Customer: One-way, broad, and uncapped indemnification burden with mandatory defense duty and attorney fee coverage.",
+        "key_details": [
+          {
+            "label": "Indemnity Direction",
+            "value": "One-way: Customer indemnifies and defends Vendor and affiliates",
+            "source_quote": "defend, indemnify, and hold harmless Vendor, its affiliates, officers, directors, employees, and agents"
+          },
+          {
+            "label": "Covered Losses",
+            "value": "Any and all claims, damages, losses, costs, and reasonable attorney fees (Uncapped)",
+            "source_quote": "any and all claims, demands, liabilities, damages, losses, costs, and expenses (including reasonable attorneys' fees)"
+          },
+          {
+            "label": "Indemnity Triggers",
+            "value": "Customer Data or Customer's use of the Services",
+            "source_quote": "arising out of or related to Customer Data or Customer's use of the Services"
+          }
+        ]
+      },
+      {
+        "clause_number": "2",
+        "title": "",
+        "category": "Termination",
+        "severity": "Safe",
+        "original_text": "SECTION 2. TERMINATION FOR CONVENIENCE AND SUSPENSION\nVendor reserves the right to suspend or terminate this Agreement immediately upon written notice for any reason or no reason, without refund of any prepaid fees, and Vendor shall have no obligation to assist in data migration or service transition.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nVendor reserves the right to suspend or terminate immediately upon written notice for any reason or no reason, with no refund of prepaid fees and no obligation to assist in service transition.\n\nWHO IS BOUND:\nVendor only\n\nKEY DETAILS:\n\u2022 Termination Right: Vendor may terminate immediately at will for any or no reason\n\u2022 Prepaid Fee Refund: No refund of prepaid fees\n\u2022 Transition Assistance: No obligation to assist in migration or service transition\n\nWHY THIS SEVERITY:\nHigh risk for Customer: Vendor possesses unilateral termination at will with forfeiture of prepaid fees and zero transition support.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 Customer possesses no reciprocal termination for convenience right or cure period.",
+        "severity_reason": "High risk for Customer: Vendor possesses unilateral termination at will with forfeiture of prepaid fees and zero transition support.",
+        "key_details": [
+          {
+            "label": "Termination Right",
+            "value": "Vendor may terminate immediately at will for any or no reason",
+            "source_quote": "suspend or terminate this Agreement immediately upon written notice for any reason or no reason"
+          },
+          {
+            "label": "Prepaid Fee Refund",
+            "value": "No refund of prepaid fees",
+            "source_quote": "without refund of any prepaid fees"
+          },
+          {
+            "label": "Transition Assistance",
+            "value": "No obligation to assist in migration or service transition",
+            "source_quote": "no obligation to assist in data migration or service transition"
+          }
+        ]
+      },
+      {
+        "clause_number": "3",
+        "title": "",
+        "category": "Renewal",
+        "severity": "Safe",
+        "original_text": "SECTION 3. TERM, AUTOMATIC RENEWAL AND ANNUAL PRICE ESCALATION.\nThis Agreement shall automatically renew for successive twelve (12) month periods unless either party provides written opt-out notice at least sixty (60) days prior to the expiration of the then-current term. Vendor may increase fees by up to fifteen percent (15%) upon each renewal.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nAgreement automatically renews for successive renewal periods unless either party gives written opt-out notice at least 60 days before expiration. Vendor may increase fees by up to 15% at each renewal.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Renewal Period: successive twelve (12) month periods\n\u2022 Opt-Out Notice Window: at least sixty (60) days prior to the expiration\n\u2022 Annual Price Escalation: increase fees by up to fifteen percent (15%)\n\nWHY THIS SEVERITY:\nModerate to High risk: Automatic renewal obligations with notice windows and fee adjustment terms.",
+        "severity_reason": "Moderate to High risk: Automatic renewal obligations with notice windows and fee adjustment terms.",
+        "key_details": [
+          {
+            "label": "Renewal Period",
+            "value": "successive twelve (12) month periods",
+            "source_quote": "successive twelve (12) month periods"
+          },
+          {
+            "label": "Opt-Out Notice Window",
+            "value": "at least sixty (60) days prior to the expiration",
+            "source_quote": "at least sixty (60) days prior to the expiration"
+          },
+          {
+            "label": "Annual Price Escalation",
+            "value": "increase fees by up to fifteen percent (15%)",
+            "source_quote": "increase fees by up to fifteen percent (15%)"
+          }
+        ]
+      },
+      {
+        "clause_number": "4",
+        "title": "",
+        "category": "Payment",
+        "severity": "Safe",
+        "original_text": "SECTION 4. INVOICING, PAYMENT TERMS AND LATE PAYMENT ACCRUALS.\nAll undisputed fees and invoices are due and payable within fifteen (15) days of receipt. Overdue balances shall accrue interest at the maximum rate permitted by law or 1.5% per month, compounded monthly, plus all collection costs and reasonable legal fees incurred by Vendor.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nInvoices are due within 15 days of receipt; overdue balances accrue interest at the maximum rate permitted by law or 1.5% per month compounded monthly, plus all collection costs and reasonable legal fees.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Payment Window: Within 15 days of invoice receipt\n\u2022 Late Interest Rate: 1.5% per month compounded monthly (or max legal rate)\n\u2022 Collection Remedies: Collection costs and reasonable legal fees\n\nWHY THIS SEVERITY:\nModerate risk: Short 15-day payment window with compounding interest and recovery of collection and legal fees.\n\nIF THE CONDITION IS NOT MET:\nOverdue balances incur 1.5% monthly compounding interest plus all collection and attorney costs.",
+        "severity_reason": "Moderate risk: Short 15-day payment window with compounding interest and recovery of collection and legal fees.",
+        "key_details": [
+          {
+            "label": "Payment Window",
+            "value": "Within 15 days of invoice receipt",
+            "source_quote": "within fifteen (15) days of receipt"
+          },
+          {
+            "label": "Late Interest Rate",
+            "value": "1.5% per month compounded monthly (or max legal rate)",
+            "source_quote": "maximum rate permitted by law or 1.5% per month, compounded monthly"
+          },
+          {
+            "label": "Collection Remedies",
+            "value": "Collection costs and reasonable legal fees",
+            "source_quote": "collection costs and reasonable legal fees"
+          }
+        ]
+      },
+      {
+        "clause_number": "5",
+        "title": "",
+        "category": "Confidentiality",
+        "severity": "Safe",
+        "original_text": "SECTION 5. CONFIDENTIALITY AND TRADE SECRET PRESERVATION.\nEach party agrees to protect the other party's Confidential Information for three (3) years following disclosure;\nprovided, however, that trade secrets shall remain protected indefinitely. Disclosures compelled by court order or legal process are permitted provided the disclosing party gives prior written notice.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nEach party agrees to maintain confidentiality for 3 years following disclosure, with trade secrets protected indefinitely and court-ordered disclosures permitted with prior written notice.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Survival Period: 3 years following disclosure (Trade secrets protected indefinitely)\n\u2022 Trade Secret Scope: Protected indefinitely\n\nWHY THIS SEVERITY:\nLow to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures.",
+        "severity_reason": "Low to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures.",
+        "key_details": [
+          {
+            "label": "Survival Period",
+            "value": "3 years following disclosure (Trade secrets protected indefinitely)",
+            "source_quote": "three (3) years following disclosure"
+          },
+          {
+            "label": "Trade Secret Scope",
+            "value": "Protected indefinitely",
+            "source_quote": "trade secrets shall remain protected indefinitely"
+          }
+        ]
+      },
+      {
+        "clause_number": "6",
+        "title": "",
+        "category": "Intellectual Property",
+        "severity": "Safe",
+        "original_text": "SECTION 6. INTELLECTUAL PROPERTY AND TELEMETRY LICENSING.\nVendor retains all right, title, and interest in and to the Platform, underlying algorithms, and all deliverables. Customer hereby grants Vendor a perpetual, irrevocable, royalty-free, worldwide license to use, aggregate, and analyze anonymized operational usage telemetry to enhance model performance.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nVendor retains all intellectual property in the Platform and algorithms. Customer grants Vendor a perpetual, irrevocable, royalty-free license to use anonymized operational usage telemetry to enhance models.\n\nWHO IS BOUND:\nBoth parties\n\nKEY DETAILS:\n\u2022 Vendor Retained IP: Vendor retains all IP in Platform and algorithms\n\u2022 Telemetry License: Perpetual, irrevocable, royalty-free license to anonymized operational usage telemetry to enhance models\n\nWHY THIS SEVERITY:\nHigh risk for Customer: Grants Vendor a perpetual and irrevocable telemetry license to customer-generated operational data.",
+        "severity_reason": "High risk for Customer: Grants Vendor a perpetual and irrevocable telemetry license to customer-generated operational data.",
+        "key_details": [
+          {
+            "label": "Vendor Retained IP",
+            "value": "Vendor retains all IP in Platform and algorithms",
+            "source_quote": "Vendor retains all right, title, and interest in and to the Platform, underlying algorithms"
+          },
+          {
+            "label": "Telemetry License",
+            "value": "Perpetual, irrevocable, royalty-free license to anonymized operational usage telemetry to enhance models",
+            "source_quote": "perpetual, irrevocable, royalty-free, worldwide license to use, aggregate, and analyze anonymized operational usage telemetry"
+          }
+        ]
+      },
+      {
+        "clause_number": "7",
+        "title": "",
+        "category": "Privacy",
+        "severity": "Safe",
+        "original_text": "SECTION 7. DATA PRIVACY AND COMPLIANCE SAFEGUARDS.\nBoth parties shall comply with applicable data privacy regulations, including GDPR and CCPA, maintaining appropriate technical and organizational safeguards against unauthorized processing or accidental loss.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nSECTION 7. DATA PRIVACY AND COMPLIANCE SAFEGUARDS.\n\nWHO IS BOUND:\nBoth parties\n\nWHY THIS SEVERITY:\nStandard commercial provision evaluated with normal legal baseline.",
+        "severity_reason": "Standard commercial provision evaluated with normal legal baseline.",
+        "key_details": []
+      },
+      {
+        "clause_number": "8",
+        "title": "",
+        "category": "Dispute Resolution",
+        "severity": "Safe",
+        "original_text": "SECTION 8. GOVERNING JURISDICTION AND BINDING ARBITRATION.\nThis Agreement shall be governed by the laws of the State of Delaware, United States, without regard to its conflict of laws principles. Any dispute, claim, or controversy shall be resolved exclusively by binding arbitration administered by the American Arbitration Association.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nGoverned by the laws of Delaware, with all disputes resolved exclusively through binding arbitration administered by the American Arbitration Association.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Arbitration Body: American Arbitration Association (AAA)\n\u2022 Governing Law: State of Delaware\n\nWHY THIS SEVERITY:\nModerate to High risk: Mandatory binding arbitration without designated seat, procedural rules, or arbitrator count.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 Arbitration seat, specific procedural rules, and number of arbitrators are not specified.",
+        "severity_reason": "Moderate to High risk: Mandatory binding arbitration without designated seat, procedural rules, or arbitrator count.",
+        "key_details": [
+          {
+            "label": "Arbitration Body",
+            "value": "American Arbitration Association (AAA)",
+            "source_quote": "administered by the American Arbitration Association"
+          },
+          {
+            "label": "Governing Law",
+            "value": "State of Delaware",
+            "source_quote": "State of Delaware, United States, without regard to its conflict of laws principles"
+          }
+        ]
+      },
+      {
+        "clause_number": "9",
+        "title": "",
+        "category": "General / Boilerplate",
+        "severity": "Safe",
+        "original_text": "SECTION 9. CROSS-BORDER TARIFFS AND STATUTORY ALLOCATION.\nIn accordance with Annex IV and Section 7.2 (Force Majeure), statutory duties and international trade tariff apportionments shall be dynamically negotiated under UNCITRAL Article 79 rules.",
+        "generated_explanation": "IN PLAIN LANGUAGE:\nCross-border regulatory tariff burdens are dynamically negotiated under UNCITRAL Article 79 rules, referencing Annex IV and Section 7.2 force majeure.\n\nWHO IS BOUND:\nBoth contracting parties\n\nKEY DETAILS:\n\u2022 Referenced Annex: Annex IV (Not attached / Dangling reference)\n\u2022 Referenced Section: Section 7.2 Force Majeure (Missing in contract / Dangling reference)\n\u2022 Tariff Allocation: Apportionment dynamically negotiated under UNCITRAL Article 79 rules\n\nWHY THIS SEVERITY:\nModerate risk: Clause relies on an agreement-to-agree, references non-existent sections/annexes, and cites questionable international sales conventions.\n\nNOT STATED IN THIS CLAUSE:\n\u2022 Annex IV and Section 7.2 force majeure do not exist in the contract (dangling cross-references).\n\u2022 UNCITRAL Article 79 is a CISG sales-of-goods provision and may be mis-cited for enterprise cloud services.",
+        "severity_reason": "Moderate risk: Clause relies on an agreement-to-agree, references non-existent sections/annexes, and cites questionable international sales conventions.",
+        "key_details": [
+          {
+            "label": "Referenced Annex",
+            "value": "Annex IV (Not attached / Dangling reference)",
+            "source_quote": "Annex IV"
+          },
+          {
+            "label": "Referenced Section",
+            "value": "Section 7.2 Force Majeure (Missing in contract / Dangling reference)",
+            "source_quote": "Section 7.2 (Force Majeure)"
+          },
+          {
+            "label": "Tariff Allocation",
+            "value": "Apportionment dynamically negotiated under UNCITRAL Article 79 rules",
+            "source_quote": "dynamically negotiated"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -563,6 +563,20 @@ def verify_and_ground_clause_narrative(
             grounding_notes.append(f"Preserved grounded legal fact '{raw_val_str}' with role '{role}'.")
             combined_narrative = f"{what_this_clause_means} {obligations} {' '.join(details_list)} {consequences or ''}".lower()
 
+    # 6. CONDITIONAL QUALIFIER & CEILING PRESERVATION
+    qualifiers_to_check = [
+        (r'maximum\s+rate\s+permitted\s+by\s+law', 'Rate Ceiling: Maximum rate permitted by law.'),
+        (r'whichever\s+is\s+less', 'Rate Limit: Whichever is less.'),
+        (r'highest\s+legal\s+rate', 'Rate Ceiling: Highest legal rate.'),
+        (r'provided\s+all\s+fees\s+are\s+paid(?:\s+in\s+full)?', 'Ownership Condition: Provided all fees are paid in full.'),
+        (r'upon\s+receipt\s+of\s+payment', 'Vesting Condition: Upon receipt of payment.')
+    ]
+    for q_pat, q_text in qualifiers_to_check:
+        if re.search(q_pat, source_text, re.IGNORECASE):
+            if not re.search(q_pat, combined_narrative, re.IGNORECASE):
+                details_list.append(q_text)
+                combined_narrative = f"{what_this_clause_means} {obligations} {' '.join(details_list)} {consequences or ''}".lower()
+
     def _clean_narrative_syntax(txt: str) -> str:
         if not txt:
             return ""

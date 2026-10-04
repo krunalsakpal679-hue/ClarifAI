@@ -1,0 +1,52 @@
+{
+  "doc_id": "val_7_manufacturing_supply",
+  "title": "MASTER OEM MANUFACTURING AND SUPPLY AGREEMENT",
+  "party_a": "Apex Hardware Systems LLC (Buyer)",
+  "party_b": "Precision Component Fabrication Inc. (Supplier)",
+  "reviewing_party": "Apex Hardware Systems LLC",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. PURCHASE ORDERS AND DELIVERY LEAD TIMES",
+      "text": "1. PURCHASE ORDERS AND DELIVERY LEAD TIMES. Supplier shall manufacture and deliver component units within forty-five (45) days of purchase order receipt.",
+      "gt_category": "Scope of Services",
+      "gt_severity": "Low",
+      "gt_party_bound": "Supplier",
+      "gt_numbers": [
+        "forty-five (45) days"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. PRODUCT WARRANTY AND DEFECT REMEDIES",
+      "text": "2. PRODUCT WARRANTY AND DEFECT REMEDIES. Supplier warrants all delivered hardware against manufacturing defects for twenty-four (24) months from delivery date.",
+      "gt_category": "Warranty",
+      "gt_severity": "Low",
+      "gt_party_bound": "Supplier",
+      "gt_numbers": [
+        "twenty-four (24) months"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. PRODUCT DEFECT INDEMNITY",
+      "text": "3. PRODUCT DEFECT INDEMNITY. Supplier shall indemnify and hold harmless Buyer and its customers from all third-party product liability claims arising from defective goods.",
+      "gt_category": "Indemnification",
+      "gt_severity": "Low",
+      "gt_party_bound": "Supplier",
+      "gt_numbers": []
+    },
+    {
+      "position": 4,
+      "title": "4. EXCLUSIVE SUPPLY AND MINIMUM COMMITMENT",
+      "text": "4. EXCLUSIVE SUPPLY AND MINIMUM COMMITMENT. Buyer commits to purchase a minimum volume of 50,000 units annually during the initial three (3) year term.",
+      "gt_category": "Term",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Buyer",
+      "gt_numbers": [
+        "50,000 units",
+        "three (3) year"
+      ]
+    }
+  ]
+}

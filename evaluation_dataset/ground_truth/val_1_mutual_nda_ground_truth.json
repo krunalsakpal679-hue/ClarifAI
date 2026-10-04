@@ -1,0 +1,48 @@
+{
+  "doc_id": "val_1_mutual_nda",
+  "title": "MUTUAL PROPRIETARY INFORMATION AND NONDISCLOSURE AGREEMENT",
+  "party_a": "Crestline Biotech Inc. (Disclosing Party)",
+  "party_b": "Aegis Therapeutics LLC (Receiving Party)",
+  "reviewing_party": "Aegis Therapeutics LLC",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. DEFINITION OF PROPRIETARY INFORMATION",
+      "text": "1. DEFINITION OF PROPRIETARY INFORMATION. Proprietary Information includes all technical, clinical, and commercial data disclosed by either party, marked confidential or reasonably understood as proprietary.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": []
+    },
+    {
+      "position": 2,
+      "title": "2. DUTY OF CARE AND USE LIMITATIONS",
+      "text": "2. DUTY OF CARE AND USE LIMITATIONS. Receiving Party agrees to protect Proprietary Information with reasonable care and use it solely for evaluating the proposed commercial transaction.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Receiving Party",
+      "gt_numbers": []
+    },
+    {
+      "position": 3,
+      "title": "3. TERM AND SURVIVAL OBLIGATIONS",
+      "text": "3. TERM AND SURVIVAL OBLIGATIONS. This Agreement shall remain in effect for two (2) years, and nondisclosure covenants shall survive for five (5) years after expiration.",
+      "gt_category": "Term",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "two (2) years",
+        "five (5) years"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. GOVERNING LAW AND VENUE",
+      "text": "4. GOVERNING LAW AND VENUE. This Agreement is governed by Delaware law, and all claims shall be resolved in state courts located in New Castle County, Delaware.",
+      "gt_category": "Governing Law",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": []
+    }
+  ]
+}

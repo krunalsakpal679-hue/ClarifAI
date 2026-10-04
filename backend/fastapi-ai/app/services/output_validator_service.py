@@ -177,8 +177,10 @@ def validate_and_resolve_clause_risk(
     position = clause.get("position", 1)
     clause_id = str(clause.get("clause_id") or clause.get("clause_number") or clause.get("position") or position)
     text = clause.get("text", "")
-    category = clause.get("category")
     categories = clause.get("categories", [])
+    category = clause.get("category")
+    if category is None and categories:
+        category = categories[0].value if hasattr(categories[0], 'value') else str(categories[0])
     reviewing_party = reviewing_party or clause.get("reviewing_party") or "Neutral"
 
     # Filter rule findings relevant to this specific clause
@@ -272,9 +274,12 @@ def validate_and_resolve_clause_risk(
             risk_reason = f"Severity determined by Legal-BERT classification ({model_severity}) based on contextual clause language."
 
         logger.info(f"Clause {clause_id} output validation PASSED: severity='{final_severity}' for party='{reviewing_party}' (source='{risk_source}').")
-        return {
+        res_dict = dict(clause)
+        res_dict.update({
             "position": position,
             "clause_id": clause_id,
+            "clause_number": clause.get("clause_number") or str(position),
+            "title": clause.get("title") or f"Section {position}",
             "text": text,
             "category": category,
             "categories": categories,
@@ -287,13 +292,17 @@ def validate_and_resolve_clause_risk(
             "risk_source": risk_source,
             "risk_reason": risk_reason,
             "reviewing_party": reviewing_party
-        }
+        })
+        return res_dict
 
     except OutputValidationError as e:
         logger.error(f"Clause {clause_id} output validation REJECTED: {e.message}")
-        return {
+        res_dict = dict(clause)
+        res_dict.update({
             "position": position,
             "clause_id": clause_id,
+            "clause_number": clause.get("clause_number") or str(position),
+            "title": clause.get("title") or f"Section {position}",
             "text": text,
             "category": category,
             "categories": categories,
@@ -306,7 +315,8 @@ def validate_and_resolve_clause_risk(
             "risk_source": "FAILED_VALIDATION",
             "risk_reason": f"Risk classification output rejected: {e.message}",
             "reviewing_party": reviewing_party
-        }
+        })
+        return res_dict
 
 
 def validate_structured_output(

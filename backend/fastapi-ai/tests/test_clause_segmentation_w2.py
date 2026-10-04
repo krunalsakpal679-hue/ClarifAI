@@ -58,20 +58,23 @@ def test_w2_exact_clause_counts_contracts_a_b_c():
     from app.services.text_cleaning_service import clean_legal_text
     from pathlib import Path
 
+    repo_root = Path(__file__).resolve().parent.parent.parent.parent
+    sample_dir = repo_root / "sample_documents"
+
     # Contract A
-    pdf_a = Path("sample_documents/Sample_Cloud_Consulting_Agreement.pdf").read_bytes()
+    pdf_a = (sample_dir / "Sample_Cloud_Consulting_Agreement.pdf").read_bytes()
     clean_a = clean_legal_text(extract_pdf_text_service(pdf_a, "A.pdf")["full_text"])["cleaned_text"]
     res_a = segment_document_clauses(clean_a)
     assert res_a["total_clauses"] == 12
 
     # Contract B
-    pdf_b = Path("sample_documents/Document_B_Consulting_Services_Agreement.pdf").read_bytes()
+    pdf_b = (sample_dir / "Document_B_Consulting_Services_Agreement.pdf").read_bytes()
     clean_b = clean_legal_text(extract_pdf_text_service(pdf_b, "B.pdf")["full_text"])["cleaned_text"]
     res_b = segment_document_clauses(clean_b)
     assert res_b["total_clauses"] == 7
 
     # Contract C
-    pdf_c = Path("sample_documents/Sample_Commercial_Lease_Agreement.pdf").read_bytes()
+    pdf_c = (sample_dir / "Sample_Commercial_Lease_Agreement.pdf").read_bytes()
     clean_c = clean_legal_text(extract_pdf_text_service(pdf_c, "C.pdf")["full_text"])["cleaned_text"]
     res_c = segment_document_clauses(clean_c)
     assert res_c["total_clauses"] == 7

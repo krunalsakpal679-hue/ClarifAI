@@ -1,0 +1,51 @@
+{
+  "doc_id": "val_10_technical_services",
+  "title": "MASTER TECHNICAL AND MANAGED SERVICES AGREEMENT",
+  "party_a": "Evergreen Enterprise Advisory LLC (Service Provider)",
+  "party_b": "Apex Financial Corporation (Client)",
+  "reviewing_party": "Apex Financial Corporation",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. MANAGED CLOUD INFRASTRUCTURE SCOPE",
+      "text": "1. MANAGED CLOUD INFRASTRUCTURE SCOPE. Service Provider delivers 24x7 monitoring, patch management, and cloud architecture optimization under Statements of Work.",
+      "gt_category": "Scope of Services",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Service Provider",
+      "gt_numbers": []
+    },
+    {
+      "position": 2,
+      "title": "2. SLA UPTIME COMMITMENT AND CREDITS",
+      "text": "2. SLA UPTIME COMMITMENT AND CREDITS. Service Provider guarantees 99.95% cloud availability. If uptime falls below 99.0%, Client receives a 20% billing credit.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Service Provider",
+      "gt_numbers": [
+        "99.95%",
+        "99.0%",
+        "20%"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. MUTUAL CONFIDENTIALITY OBLIGATIONS",
+      "text": "3. MUTUAL CONFIDENTIALITY OBLIGATIONS. Each party protects confidential information with reasonable care, surviving for three (3) years following agreement termination.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "three (3) years"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. MUTUAL DISPUTE RESOLUTION AND ARBITRATION",
+      "text": "4. MUTUAL DISPUTE RESOLUTION AND ARBITRATION. Any controversy shall be submitted to binding arbitration in San Francisco, California under AAA commercial arbitration rules.",
+      "gt_category": "Dispute Resolution",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": []
+    }
+  ]
+}

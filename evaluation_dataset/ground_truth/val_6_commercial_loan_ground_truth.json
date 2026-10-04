@@ -1,0 +1,54 @@
+{
+  "doc_id": "val_6_commercial_loan",
+  "title": "COMMERCIAL CREDIT FACILITY AND TERM LOAN AGREEMENT",
+  "party_a": "Keystone Commercial Bank (Lender)",
+  "party_b": "Pioneer Heavy Industries Corp. (Borrower)",
+  "reviewing_party": "Pioneer Heavy Industries Corp.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. PRINCIPAL FACILITY AND DISBURSEMENT",
+      "text": "1. PRINCIPAL FACILITY AND DISBURSEMENT. Lender establishes a single-draw term loan facility in the principal amount of $1,500,000.00 USD disbursed on the Closing Date.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "$1,500,000.00"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. INTEREST RATE AND COMPOUNDING LATE CHARGES",
+      "text": "2. INTEREST RATE AND COMPOUNDING LATE CHARGES. Interest accrues at 6.75% per annum. Past due payments accrue default interest of 2.5% per month compounded monthly.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Borrower",
+      "gt_numbers": [
+        "6.75%",
+        "2.5%"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. FINANCIAL COVENANTS AND DSCR RATIO",
+      "text": "3. FINANCIAL COVENANTS AND DSCR RATIO. Borrower shall maintain a minimum Debt Service Coverage Ratio (DSCR) of not less than 1.25 to 1.00 at the close of each fiscal quarter.",
+      "gt_category": "General / Boilerplate",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Borrower",
+      "gt_numbers": [
+        "1.25 to 1.00"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. EVENTS OF DEFAULT AND ACCELERATION",
+      "text": "4. EVENTS OF DEFAULT AND ACCELERATION. Upon any payment default continuing for ten (10) days, Lender may declare all unpaid principal and accrued interest immediately due.",
+      "gt_category": "Termination",
+      "gt_severity": "High",
+      "gt_party_bound": "Borrower",
+      "gt_numbers": [
+        "ten (10) days"
+      ]
+    }
+  ]
+}

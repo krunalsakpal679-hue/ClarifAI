@@ -28,7 +28,7 @@ HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     # Indemnification
     (re.compile(r"^(?:INDEMNIFICATION|INDEMNITY\s+OBLIGATIONS|INDEMNITY|DEFENSE\s+AND\s+INDEMNIFICATION|HOLD\s+HARMLESS|PATENT\s+INFRINGEMENT\s+AND\s+PRODUCT\s+INDEMNIFICATION)\b", re.IGNORECASE), ClauseCategoryEnum.INDEMNIFICATION),
     # Limitation of Liability
-    (re.compile(r"^(?:LIMITATION\s+OF\s+LIABILITY|AGGREGATE\s+LIABILITY\s+CAP|AGGREGATE\s+(?:MONETARY\s+)?LIABILITY|DAMAGES\s+CAP|DISCLAIMER\s+OF\s+CONSEQUENTIAL\s+DAMAGES|LIABILITY\s+CAP)\b", re.IGNORECASE), ClauseCategoryEnum.LIMITATION_OF_LIABILITY),
+    (re.compile(r"^(?:LIMITATION\s+OF\s+LIABILITY|AGGREGATE\s+LIABILITY\s+CAP|AGGREGATE\s+(?:MONETARY\s+)?LIABILITY|DAMAGES\s+CAP|DISCLAIMER\s+OF\s+CONSEQUENTIAL\s+DAMAGES|LIABILITY\s+CAP|MONETARY\s+DAMAGES\s+LIMITATION|DAMAGES\s+LIMITATION)\b", re.IGNORECASE), ClauseCategoryEnum.LIMITATION_OF_LIABILITY),
     # Term
     (re.compile(r"^(?:TERM\s+DURATION|LEASE\s+TERM|LEASED\s+EQUIPMENT\s+AND\s+TERM|TERM)$", re.IGNORECASE), ClauseCategoryEnum.TERM),
     # Termination
@@ -36,7 +36,7 @@ HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     # Renewal
     (re.compile(r"^(?:RENEWAL|TERM\s+AND\s+RENEWAL|EXTENSION|AUTOMATIC\s+RENEWAL)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL),
     # Dispute Resolution
-    (re.compile(r"\b(?:DISPUTE\s+RESOLUTION|BINDING\s+ARBITRATION|ARBITRATION|GOVERNING\s+FORUM|COURT\s+VENUE)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION),
+    (re.compile(r"\b(?:DISPUTE\s+RESOLUTION|BINDING\s+ARBITRATION|ARBITRATION|GOVERNING\s+FORUM|COURT\s+VENUE|EXCLUSIVE\s+JURISDICTION|VENUE\s+AND\s+JURISDICTION)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION),
     # Governing Law
     (re.compile(r"\b(?:GOVER?N(?:ING|ERNG)?\s+(?:LAW|JURISDICTION)|APPLICABLE\s+LAW|CHOICE\s+OF\s+LAW)\b", re.IGNORECASE), ClauseCategoryEnum.GOVERNING_LAW),
 
@@ -315,14 +315,8 @@ def score_clause_categories(
         (cat, score) for cat, score in scores.items() if score >= CONFIDENCE_FLOOR
     ]
 
-
     # Sort descending by score
     ranked_categories.sort(key=lambda x: x[1], reverse=True)
-    
-    # Fallback to General / Boilerplate if nothing meets confidence floor
-    if not ranked_categories:
-        ranked_categories = [(ClauseCategoryEnum.GENERAL_BOILERPLATE, CONFIDENCE_FLOOR)]
-        
     return ranked_categories
 
 
@@ -369,6 +363,9 @@ def categorize_clause_records(
 
         record = dict(clause)
         record["categories"] = assigned_categories
+        primary_val = assigned_categories[0].value if assigned_categories else "General / Boilerplate"
+        record["category"] = primary_val
+        record["primary_category"] = primary_val
         categorized_records.append(record)
 
     logger.info(f"Clause Categorization Complete: {len(categorized_records)} clauses processed.")
@@ -384,12 +381,13 @@ def categorize_clause_records(
 def categorize_clause(text: str, title: str = "") -> Dict[str, Any]:
     """Single clause categorization helper."""
     ranked = score_clause_categories(text=text, title=title)
-    primary_cat = ranked[0][0]
+    primary_cat = ranked[0][0] if ranked else ClauseCategoryEnum.GENERAL_BOILERPLATE
+    conf = ranked[0][1] if ranked else 0
     return {
         "primary_category": primary_cat,
         "category": primary_cat,
         "ranked_categories": ranked,
-        "confidence": ranked[0][1]
+        "confidence": conf
     }
 
 

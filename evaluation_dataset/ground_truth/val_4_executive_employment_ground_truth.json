@@ -1,0 +1,53 @@
+{
+  "doc_id": "val_4_executive_employment",
+  "title": "EXECUTIVE EMPLOYMENT AGREEMENT",
+  "party_a": "Aura Pharmaceuticals Corp. (Company)",
+  "party_b": "Marcus Thorne (Executive)",
+  "reviewing_party": "Marcus Thorne",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. BASE SALARY AND INCENTIVE BONUS",
+      "text": "1. BASE SALARY AND INCENTIVE BONUS. Company pays Executive an annual base salary of $320,000.00, payable semi-monthly, plus an annual performance bonus target of 40%.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Company",
+      "gt_numbers": [
+        "$320,000.00",
+        "40%"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. RESTRICTIVE COVENANTS AND NON-COMPETE",
+      "text": "2. RESTRICTIVE COVENANTS AND NON-COMPETE. For twelve (12) months following separation, Executive shall not work for any direct pharmaceutical competitor within North America.",
+      "gt_category": "Restrictive Covenants",
+      "gt_severity": "High",
+      "gt_party_bound": "Executive only",
+      "gt_numbers": [
+        "twelve (12) months"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. INTELLECTUAL PROPERTY ASSIGNMENT",
+      "text": "3. INTELLECTUAL PROPERTY ASSIGNMENT. All drug formulations, chemical syntheses, and patents developed by Executive during employment are works made for hire belonging solely to Company.",
+      "gt_category": "Intellectual Property",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Executive only",
+      "gt_numbers": []
+    },
+    {
+      "position": 4,
+      "title": "4. SEVERANCE UPON TERMINATION WITHOUT CAUSE",
+      "text": "4. SEVERANCE UPON TERMINATION WITHOUT CAUSE. If terminated without cause, Executive receives sixty (60) days advance notice and nine (9) months salary continuation.",
+      "gt_category": "Termination",
+      "gt_severity": "Low",
+      "gt_party_bound": "Company",
+      "gt_numbers": [
+        "sixty (60) days",
+        "nine (9) months"
+      ]
+    }
+  ]
+}

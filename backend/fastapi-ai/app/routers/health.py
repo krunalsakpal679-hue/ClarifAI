@@ -67,3 +67,28 @@ async def readiness_check():
         "service": "fastapi-ai",
         "groq_configured": bool(settings.GROQ_API_KEY)
     }
+
+
+@router.get("/health/llm")
+async def llm_health_check():
+    """
+    Full Groq LLM diagnostic health endpoint per Section 1 requirements.
+    Never exposes raw key, returns redacted prefix and active mode.
+    """
+    raw_key = (settings.GROQ_API_KEY or "").strip()
+    key_len = len(raw_key)
+    prefix = raw_key[:4] if raw_key else ""
+    redacted = f"{prefix}***[REDACTED]***" if (raw_key and raw_key.startswith("gsk_")) else "NOT_CONFIGURED"
+    
+    llm_info = get_llm_status()
+    active_mode = "LLM mode" if bool(raw_key) else "Limited mode (LLM unavailable)"
+    
+    return {
+        "status": "ok" if llm_info.get("configured") else "limited",
+        "mode": active_mode,
+        "model_name": settings.GROQ_MODEL_NAME,
+        "key_configured": bool(raw_key),
+        "key_redacted": redacted,
+        "key_length": key_len,
+        "diagnostics": llm_info
+    }

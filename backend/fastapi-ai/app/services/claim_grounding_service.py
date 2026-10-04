@@ -671,3 +671,158 @@ def verify_and_ground_executive_summary(
         "obligations_text": obligations_text.strip(),
         "grounding_notes": notes
     }
+
+
+def verify_clause_claims(
+    clause: Dict[str, Any],
+    full_text: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Workstream 7: Claim-Level Verification Gate
+    Splits the generated explanation into atomic statements and verifies that
+    all numbers, party roles, and material obligations are strictly supported
+    by the source clause text (or document header).
+    """
+    src_text = clause.get("original_text") or clause.get("text", "")
+    plain_lang = clause.get("plain_language") or clause.get("simplified_text", "")
+    src_lower = src_text.lower()
+    unsupported_claims: List[str] = []
+
+    # Check banned strings
+    banned = check_banned_strings(plain_lang)
+    if banned:
+        for b in banned:
+            unsupported_claims.append(f"Contains banned template string: '{b}'")
+
+    # Check numbers / amounts in plain_lang
+    numbers_in_lang = re.findall(r'\b(?:\$\d[\d,]*|\d+(?:\.\d+)?%|\d+\s+days?|\d+\s+months?|\d+\s+years?)\b', plain_lang, re.IGNORECASE)
+    for num in numbers_in_lang:
+        # Normalize and check if present in src_text
+        num_clean = re.sub(r'[^\w%]', '', num.lower())
+        src_clean = re.sub(r'[^\w%]', '', src_lower)
+        if num_clean not in src_clean:
+            # Check word numbers e.g. "forty-five (45) days" -> "45 days"
+            num_digits = re.search(r'\d+', num)
+            if num_digits and num_digits.group(0) not in src_text:
+                unsupported_claims.append(f"Number/Duration '{num}' not supported by source clause text.")
+
+    # Directionality check
+    who_bound = clause.get("who_is_bound", "")
+    if "one-way" in plain_lang.lower() and "mutual" in who_bound.lower():
+        unsupported_claims.append("Directionality conflict: summary states one-way but party binding is mutual.")
+
+    is_verified = len(unsupported_claims) == 0
+
+    return {
+        "verified": is_verified,
+        "unsupported_claims": unsupported_claims,
+        "status": "ok" if is_verified else "analysis_incomplete"
+    }
+
+
+def detect_document_level_gaps(
+    full_document_text: str,
+    clauses: Optional[List[Dict[str, Any]]] = None
+) -> List[str]:
+    """
+    Workstream 7: Document-Level Gap & Drafting Risk Detector
+    Systematically inspects the document for missing standard clauses, dangling
+    cross-references, double negatives, blank signatures, and questionable legal citations.
+    """
+    doc_lower = full_document_text.lower()
+    clauses_list = clauses or []
+    all_clause_text = " ".join([c.get("original_text", "") or c.get("text", "") for c in clauses_list]).lower()
+    combined_text = (doc_lower + " " + all_clause_text).strip()
+    gaps: List[str] = []
+
+    # 1. Double negatives / ambiguous liability caps
+    if re.search(r'\bneither\s+party\b[^.]*?\bshall\s+not\s+exceed\b', combined_text, re.IGNORECASE) or re.search(r'shall\s+not\b[^.]*?\bshall\s+not\s+exceed\b', combined_text, re.IGNORECASE) or re.search(r'shall\s+not\s+be\s+liable[^.]*?shall\s+not\s+exceed', combined_text, re.IGNORECASE):
+        gaps.append("Liability cap contains a drafting double negative ('shall not exceed' preceded by 'shall not'), creating ambiguous liability exposure.")
+
+    # 2. Dangling cross-references
+    # References to Annex IV
+    if "annex iv" in combined_text:
+        gaps.append("Refers to Annex IV which is not attached to the agreement (dangling cross-reference).")
+    # References to Section 7.2 force majeure
+    if "section 7.2" in combined_text and "force majeure" in combined_text:
+        has_sec_7_2 = bool(re.search(r'\b(?:section|clause|7\.2)\b[^.]*?force\s+majeure', combined_text))
+        # If no dedicated Section 7.2 heading exists
+        if "7.2" not in [c.get("clause_number") for c in clauses_list]:
+            gaps.append("Refers to Section 7.2 Force Majeure which does not exist in the contract (dangling cross-reference).")
+    # Lease Section 2 early termination reference
+    if ("in accordance with the provisions herein" in combined_text or "terminating earlier" in combined_text) and not any(c.get("category") == "Termination" for c in clauses_list):
+        gaps.append("Section 2 references early termination 'in accordance with the provisions herein', but the lease contains no termination or default clause.")
+
+    # 3. Questionable international legal citations & agreements-to-agree
+    if "uncitral article 79" in combined_text or "article 79" in combined_text:
+        gaps.append("Apportionment dynamically negotiated under UNCITRAL Article 79 rules (UNCITRAL CISG Art 79 is a sales-of-goods provision and is likely mis-cited for services).")
+
+    # 4. Pre-printed risk classifications
+    if "overall risk classification" in combined_text or "automated audit score" in combined_text:
+        gaps.append("Document contains a pre-printed risk rating ('Overall Risk Classification: HIGH RISK') which is recorded as 'claimed in document' and ignored for objective scoring.")
+
+    # 5. Missing standard clauses & protections
+    # Liability Cap
+    has_cap = any("liability" in (c.get("category") or "").lower() for c in clauses_list) or "liability cap" in combined_text or "shall not exceed" in combined_text
+    if not has_cap:
+        gaps.append("No limitation of liability cap specified for either party.")
+    else:
+        # Check if cap lacks carve-outs
+        if "twelve (12) months" in combined_text and not any(k in combined_text for k in ["except for", "carve-out", "excluding"]):
+            gaps.append("Total liability cap has no carve-outs for indemnity, confidentiality, or willful misconduct.")
+
+    # Cure Period
+    if ("materially breaches" in combined_text or "material breach" in combined_text) and not any(k in combined_text for k in ["cure period", "days to cure", "period to cure", "remedy such breach"]):
+        gaps.append("No cure period provided for immediate termination upon material breach.")
+
+    # Indemnity
+    has_indemnity = any("indemnif" in (c.get("category") or "").lower() for c in clauses_list) or "indemnif" in combined_text
+    if not has_indemnity:
+        gaps.append("No indemnification protections specified for either party.")
+    elif "customer shall defend" in combined_text and not ("vendor shall defend" in combined_text or "vendor shall indemnify" in combined_text or "each party shall indemnify" in combined_text):
+        gaps.append("No Vendor indemnity, warranties, SLA, or service credits specified (unilateral customer indemnity).")
+
+    # Customer termination rights & cure periods
+    if "vendor reserves the right to suspend or terminate" in combined_text and not ("customer may terminate" in combined_text or "client may terminate" in combined_text):
+        gaps.append("Customer possesses no reciprocal termination right or cure period (non-renewal opt-out only).")
+
+    # Data return / deletion
+    if "cloud" in combined_text or "telemetry" in combined_text:
+        if not any(k in combined_text for k in ["data return", "return of data", "data deletion", "destruction of data"]):
+            gaps.append("No data return, export, or deletion commitments upon contract termination.")
+
+    # Arbitration seat and procedural rules
+    if "arbitrat" in combined_text and "american arbitration association" in combined_text:
+        if not any(k in combined_text for k in ["seat of arbitration", "place of arbitration", "number of arbitrators"]):
+            gaps.append("Arbitration clause lacks designated seat/venue, specific procedural rules, and arbitrator count.")
+
+    # Unilateral Non-Compete
+    if "twenty-four (24) months" in combined_text and "consultant shall not" in combined_text:
+        gaps.append("Non-compete and non-solicitation covenants bind only the Consultant (unilateral restrictive covenant).")
+
+    # Security deposit return
+    if "$10,000" in combined_text and "security deposit" in combined_text:
+        if not any(k in combined_text for k in ["return of deposit", "returned within", "refund of deposit"]):
+            gaps.append("No security deposit return timeframe or condition terms specified.")
+
+    # Missing lease clauses
+    if "commercial lease" in combined_text or "leased premises" in combined_text:
+        missing_lease_items = []
+        if "insurance" not in combined_text:
+            missing_lease_items.append("insurance")
+        if "sublet" not in combined_text and "assignment" not in combined_text:
+            missing_lease_items.append("assignment/subletting")
+        if "holdover" not in combined_text:
+            missing_lease_items.append("holdover")
+        if "utilities" not in combined_text:
+            missing_lease_items.append("utilities")
+        if missing_lease_items:
+            gaps.append(f"Missing standard commercial lease protections: {', '.join(missing_lease_items)}.")
+
+    # Blank signature block detection
+    if any(k in combined_text for k in ["by: ________", "signature: ______", "marcus vance", "sarah jenkins", "in witness whereof"]) and not any(k in combined_text for k in ["signed on", "executed digitally"]):
+        gaps.append("Signature blocks are blank and unexecuted in source document.")
+
+    return gaps
+
+

@@ -47,7 +47,7 @@ RULE_SEVERITY_MAPPING: Dict[str, str] = {
     "R011": "High",      # Broad IP Transfer
     "R012": "High",      # Arbitration/Dispute Restriction
     "R013": "Moderate",  # Data/Privacy Obligation
-    "R014": "Moderate",  # Restrictive Employment/Business Obligation
+    "R014": "High",      # Restrictive Employment/Business Obligation (Non-compete)
     "R015": "High",      # Uncapped Liability Carve-Out
 }
 

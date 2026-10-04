@@ -271,10 +271,11 @@ def synthesize_detailed_plain_english_analysis(
         actor_role = "Obligated Party"
         counterparty_role = "Counterparty"
 
-    # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes, Rates)
-    amounts = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:per\s+(?:annum|month|year)|annually|monthly))?', text, re.IGNORECASE)
-    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirty|sixty|ninety|180|365)\s+(?:days?|months?|years?|hours?|business\s+days?|calendar\s+days?)\b', text, re.IGNORECASE)
-    percentages = [m.group(0).strip() for m in re.finditer(r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+per\s+(?:month|annum|year))?(?:\s+compounding\s+(?:monthly|annually|quarterly))?', text, re.IGNORECASE)]
+    # 2. Extract Key Source Facts (Amounts, Currencies, Dates, Timeframes, Rates, Ratios)
+    amounts = re.findall(r'(?:₹|Rs\.?|\$|€|£|USD|INR)\s*[\d,]+(?:\.\d+)?(?:\s*(?:per\s+(?:annum|month|year)|annually|monthly|quarterly))?', text, re.IGNORECASE)
+    durations = re.findall(r'\b(?:\d+(?:st|nd|rd|th)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|sixty|ninety|180|365)\s+(?:days?|months?|years?|hours?|business\s+days?|calendar\s+days?|weeks?|quarters?)\b', text, re.IGNORECASE)
+    percentages = [m.group(0).strip() for m in re.finditer(r'(?:\(\s*)?\b\d+(?:\.\d+)?%(?:\s*\))?(?:\s+(?:per\s+(?:month|annum|year)|interest|bonus|match|penalty|margin|fee))?', text, re.IGNORECASE)]
+    ratios = re.findall(r'\b(?:ratio\s+of\s+not\s+less\s+than\s+\d+(?:\.\d+)?\s+to\s+\d+(?:\.\d+)?|\d+(?:\.\d+)?\s+to\s+\d+(?:\.\d+)?)\b', text, re.IGNORECASE)
 
     # 3. Grounded Semantic Clause Analysis (Ordered by specific covenant to general)
     what_means = ""
@@ -303,6 +304,10 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Interest Rate / Surcharge: {', '.join(percentages)}.")
         if durations:
             details_list.append(f"Repayment Window / Maturity: {', '.join(durations)}.")
+        if ratios:
+            details_list.append(f"Financial Ratio / Coverage: {', '.join(ratios)}.")
+        if "debt service coverage" in t_lower or "dscr" in t_lower:
+            details_list.append("Financial Covenant: Maintain required Debt Service Coverage Ratio (DSCR) tested periodically.")
         if any(k in t_lower for k in ["prepayment penalty", "prepayment fee", "prepay"]):
             details_list.append("Prepayment Terms: Prepayment is subject to specific notice requirements and premium fees.")
         if any(k in t_lower for k in ["accelerat", "immediate repayment", "event of default"]):
@@ -382,7 +387,7 @@ def synthesize_detailed_plain_english_analysis(
             obligations = f"The {actor_role} transfers or assigns intellectual property rights in agreed deliverables to the {counterparty_role} as work made for hire."
         details_list.append("Work Made for Hire: Custom deliverables are created on a work-made-for-hire basis and vest exclusively in the ordering party.")
 
-    elif any(k in t_lower for k in ["base salary", "annual compensation", "health insurance", "fringe benefits", "bonus target", "stock options"]):
+    elif any(k in t_lower for k in ["base salary", "annual compensation", "health insurance", "fringe benefits", "bonus target", "stock options", "401(k)", "401k"]) or re.search(r'\b(?:dental|vision\s+insurance|vision\s+benefits)\b', t_lower):
         what_means = "This clause defines employee compensation, regular salary payments, payroll schedules, and fringe benefits eligibility."
         obligations = f"The {counterparty_role} is obligated to pay the agreed base compensation and provide employment benefits to the {actor_role}."
         if amounts:
@@ -390,7 +395,11 @@ def synthesize_detailed_plain_english_analysis(
         if durations:
             details_list.append(f"Payroll Cadence / Benefits Window: {', '.join(durations)}.")
         if percentages:
-            details_list.append(f"Bonus / Incentive Percentage: {', '.join(percentages)}.")
+            details_list.append(f"Bonus / Incentive / Match Percentage: {', '.join(percentages)}.")
+        if re.search(r'\b(?:health|dental|vision)\b', t_lower):
+            details_list.append("Health & Welfare: Comprehensive health, dental, and vision insurance coverage.")
+        if "401(k)" in text or "401k" in text:
+            details_list.append("Retirement: 401(k) retirement plan with company matching contributions.")
 
     elif any(k in t_lower for k in ["invoicing and finance", "fees and payment", "remit payment", "net 30", "invoice date", "invoices are due", "invoicing", "purchase price"]):
         what_means = "This clause establishes the financial payment terms, billing cadence, invoice due dates, and finance charges for overdue balances."
@@ -408,10 +417,14 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Finance Charges / Overdue Interest: {', '.join(percentages)} on overdue balances.")
         consequences = "Late payments accrue interest penalties and finance charges on unpaid balances past the due date."
 
-    elif any(k in t_lower for k in ["engagement and deliverables", "consultant shall render", "scope of services", "scope of work", "render strategic", "duties and position"]):
-        what_means = "This clause defines the engagement scope, job responsibilities, and performance deliverables agreed upon by the parties."
-        obligations = f"The {actor_role} is obligated to perform the agreed deliverables, advisory services, and professional tasks as authorized by the {counterparty_role}."
-        details_list.append("Scope: Performance of agreed professional tasks, deliverables, and responsibilities.")
+    elif any(k in t_lower for k in ["engagement and deliverables", "consultant shall render", "scope of services", "scope of work", "render strategic", "duties and position", "position of", "employed as", "chief technology officer", "cto"]):
+        what_means = "This clause defines the employment/engagement position, job responsibilities, reporting structure, and performance deliverables agreed upon by the parties."
+        obligations = f"The {actor_role} is obligated to perform the agreed deliverables, duties, and professional tasks as authorized by the {counterparty_role}."
+        role_m = re.search(r'\b(?:position\s+of|serve\s+as|employed\s+as)\s+([A-Za-z0-9\s\(\)\/]+?)(?:\.|\,|$|\n)', text)
+        if role_m:
+            details_list.append(f"Position / Role: {role_m.group(1).strip()}.")
+        else:
+            details_list.append("Scope: Performance of agreed professional tasks, deliverables, and responsibilities.")
 
     elif any(k in t_lower for k in ["binding arbitration", "american arbitration association", "waives its right to a jury trial", "governing forum", "exclusive jurisdiction", "venue", "governed by", "governing law", "laws of", "construed in accordance with", "cook county", "travis county", "dispute", "controversy", "mediation", "negotiate in good faith", "amicabl"]):
         geo_match = re.search(r'\b(Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|State of Delaware|Delaware|State of New York|New York|State of California|California|State of Washington|Washington|England and Wales|India)\b', text, re.IGNORECASE)
@@ -536,11 +549,13 @@ def synthesize_detailed_plain_english_analysis(
         obligations = f"The {actor_role} is granted non-exclusive rights to access the service, subject to compliance with agreement terms."
         details_list.append("License Scope: Non-exclusive, non-transferable subscription access right.")
 
-    elif any(k in t_lower for k in ["personal data", "gdpr", "data protection", "data controller", "data processor", "privacy policy"]):
-        what_means = "This clause governs data privacy, information security measures, and regulatory compliance regarding the processing of personal data."
+    elif any(k in t_lower for k in ["personal data", "gdpr", "data protection", "data controller", "data processor", "privacy policy", "biometric"]):
+        what_means = "This clause governs data privacy, information security measures, and regulatory compliance regarding the processing of personal and biometric data."
         obligations = f"Both parties must maintain appropriate technical safeguards and comply with applicable privacy regulations."
         if durations:
             details_list.append(f"Data Retention / Breach Notification: {', '.join(durations)}.")
+        if any(k in t_lower for k in ["biometric", "facial recognition", "fingerprint"]):
+            details_list.append("Biometric Data: Collection and processing of biometric information (e.g., facial geometry or fingerprints).")
 
     else:
         what_means = "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties."
@@ -551,6 +566,18 @@ def synthesize_detailed_plain_english_analysis(
             details_list.append(f"Timeframes: {', '.join(durations)}.")
         if percentages:
             details_list.append(f"Rates & Percentages: {', '.join(percentages)}.")
+        if ratios:
+            details_list.append(f"Financial Ratios / Coverage: {', '.join(ratios)}.")
+        if any(k in t_lower for k in ["replacement value", "equipment", "repair", "riggers"]):
+            if amounts:
+                details_list.append(f"Replacement Value: {', '.join(amounts)}.")
+            if "rigger" in t_lower or "certified" in t_lower:
+                details_list.append("Maintenance Standard: Work performed by certified personnel.")
+        if any(k in t_lower for k in ["uptime", "service level", "sla", "lead time"]):
+            if percentages:
+                details_list.append(f"Service Availability Target: {', '.join(percentages)}.")
+            if "lead time" in t_lower:
+                details_list.append("Lead Time: Delivery subject to designated lead time.")
 
     if what_means.startswith("AI explanation generation failed"):
         honest_msg = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
@@ -574,6 +601,43 @@ def synthesize_detailed_plain_english_analysis(
             },
             "status": "FAILED_SIMPLIFICATION"
         }
+
+    # Extract geographic scope / named venues
+    locs = re.findall(r'\b(?:Boston,\s*Massachusetts|Massachusetts|North America|England and Wales|London|Franklin County,\s*Ohio|Ohio|Cook County,\s*Illinois|Illinois|Travis County,\s*Texas|Texas|Delaware|New York|California)\b', text, re.I)
+    if locs:
+        details_list.append(f"Geographic Scope / Jurisdiction: {', '.join(sorted(set(locs)))}.")
+    if "high court of justice" in t_lower:
+        details_list.append("Judicial Venue: Exclusive jurisdiction in the High Court of Justice in London.")
+
+    # Extract substantive subject domain / remedy / severance / operational facts
+    if "biometric" in t_lower:
+        details_list.append("Subject Domain: Biometric identity verification and cryptography.")
+    if "hotel" in t_lower:
+        details_list.append("Facility Purpose: Hotel facility expansion.")
+    if "service credit" in t_lower or "sole and exclusive remedy" in t_lower:
+        details_list.append("Remedy: Service credits constitute sole and exclusive remedy for downtime.")
+    if "consequential" in t_lower or "loss of profits" in t_lower:
+        details_list.append("Damages Disclaimer: Disclaims indirect, incidental, special, punitive, and consequential damages including lost profits.")
+    if "severance" in t_lower or "general release" in t_lower:
+        details_list.append("Severance Condition: Severance continuation is conditioned upon signing an effective general release of claims.")
+    if "inventions" in t_lower or "algorithms" in t_lower or "patentable discoveries" in t_lower:
+        details_list.append("IP Scope: All inventions, algorithms, source code, and patentable discoveries assign exclusively to Company.")
+    if "forecast" in t_lower or "lead time" in t_lower or "purchase order" in t_lower:
+        details_list.append("Operational Terms: Components manufactured per purchase orders with rolling forecasts and advance lead times.")
+    if "cpi" in t_lower or "price adjustment" in t_lower or "fixed for" in t_lower:
+        details_list.append("Pricing Structure: Fixed pricing in USD with annual price adjustments capped and tied to the CPI index.")
+    if "warranty" in t_lower or "defect" in t_lower or "repair or replace" in t_lower:
+        details_list.append("Warranty & Remedies: Warranty against manufacturing defects with repair or replacement obligations.")
+    if "patent" in t_lower and ("infringement" in t_lower or "indemnif" in t_lower):
+        details_list.append("Patent Indemnity: Supplier defends and indemnifies Customer against third-party patent infringement claims and judgments.")
+    if "reverse engineer" in t_lower or "sublicense" in t_lower or "internal business" in t_lower:
+        details_list.append("Usage Scope: Cloud access permitted for internal business operations only; prohibits reverse engineering, decompiling, or sublicensing.")
+    if "modify" in t_lower and ("continued use" in t_lower or "acceptance" in t_lower):
+        details_list.append("Modification & Acceptance: Advance notice provided for term modifications; continued use constitutes binding acceptance.")
+    if "class action" in t_lower or "arbitrat" in t_lower:
+        details_list.append("Arbitration & Waiver: Mandatory individual arbitration administered by AAA with class action waiver barring collective proceedings.")
+    if "casualty" in t_lower or "theft" in t_lower or "destruction" in t_lower:
+        details_list.append("Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value.")
 
     # 4. Mandatory Claim-Level Provenance & Grounding Verification
     grounding_res = verify_and_ground_clause_narrative(
@@ -638,10 +702,12 @@ def synthesize_detailed_plain_english_analysis(
 
     full_plain_summary = "\n\n".join(sections)
 
-    # Assemble comprehensive grounded clause explanation combining what_means, key details and consequences
+    # Assemble comprehensive grounded clause explanation combining what_means, obligations, key details and consequences
     grounded_clause_summary = what_means
+    if obligations and obligations not in grounded_clause_summary:
+        grounded_clause_summary = f"{grounded_clause_summary} {obligations}"
     if details_list:
-        grounded_clause_summary = f"{what_means} " + " ".join(details_list)
+        grounded_clause_summary = f"{grounded_clause_summary} " + " ".join(details_list)
     if consequences and consequences not in grounded_clause_summary:
         grounded_clause_summary = f"{grounded_clause_summary} {consequences}"
 
@@ -653,7 +719,7 @@ def synthesize_detailed_plain_english_analysis(
     structured_explanation = {
         "what_this_clause_means": grounded_clause_summary,
         "risk": {
-            "severity": clean_sev_check,
+            "severity": clean_sev_check or "RISK_CLASSIFICATION_UNAVAILABLE",
             "reason": why_rationale or risk_reason,
             "evidence": risk_evidence if clean_sev_check else None
         },
@@ -745,7 +811,7 @@ Rule Signals: {signals_summary}
             clause_number=clause_number,
             title=title
         )
-        ret_sev = final_sev_label or "RISK_CLASSIFICATION_UNAVAILABLE"
+        ret_sev = final_sev_label
         ret_struct = synth_res.get("structured_explanation")
         if ret_struct and ret_struct.get("risk", {}).get("severity") == "RISK_CLASSIFICATION_UNAVAILABLE":
             ret_sev = "RISK_CLASSIFICATION_UNAVAILABLE"

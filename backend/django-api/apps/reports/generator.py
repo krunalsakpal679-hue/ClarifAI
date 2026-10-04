@@ -152,13 +152,13 @@ def generate_document_pdf(report, document, language='en'):
 
     elements = []
 
-    # Calculate document hash (SHA-256)
-    doc_hash = hashlib.sha256(str(document.id).encode()).hexdigest()[:16]
+    # Calculate document hash (Full 64-hex SHA-256 per W8 Spec)
+    doc_hash = hashlib.sha256(str(document.id).encode()).hexdigest()
     if hasattr(document, 'file_reference') and document.file_reference:
         try:
             if hasattr(document.file_reference, 'path') and os.path.exists(document.file_reference.path):
                 with open(document.file_reference.path, 'rb') as f:
-                    doc_hash = hashlib.sha256(f.read()).hexdigest()[:16]
+                    doc_hash = hashlib.sha256(f.read()).hexdigest()
         except Exception:
             pass
 
@@ -166,6 +166,7 @@ def generate_document_pdf(report, document, language='en'):
     doc_title = (document.original_filename or "Commercial Agreement").replace(".pdf", "").replace("_", " ")
     elements.append(Paragraph(f"<b>ClarifAI Contract Analysis:</b> {doc_title}", title_style))
     
+    reviewing_party = getattr(document, 'reviewing_party', None) or "Neutral / Reviewing Counsel"
     header_table_data = [
         [
             Paragraph(f"<b>Report ID:</b> {report.id}", meta_style),
@@ -173,7 +174,7 @@ def generate_document_pdf(report, document, language='en'):
         ],
         [
             Paragraph(f"<b>Source File:</b> {document.original_filename}", meta_style),
-            Paragraph(f"<b>Perspective:</b> Reviewing as Neutral / Counterparty", meta_style)
+            Paragraph(f"<b>Perspective:</b> Reviewing as: {reviewing_party}", meta_style)
         ]
     ]
     t_hdr = Table(header_table_data, colWidths=[270, 270])
@@ -195,11 +196,17 @@ def generate_document_pdf(report, document, language='en'):
             elements.append(Paragraph(f"<b>Purpose:</b> {_safe_str(summary.purpose_text, has_unicode)}", body_style))
             elements.append(Spacer(1, 4))
 
-        # Risk Counts
+        # Risk Counts (Matching exact clause counts per W8 Spec)
         high_cnt = clauses.filter(severity__iexact='high').count()
         mod_cnt = clauses.filter(severity__in=['moderate', 'medium']).count()
         low_cnt = clauses.filter(severity__in=['low', 'safe']).count()
-        elements.append(Paragraph(f"<b>Risk Profile:</b> HIGH: {high_cnt} | MODERATE: {mod_cnt} | LOW: {low_cnt} (Total: {clauses.count()} clauses)", body_style))
+        rev_cnt = clauses.exclude(severity__in=['high', 'moderate', 'medium', 'low', 'safe']).count()
+        
+        profile_str = f"HIGH: {high_cnt} | MODERATE: {mod_cnt} | LOW: {low_cnt}"
+        if rev_cnt > 0:
+            profile_str += f" | NEEDS_REVIEW: {rev_cnt}"
+        profile_str += f" (Total: {clauses.count()} clauses)"
+        elements.append(Paragraph(f"<b>Risk Profile:</b> {profile_str}", body_style))
         elements.append(Spacer(1, 6))
 
         # Top Risks & Gaps
@@ -217,7 +224,8 @@ def generate_document_pdf(report, document, language='en'):
         for cl in clauses:
             sev_label = (cl.severity or "Low").upper()
             cat_label = cl.category or "General"
-            title_label = getattr(cl, 'title', None) or (cl.structured_explanation.get('title') if (cl.structured_explanation and isinstance(cl.structured_explanation, dict)) else None) or f"Clause {cl.position}"
+            c_num = getattr(cl, 'clause_number', None) or str(cl.position)
+            title_label = getattr(cl, 'title', None) or (cl.structured_explanation.get('title') if (cl.structured_explanation and isinstance(cl.structured_explanation, dict)) else None) or f"Section {c_num}"
             
             takeaway = cl.simplified_text.split('\n')[0] if cl.simplified_text else cl.original_text[:100]
             if cl.simplified_text and "IN PLAIN LANGUAGE:" in cl.simplified_text:
@@ -226,7 +234,7 @@ def generate_document_pdf(report, document, language='en'):
                     takeaway = parts[1].split("\n\n")[0].strip()
 
             summary_rows.append([
-                str(cl.position),
+                str(c_num),
                 Paragraph(_safe_str(title_label, has_unicode), body_style),
                 Paragraph(_safe_str(cat_label, has_unicode), body_style),
                 Paragraph(f"<b>{sev_label}</b>", body_style),
@@ -250,16 +258,18 @@ def generate_document_pdf(report, document, language='en'):
         elements.append(Paragraph("<b>3. Detailed Clause-Level Analysis</b>", heading_style))
         for cl in clauses:
             card_elements = []
-            c_title = getattr(cl, 'title', None) or (cl.structured_explanation.get('title') if (cl.structured_explanation and isinstance(cl.structured_explanation, dict)) else None) or f"Clause {cl.position}"
+            c_num = getattr(cl, 'clause_number', None) or str(cl.position)
+            c_title = getattr(cl, 'title', None) or (cl.structured_explanation.get('title') if (cl.structured_explanation and isinstance(cl.structured_explanation, dict)) else None) or f"Section {c_num}"
             c_sev = (cl.severity or "Low").upper()
             c_cat = cl.category or "General"
 
-            card_elements.append(Paragraph(f"<b>Clause {cl.position}. {c_title}</b> &nbsp;|&nbsp; <i>{c_cat}</i> &nbsp;|&nbsp; <b>[{c_sev} SEVERITY]</b>", subheading_style))
+            card_elements.append(Paragraph(f"<b>Section {c_num}. {c_title}</b> &nbsp;|&nbsp; <i>{c_cat}</i> &nbsp;|&nbsp; <b>[{c_sev} SEVERITY]</b>", subheading_style))
             card_elements.append(Spacer(1, 2))
 
             # Original Text
             card_elements.append(Paragraph("<b>Original Text:</b>", body_style))
             card_elements.append(Paragraph(_safe_str(cl.original_text, has_unicode), quote_style))
+
 
             # Structured Simplified Breakdown
             if cl.simplified_text:

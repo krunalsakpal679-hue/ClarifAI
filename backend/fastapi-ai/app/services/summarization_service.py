@@ -213,8 +213,6 @@ def generate_document_summary(
 
         # 1. Purpose Text: Summarize preamble & services clauses into a clean executive statement
         purpose_clauses = [c.get("text", "") for c in clauses[:2] if c.get("text")]
-        purpose_combined = "\n".join(purpose_clauses) if purpose_clauses else "Contractual agreement between parties."
-        purpose_res = summarize_text(purpose_combined, max_length=120, min_length=20)
         
         # Extract title and parties for executive synthesis
         p_text_raw = purpose_clauses[0] if purpose_clauses else ""

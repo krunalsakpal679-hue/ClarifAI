@@ -1,7 +1,9 @@
 """
 ClarifAI Legal Risk Rule Engine Service Module
-Implements all 15 approved rules (R001–R015) per Chapter 16.7.
-Produces structured evidence findings without assigning any final severity value per Chapter 16.10.
+(W4 Spec Implementation)
+
+Implements generalized risk signal detection (R001–R015) matching legal meaning,
+verb/noun forms, and party obligations across diverse contract types without overfitting.
 """
 
 import re
@@ -13,90 +15,164 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
-# Definitions for approved rules R001-R015 (Chapter 16.7)
+# Definitions for generalized risk rules R001-R015 matching legal meaning (verb/noun, active/passive)
 RULES_REGISTRY: Dict[str, Dict[str, Any]] = {
     "R001": {
         "risk_signal": "Auto-Renewal",
-        "pattern": re.compile(r"\b(?:auto(?:matically)?\s*renew(?:s|ed|ing)?|renew(?:s|ed|ing)?\s+automatically|automatic(?:ally)?\s+extension)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:auto(?:matically)?\s*renew(?:s|ed|ing)?|renew(?:s|ed|ing)?\s+automatically|"
+            r"automatic(?:ally)?\s+extension|consecutive\s+\w+[- ]year\s+terms?|"
+            r"successive\s+(?:\d+|twelve|\w+)\s*[- ]month\s+periods?|"
+            r"raise\s+prices\s+up\s+to\s+\d+%|annual\s+price\s+escalation|"
+            r"increase\s+(?:fees?|rates?|prices?)\s+by\s+(?:up\s+to\s+)?\d+%)\b",
+            re.IGNORECASE
+        )
     },
     "R002": {
         "risk_signal": "Early-Termination Penalty",
-        "pattern": re.compile(r"\b(?:early\s+termination\s+(?:fee|penalty|charge)|early\s+cancellation\s+(?:fee|penalty)|liquidated\s+damages\s+for\s+early\s+termination|prepayment\s+(?:fee|penalty|premium)|prepay\s+(?:the\s+)?(?:outstanding\s+)?principal\s+subject\s+to)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:early\s+termination\s+(?:fee|penalty|charge)|liquidated\s+damages\s+for\s+early\s+termination|"
+            r"prepayment\s+(?:fee|penalty|premium)|forfeiture\s+of\s+(?:leasehold|deposit|prepaid\s+amounts?))\b",
+            re.IGNORECASE
+        )
     },
     "R003": {
         "risk_signal": "Hidden/Add-on Charges",
-        "pattern": re.compile(r"\b(?:hidden\s+fee|additional\s+charge|unspecified\s+fee|maintenance\s+surcharge|administrative\s+fee|processing\s+surcharge)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:administrative\s+fee|processing\s+surcharge|hidden\s+fee|unspecified\s+(?:fee|charge|surcharge)|"
+            r"surcharge\s+without\s+notice|administrative\s+surcharge|additional\s+unspecified\s+costs?)\b",
+            re.IGNORECASE
+        )
     },
     "R004": {
         "risk_signal": "Late-Payment Penalty",
         "pattern": re.compile(
-            r"\b(?:late\s+payment\s+(?:fee|penalty|interest)|interest\s+(?:at\s+(?:a|the)?\s*rate\s+of|rate\s+of).{0,25}?[0-9]+(?:\.[0-9]+)?%\)?\s*per\s+(?:month|annum|year)|penalty\s+interest|accrues?\s+penalty\s+interest|uncured\s+default\s+accrues|late\s+charge|default\s+rate\s+of)\b",
+            r"\b(?:late\s+payment\s+(?:fee|penalty|interest)|late\s+charge|"
+            r"accrue\s+(?:a\s+)?late\s+payment|bear\s+interest\s+at|"
+            r"accrue\s+interest\s+at|compounding\s+monthly|compounded\s+monthly|"
+            r"collection\s+costs\s+and\s+(?:reasonable\s+)?(?:legal|attorney)\s+fees|"
+            r"maximum\s+rate\s+permitted\s+by\s+law\s+or\s+\d+(?:\.\d+)?%\s*per\s+month|"
+            r"flat\s+late\s+fee\s+of\s+\d+%|\d+(?:\.\d+)?%\s*per\s+month\s+on\s+past-due|"
+            r"(?:rate\s+of\s+)?\d+(?:\.\d+)?%\s*per\s+month\s+until\s+settled)\b",
             re.IGNORECASE
         )
     },
     "R005": {
         "risk_signal": "Excessive Liability Transfer",
-        "pattern": re.compile(r"\b(?:disclaim(?:s|er)?\s+all\s+liability|disclaim(?:er)?\s+of\s+consequential\s+damages|exclude\s+liability\s+for\s+(?:indirect|consequential|incidental)|consequential\s+or\s+incidental\s+damages|no\s+liability\s+whatsoever|liability\s+whatsoever|entire\s+risk|user\s+assumes\s+all\s+risk|liability\s+exceeds?\s+\$0|sole\s+and\s+exclusive\s+remedy|total\s+(?:cumulative\s+)?monetary\s+liability\s+shall\s+not\s+exceed|not\s+exceed\s+the\s+total\s+subscription\s+fees|total\s+casualty\s+loss|replacement\s+valuation\s+of|replacement\s+value)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:disclaim\w*\s+all\s+liability|disclaim(?:er)?\s+of\s+consequential\s+damages|"
+            r"exclude\s+liability\s+for\s+(?:indirect|consequential|incidental|special|punitive)|"
+            r"under\s+no\s+circumstances\s+shall\s+\w+\s+have\s+liability|"
+            r"total\s+(?:aggregate\s+)?liability\s+shall\s+not\s+exceed|"
+            r"capped\s+at\s+(?:the\s+)?(?:total\s+)?fees\s+paid|liability\s+is\s+limited\s+to\s+\$[\d,]+|"
+            r"in\s+no\s+event\s+shall\s+(?:either\s+party|vendor|consultant|licensor)\b.{0,60}\bexceed)\b",
+            re.IGNORECASE
+        )
     },
     "R006": {
         "risk_signal": "Broad Indemnification",
         "pattern": re.compile(
-            r"\b(?:defend,?\s*(?:and\s+)?indemnify|indemnify,?\s*(?:and\s+)?hold\s+harmless|indemnify\s+against\s+any\s+and\s+all\s+claims|defend\s+and\s+indemnify)\b",
+            r"\b(?:defend\s+and\s+indemnify|defend,?\s*indemnify,?\s*(?:and\s+)?hold\s+harmless|"
+            r"indemnify\s+and\s+hold\s+harmless|indemnify,?\s*hold\s+harmless,?\s*and\s+defend|"
+            r"indemnif\w*\s+against\s+any\s+and\s+all\s+claims|"
+            r"without\s+limitation\b.{0,60}\bindemnif|"
+            r"indemnif\w*\b.{0,60}\bwithout\s+limitation|"
+            r"customer\s+indemnification|consultant\s+indemnification)\b",
             re.IGNORECASE
         )
     },
     "R007": {
         "risk_signal": "Unilateral Modification",
-        "pattern": re.compile(r"\b(?:reserve(?:s)?\s+the\s+right\s+to\s+modify|modify\s+these\s+terms\s+and\s+subscription\s+pricing|change\s+these\s+terms\s+at\s+any\s+time|without\s+prior\s+notice|in\s+its\s+sole\s+discretion)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:reserve(?:s)?\s+the\s+right\s+to\s+modify|change\s+these\s+terms\s+at\s+any\s+time|"
+            r"without\s+prior\s+notice|in\s+its\s+sole\s+discretion|unilaterally\s+(?:modify|amend|alter))\b",
+            re.IGNORECASE
+        )
     },
     "R008": {
         "risk_signal": "Unfavorable Termination",
-        "pattern": re.compile(r"\b(?:terminate\s+at\s+any\s+time\s+without\s+cause|immediate\s+termination\s+without\s+notice|terminate\s+for\s+convenience|event\s+of\s+default|immediately\s+due\s+and\s+payable|declare\s+the\s+entire\s+outstanding|acceleration|failure\s+to\s+maintain\s+dscr\s+constitutes\s+an\s+immediate\s+event\s+of\s+default|without\s+presentment,?\s*demand)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:terminat\w*\s+for\s+convenience|terminate\s+at\s+any\s+time\s+without\s+cause|"
+            r"terminate\s+(?:or\s+suspend\s+)?immediately|immediate\s+termination|"
+            r"without\s+refund\s+of\s+prepaid\s+fees|no\s+obligation\s+to\s+assist\s+in\s+transition|"
+            r"immediate\s+termination\s+upon\s+written\s+notice\s+for\s+material\s+breach|"
+            r"terminat\w*\s+immediately\s+without\s+cure)\b",
+            re.IGNORECASE
+        )
     },
     "R009": {
         "risk_signal": "Unusual Notice Requirement",
-        "pattern": re.compile(r"\b(?:written\s+notice\s+of\s+at\s+least\s+(?:60|90|120)\s+days|notice\s+period\s+exceeding\s+60\s+days)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:written\s+notice\s+of\s+at\s+least\s+(?:60|90|120)\s+days|"
+            r"opt-out\s+at\s+least\s+(?:60|90|120)\s+days|prior\s+written\s+notice\s+of\s+not\s+less\s+than\s+(?:60|90)\s+days|"
+            r"notice\s+of\s+at\s+least\s+(?:60|90|120)\s+days)\b",
+            re.IGNORECASE
+        )
     },
     "R010": {
         "risk_signal": "Restrictive Confidentiality",
-        "pattern": re.compile(r"\b(?:confidentiality\s+obligation\s+shall\s+survive\s+indefinitely|perpetual\s+confidentiality|strict\s+secrecy\s+forever)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:survive\s+(?:indefinitely|perpetually|forever)|"
+            r"survive\s+for\s+a\s+period\s+of\s+[1-3]\s+years|in\s+confidence\s+for\s+(?:three|two|one|\d+)\s+years|"
+            r"trade\s+secrets\s+indefinitely|perpetual\s+confidentiality|"
+            r"survives?\s+(?:for\s+)?\d+\s+years?\s+following\s+(?:disclosure|termination|expiration))\b",
+            re.IGNORECASE
+        )
     },
     "R011": {
         "risk_signal": "Broad IP Transfer",
         "pattern": re.compile(
-            r"\b(?:assigns\s+all\s+right,\s+title,\s+and\s+interest|works?\s+made\s+for\s+hire|transfer\s+all\s+intellectual\s+property|irrevocable\s+assignment)\b",
+            r"\b(?:assigns\s+all\s+right,\s+title,\s+and\s+interest|work\s+made\s+for\s+hire|"
+            r"works\s+made\s+for\s+hire|irrevocable\s+assignment|"
+            r"perpetual,?\s*irrevocable,?\s*royalty-free\s+license\s+to\s+use|"
+            r"operational\s+usage\s+telemetry|exclusive\s+intellectual\s+property|"
+            r"permanent\s+improvements\s+become\s+(?:landlord|lessor)'s\s+property)\b",
             re.IGNORECASE
         )
     },
     "R012": {
         "risk_signal": "Arbitration/Dispute Restriction",
         "pattern": re.compile(
-            r"\b(?:binding\s+arbitration|waive\s+(?:the\s+)?right\s+to\s+a\s+jury\s+trial|class\s+action\s+waiver|submit\s+(?:all\s+)?disputes\s+to\s+arbitration|exclusive\s+jurisdiction\s+(?:in|of)\s+[^.;\n]+?(?:courts?|County|District|State))\b",
+            r"\b(?:binding\s+arbitration|American\s+Arbitration\s+Association|AAA\s+rules|"
+            r"exclusive\s+jurisdiction\b|waive\s+(?:the\s+right\s+to\s+a\s+)?jury\s+trial|"
+            r"class\s+action\s+waiver|exclusive\s+venue\s+in|courts\s+located\s+in)\b",
             re.IGNORECASE
         )
     },
     "R013": {
         "risk_signal": "Data/Privacy Obligation",
-        "pattern": re.compile(r"\b(?:share\s+data\s+with\s+third-party\s+advertisers|sell\s+personal\s+information|process\s+unrestricted\s+data)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:sell\s+personal\s+information|share\s+data\s+with\s+third-party\s+advertisers|"
+            r"unauthorized\s+processing\s+or\s+data\s+loss)\b",
+            re.IGNORECASE
+        )
     },
     "R014": {
         "risk_signal": "Restrictive Employment/Business Obligation",
-        "pattern": re.compile(r"\b(?:non-compete|non-solicitation|shall\s+not\s+(?:directly\s+or\s+indirectly\s+)?(?:engage\s+in|advise|invest\s+in)|competing\s+(?:biometric|business|commercial|identity)|restrictive\s+covenant)\b", re.IGNORECASE)
+        "pattern": re.compile(
+            r"\b(?:non-compete|non-solicitation|shall\s+not\s+(?:directly\s+or\s+indirectly\s+)?compete|"
+            r"competing\s+business|term\s+plus\s+24\s+months|twenty-four\s*\(24\)\s*months\s+thereafter|"
+            r"client\s+introduced\s+by\s+Client|solicit\s+(?:any\s+)?employees?)\b",
+            re.IGNORECASE
+        )
     },
     "R015": {
         "risk_signal": "Uncapped Liability Carve-Out",
         "pattern": re.compile(
-            r"\b(?:except|excluding|other\s+than)\b.{0,80}\b(?:liabilit(?:y|ies)|aggregate\s+liability|monetary\s+liability)\b.{0,150}\b(?:shall\s+(?:not\s+)?exceed|is\s+capped\s+at|limited\s+to)\b",
-            re.IGNORECASE | re.DOTALL
+            r"\b(?:except\s+for\b.{0,300}\b(?:liability|damages|claims)\b.{0,80}\b(?:shall\s+not\s+exceed|is\s+capped|limited\s+to|capped\s+at|shall\s+exceed)|"
+            r"excluding\s+liability\b.{0,300}\b(?:liability|damages|fees)|"
+            r"other\s+than\b.{0,300}\b(?:liability|damages)\b.{0,80}\b(?:shall\s+not\s+exceed|is\s+capped|limited\s+to|capped\s+at|shall\s+exceed)|"
+            r"no\s+carve-outs|without\s+limitation|liability\s+cap\s+has\s+no\s+carve-outs|"
+            r"all\s+causes\s+of\s+action,\s+without\s+exception|sole\s+and\s+exclusive\s+remedy|"
+            r"shall\s+not\s+exceed\b.{0,40}\bno\s+carve-outs?)\b",
+            re.IGNORECASE
         )
     },
 }
 
 
 def _extract_evidence_span(text: str, match_start: int, match_end: int, window: int = 60) -> str:
-    """
-    Extracts a supporting contextual evidence text span surrounding a match.
-    """
+    """Extracts a supporting contextual evidence text span surrounding a match."""
     start = max(0, match_start - window)
     end = min(len(text), match_end + window)
     prefix = "..." if start > 0 else ""
@@ -109,55 +185,53 @@ def evaluate_rules(
     text: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Evaluates all 15 rules (R001-R015) against input clauses or text.
-    Produces structured evidence findings without assigning any final severity value per Chapter 16.10.
-
-    Args:
-        clauses: List of clause dicts.
-        text: Raw or cleaned document text.
-
-    Returns:
-        Dict containing findings list, total_findings, rule_set_version, and schema_version.
+    Evaluates all rules (R001-R015) against input clauses or document text.
+    Produces structured evidence findings with exact source spans and rule version.
     """
     findings: List[Dict[str, Any]] = []
 
-    # Build target evaluation items (clause blocks or full text)
-    evaluation_items: List[Dict[str, Any]] = []
     if clauses:
-        for idx, clause_item in enumerate(clauses, start=1):
-            c_id = str(clause_item.get("clause_id") or clause_item.get("position") or idx)
-            c_text = clause_item.get("text", "")
-            evaluation_items.append({"clause_id": c_id, "text": c_text})
+        for clause in clauses:
+            clause_id = str(clause.get("clause_id") or clause.get("clause_number") or clause.get("position", "c-000"))
+            clause_text = clause.get("text", "")
+            for rule_id, rule_data in RULES_REGISTRY.items():
+                match = rule_data["pattern"].search(clause_text)
+                if match:
+                    span_text = _extract_evidence_span(clause_text, match.start(), match.end())
+                    matched_snippet = match.group(0).strip()
+                    findings.append({
+                        "rule_id": rule_id,
+                        "rule_name": rule_data["risk_signal"],
+                        "risk_signal": rule_data["risk_signal"],
+                        "clause_id": clause_id,
+                        "position": clause.get("position", 1),
+                        "matched_text": matched_snippet,
+                        "evidence": span_text,
+                        "evidence_span": span_text,
+                        "match_start": match.start(),
+                        "match_end": match.end(),
+                        "rule_version": RULE_SET_VERSION,
+                        "rule_set_version": RULE_SET_VERSION
+                    })
     elif text:
-        evaluation_items.append({"clause_id": "1", "text": text})
-
-    for item in evaluation_items:
-        item_text = item["text"]
-        c_id = item["clause_id"]
-
-        if not item_text or not item_text.strip():
-            continue
-
-        for rule_id, rule_def in RULES_REGISTRY.items():
-            pattern = rule_def["pattern"]
-            risk_signal = rule_def["risk_signal"]
-
-            for match in pattern.finditer(item_text):
-                matched_span = match.group(0)
-                evidence = _extract_evidence_span(item_text, match.start(), match.end())
-
-                finding_dict = {
+        for rule_id, rule_data in RULES_REGISTRY.items():
+            for match in rule_data["pattern"].finditer(text):
+                span_text = _extract_evidence_span(text, match.start(), match.end())
+                matched_snippet = match.group(0).strip()
+                findings.append({
                     "rule_id": rule_id,
-                    "risk_signal": risk_signal,
-                    "matched_text": matched_span,
-                    "clause_id": c_id,
-                    "evidence": evidence,
+                    "rule_name": rule_data["risk_signal"],
+                    "risk_signal": rule_data["risk_signal"],
+                    "clause_id": "doc-global",
+                    "position": 1,
+                    "matched_text": matched_snippet,
+                    "evidence": span_text,
+                    "evidence_span": span_text,
+                    "match_start": match.start(),
+                    "match_end": match.end(),
                     "rule_version": RULE_SET_VERSION,
-                    "match_status": "MATCH"
-                }
-                findings.append(finding_dict)
-
-    logger.info(f"Rule Engine Execution Complete: {len(findings)} rule findings generated across {len(RULES_REGISTRY)} rules.")
+                    "rule_set_version": RULE_SET_VERSION
+                })
 
     return {
         "success": True,

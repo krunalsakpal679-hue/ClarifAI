@@ -1,0 +1,94 @@
+{
+  "doc_id": "held_out_2_saas_service_level_agreement",
+  "title": "ENTERPRISE SAAS AND SERVICE LEVEL AGREEMENT",
+  "party_a": "NovaScale Cloud Systems Inc. (Provider)",
+  "party_b": "Horizon Media Group LLC (Customer)",
+  "reviewing_party": "Horizon Media Group LLC",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. UPTIME COMMITMENT AND AVAILABILITY",
+      "text": "1. UPTIME COMMITMENT AND AVAILABILITY. Provider warrants that the SaaS Platform shall achieve ninety-nine point nine percent (99.9%) system availability during each calendar month, excluding scheduled maintenance windows.",
+      "gt_category": "Service Level Agreement (SLA)",
+      "gt_severity": "Low",
+      "gt_party_bound": "Provider",
+      "gt_numbers": [
+        "ninety-nine point nine percent (99.9%)"
+      ],
+      "gt_exceptions": [
+        "scheduled maintenance windows"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. SCHEDULED MAINTENANCE NOTIFICATION",
+      "text": "2. SCHEDULED MAINTENANCE NOTIFICATION. Provider shall provide at least seventy-two (72) hours advance electronic notice for all scheduled downtime, which shall occur only between 00:00 and 04:00 UTC on weekends.",
+      "gt_category": "Service Level Agreement (SLA)",
+      "gt_severity": "Low",
+      "gt_party_bound": "Provider",
+      "gt_numbers": [
+        "seventy-two (72) hours"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 3,
+      "title": "3. SERVICE LEVEL CREDITS",
+      "text": "3. SERVICE LEVEL CREDITS. If monthly uptime falls below ninety-nine percent (99.0%), Customer is entitled to a fifteen percent (15%) service credit applied against the subsequent monthly billing invoice.",
+      "gt_category": "Payment",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Provider",
+      "gt_numbers": [
+        "ninety-nine percent (99.0%)",
+        "fifteen percent (15%)"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 4,
+      "title": "4. DATA PROTECTION AND SECURITY AUDITS",
+      "text": "4. DATA PROTECTION AND SECURITY AUDITS. Provider shall maintain SOC 2 Type II compliance and encrypt all Customer data in transit and at rest using AES-256 encryption.",
+      "gt_category": "Privacy",
+      "gt_severity": "Low",
+      "gt_party_bound": "Provider",
+      "gt_numbers": [
+        "AES-256"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 5,
+      "title": "5. UNILATERAL CUSTOMER INDEMNIFICATION",
+      "text": "5. UNILATERAL CUSTOMER INDEMNIFICATION. Customer shall defend, indemnify, and hold harmless Provider from all third-party claims, liabilities, and legal fees arising from Customer's transmitted content.",
+      "gt_category": "Indemnification",
+      "gt_severity": "High",
+      "gt_party_bound": "Customer only",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 6,
+      "title": "6. AGGREGATE MONETARY LIABILITY CAP",
+      "text": "6. AGGREGATE MONETARY LIABILITY CAP. Provider's total aggregate liability under this agreement is strictly capped at the total subscription fees paid by Customer during the prior twelve (12) months.",
+      "gt_category": "Liability",
+      "gt_severity": "High",
+      "gt_party_bound": "Provider",
+      "gt_numbers": [
+        "twelve (12) months"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 7,
+      "title": "7. TERMINATION FOR CAUSE",
+      "text": "7. TERMINATION FOR CAUSE. Either party may terminate immediately upon written notice if the other party commits a material breach and fails to cure within thirty (30) days of written demand.",
+      "gt_category": "Termination",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "thirty (30) days"
+      ],
+      "gt_exceptions": []
+    }
+  ]
+}

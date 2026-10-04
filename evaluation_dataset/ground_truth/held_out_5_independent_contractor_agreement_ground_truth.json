@@ -1,0 +1,86 @@
+{
+  "doc_id": "held_out_5_independent_contractor_agreement",
+  "title": "INDEPENDENT CONTRACTOR CONSULTING AGREEMENT",
+  "party_a": "Aether Dynamics LLC (Client)",
+  "party_b": "Kestrel Security Advisory Inc. (Contractor)",
+  "reviewing_party": "Kestrel Security Advisory Inc.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. CONSULTING SERVICES AND DELIVERABLES",
+      "text": "1. CONSULTING SERVICES AND DELIVERABLES. Contractor shall deliver cybersecurity penetration testing and architecture review services in accordance with Schedule A milestones.",
+      "gt_category": "Scope / Deliverables",
+      "gt_severity": "Low",
+      "gt_party_bound": "Contractor",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 2,
+      "title": "2. COMPENSATION AND EXPENSES",
+      "text": "2. COMPENSATION AND EXPENSES. Client shall remit a fixed fee of $18,500.00 within forty-five (45) days of receipt of undisputed milestone completion invoices.",
+      "gt_category": "Payment",
+      "gt_severity": "Low",
+      "gt_party_bound": "Client",
+      "gt_numbers": [
+        "$18,500.00",
+        "forty-five (45) days"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 3,
+      "title": "3. INDEPENDENT CONTRACTOR STATUS",
+      "text": "3. INDEPENDENT CONTRACTOR STATUS. Contractor acts as an independent contractor, assuming sole liability for all state, federal, and local income and payroll taxes.",
+      "gt_category": "General / Boilerplate",
+      "gt_severity": "Low",
+      "gt_party_bound": "Contractor",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 4,
+      "title": "4. CONFIDENTIALITY AND NONDISCLOSURE",
+      "text": "4. CONFIDENTIALITY AND NONDISCLOSURE. Contractor agrees to hold all client architectural designs and vulnerability assessments in confidence for five (5) years following project completion.",
+      "gt_category": "Confidentiality",
+      "gt_severity": "Low",
+      "gt_party_bound": "Contractor only",
+      "gt_numbers": [
+        "five (5) years"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 5,
+      "title": "5. UNILATERAL CONTRACTOR INDEMNIFICATION",
+      "text": "5. UNILATERAL CONTRACTOR INDEMNIFICATION. Contractor shall defend and indemnify Client against all claims, liabilities, losses, and damages arising out of Contractor's performance or negligence.",
+      "gt_category": "Indemnification",
+      "gt_severity": "Critical",
+      "gt_party_bound": "Contractor only",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 6,
+      "title": "6. TERMINATION FOR CONVENIENCE",
+      "text": "6. TERMINATION FOR CONVENIENCE. Client may terminate this agreement at any time without cause upon fourteen (14) days prior written notice, paying only for completed deliverables.",
+      "gt_category": "Termination",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Client only",
+      "gt_numbers": [
+        "fourteen (14) days"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 7,
+      "title": "7. GOVERNING LAW AND SEVERABILITY",
+      "text": "7. GOVERNING LAW AND SEVERABILITY. This Agreement shall be governed by California law. If any provision is deemed unenforceable, remaining terms remain in full force.",
+      "gt_category": "Governing Law",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    }
+  ]
+}

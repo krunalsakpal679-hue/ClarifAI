@@ -1,0 +1,90 @@
+{
+  "doc_id": "held_out_4_executive_employment_agreement",
+  "title": "EXECUTIVE EMPLOYMENT AND RESTRICTIVE COVENANTS",
+  "party_a": "Solstice BioTech Corp. (Company)",
+  "party_b": "Dr. Elena Vance (Executive)",
+  "reviewing_party": "Dr. Elena Vance",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. POSITION AND COMPENSATION",
+      "text": "1. POSITION AND COMPENSATION. Company employs Executive as Chief Scientific Officer with an annual base salary of $275,000.00, payable in semi-monthly installments, plus eligibility for a performance bonus of up to 35%.",
+      "gt_category": "Payment",
+      "gt_severity": "Low",
+      "gt_party_bound": "Company",
+      "gt_numbers": [
+        "$275,000.00",
+        "35%"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 2,
+      "title": "2. NON-COMPETE RESTRICTION",
+      "text": "2. NON-COMPETE RESTRICTION. For eighteen (18) months following termination, Executive shall not directly or indirectly engage with any competing biotechnology business within a one hundred (100) mile radius.",
+      "gt_category": "Non-Compete",
+      "gt_severity": "Critical",
+      "gt_party_bound": "Executive only",
+      "gt_numbers": [
+        "eighteen (18) months",
+        "one hundred (100) mile"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 3,
+      "title": "3. NON-SOLICITATION OF EMPLOYEES AND CLIENTS",
+      "text": "3. NON-SOLICITATION OF EMPLOYEES AND CLIENTS. Executive covenants not to solicit or recruit any employee, contractor, or commercial customer of Company for twenty-four (24) months post-employment.",
+      "gt_category": "Non-Solicitation",
+      "gt_severity": "High",
+      "gt_party_bound": "Executive only",
+      "gt_numbers": [
+        "twenty-four (24) months"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 4,
+      "title": "4. INTELLECTUAL PROPERTY ASSIGNMENT",
+      "text": "4. INTELLECTUAL PROPERTY ASSIGNMENT. All discoveries, inventions, patents, and software conceived by Executive during employment vest entirely and irrevocably in Company as work made for hire.",
+      "gt_category": "Intellectual Property",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Executive only",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 5,
+      "title": "5. TERMINATION WITHOUT CAUSE AND SEVERANCE",
+      "text": "5. TERMINATION WITHOUT CAUSE AND SEVERANCE. If Company terminates Executive without cause, Company shall provide sixty (60) days advance notice and pay six (6) months base salary as severance.",
+      "gt_category": "Termination",
+      "gt_severity": "Low",
+      "gt_party_bound": "Company",
+      "gt_numbers": [
+        "sixty (60) days",
+        "six (6) months"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 6,
+      "title": "6. TERMINATION FOR CAUSE",
+      "text": "6. TERMINATION FOR CAUSE. Company may terminate immediately for cause upon fraud, felony conviction, or gross insubordination, forfeiting all unvested equity and severance entitlements.",
+      "gt_category": "Termination",
+      "gt_severity": "High",
+      "gt_party_bound": "Company",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 7,
+      "title": "7. MANDATORY ARBITRATION",
+      "text": "7. MANDATORY ARBITRATION. Any employment dispute shall be settled by binding arbitration in Seattle, Washington under American Arbitration Association (AAA) employment rules.",
+      "gt_category": "Dispute Resolution",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    }
+  ]
+}

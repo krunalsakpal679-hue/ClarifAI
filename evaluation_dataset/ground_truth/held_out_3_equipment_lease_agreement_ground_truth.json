@@ -1,0 +1,92 @@
+{
+  "doc_id": "held_out_3_equipment_lease_agreement",
+  "title": "COMMERCIAL EQUIPMENT LEASE AGREEMENT",
+  "party_a": "Precision Machinery Leasing LLC (Lessor)",
+  "party_b": "Atlas Manufacturing Corp. (Lessee)",
+  "reviewing_party": "Atlas Manufacturing Corp.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. LEASE TERM AND COMMENCEMENT",
+      "text": "1. LEASE TERM AND COMMENCEMENT. Lessor leases to Lessee the industrial machinery listed in Exhibit A for an initial term of thirty-six (36) months commencing October 1, 2026.",
+      "gt_category": "Term",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "thirty-six (36) months"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 2,
+      "title": "2. MONTHLY RENT AND SECURITY DEPOSIT",
+      "text": "2. MONTHLY RENT AND SECURITY DEPOSIT. Lessee shall remit monthly rent of $5,400.00 on the first business day of each month, along with an upfront security deposit of $10,800.00.",
+      "gt_category": "Payment",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Lessee",
+      "gt_numbers": [
+        "$5,400.00",
+        "$10,800.00"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 3,
+      "title": "3. MAINTENANCE AND REPAIR COVENANTS",
+      "text": "3. MAINTENANCE AND REPAIR COVENANTS. Lessee assumes sole responsibility for all routine maintenance, preventative servicing, and repairs required to maintain the machinery in certified operating condition.",
+      "gt_category": "Maintenance",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Lessee",
+      "gt_numbers": [],
+      "gt_exceptions": []
+    },
+    {
+      "position": 4,
+      "title": "4. MANDATORY INSURANCE COVERAGE",
+      "text": "4. MANDATORY INSURANCE COVERAGE. Lessee shall maintain commercial general liability insurance of not less than $2,000,000.00 per occurrence naming Lessor as an additional insured party.",
+      "gt_category": "Insurance",
+      "gt_severity": "Medium",
+      "gt_party_bound": "Lessee",
+      "gt_numbers": [
+        "$2,000,000.00"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 5,
+      "title": "5. LESSOR INSPECTION RIGHTS",
+      "text": "5. LESSOR INSPECTION RIGHTS. Lessor and its authorized agents may enter Lessee's premises during standard operating hours upon forty-eight (48) hours advance written notice to inspect the leased equipment.",
+      "gt_category": "Audit / Inspection",
+      "gt_severity": "Low",
+      "gt_party_bound": "Lessee",
+      "gt_numbers": [
+        "forty-eight (48) hours"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 6,
+      "title": "6. UNRESTRICTED DEFAULT AND REPOSSESSION",
+      "text": "6. UNRESTRICTED DEFAULT AND REPOSSESSION. Upon Lessee's failure to pay rent within ten (10) days of the due date, Lessor may repossess the equipment immediately without judicial process.",
+      "gt_category": "Default / Remedies",
+      "gt_severity": "Critical",
+      "gt_party_bound": "Lessee",
+      "gt_numbers": [
+        "ten (10) days"
+      ],
+      "gt_exceptions": []
+    },
+    {
+      "position": 7,
+      "title": "7. PROHIBITION OF ASSIGNMENT OR SUBLEASE",
+      "text": "7. PROHIBITION OF ASSIGNMENT OR SUBLEASE. Lessee shall not assign, sublease, or pledge the equipment without Lessor's prior written consent, which Lessor may withhold at its sole discretion.",
+      "gt_category": "Assignment",
+      "gt_severity": "High",
+      "gt_party_bound": "Lessee",
+      "gt_numbers": [],
+      "gt_exceptions": [
+        "with Lessor's prior written consent"
+      ]
+    }
+  ]
+}

@@ -217,10 +217,10 @@ def generate_document_pdf(report, document, language='en'):
         for cl in clauses:
             sev_label = (cl.severity or "Low").upper()
             cat_label = cl.category or "General"
-            title_label = cl.title or f"Clause {cl.position}"
+            title_label = getattr(cl, 'title', None) or (cl.structured_explanation.get('title') if (cl.structured_explanation and isinstance(cl.structured_explanation, dict)) else None) or f"Clause {cl.position}"
             
             takeaway = cl.simplified_text.split('\n')[0] if cl.simplified_text else cl.original_text[:100]
-            if "IN PLAIN LANGUAGE:" in cl.simplified_text:
+            if cl.simplified_text and "IN PLAIN LANGUAGE:" in cl.simplified_text:
                 parts = cl.simplified_text.split("IN PLAIN LANGUAGE:")
                 if len(parts) > 1:
                     takeaway = parts[1].split("\n\n")[0].strip()
@@ -250,7 +250,7 @@ def generate_document_pdf(report, document, language='en'):
         elements.append(Paragraph("<b>3. Detailed Clause-Level Analysis</b>", heading_style))
         for cl in clauses:
             card_elements = []
-            c_title = cl.title or f"Clause {cl.position}"
+            c_title = getattr(cl, 'title', None) or (cl.structured_explanation.get('title') if (cl.structured_explanation and isinstance(cl.structured_explanation, dict)) else None) or f"Clause {cl.position}"
             c_sev = (cl.severity or "Low").upper()
             c_cat = cl.category or "General"
 

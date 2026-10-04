@@ -1,0 +1,53 @@
+{
+  "doc_id": "val_2_enterprise_saas",
+  "title": "ENTERPRISE CLOUD SAAS SUBSCRIPTION AGREEMENT",
+  "party_a": "StratusCloud Technologies Inc. (Provider)",
+  "party_b": "Pacific Rim Logistics Corp. (Customer)",
+  "reviewing_party": "Pacific Rim Logistics Corp.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. SUBSCRIPTION FEES AND BILLING",
+      "text": "1. SUBSCRIPTION FEES AND BILLING. Customer shall pay monthly subscription fees of $8,500.00 within thirty (30) days of invoice date. Overdue amounts incur interest at 1.5% per month.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Customer",
+      "gt_numbers": [
+        "$8,500.00",
+        "thirty (30) days",
+        "1.5%"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. UNILATERAL CUSTOMER INDEMNIFICATION",
+      "text": "2. UNILATERAL CUSTOMER INDEMNIFICATION. Customer shall defend, indemnify, and hold harmless Provider against all third-party claims, liabilities, and legal expenses arising from Customer data.",
+      "gt_category": "Indemnification",
+      "gt_severity": "High",
+      "gt_party_bound": "Customer only",
+      "gt_numbers": []
+    },
+    {
+      "position": 3,
+      "title": "3. AGGREGATE LIABILITY CAP",
+      "text": "3. AGGREGATE LIABILITY CAP. Total liability of Provider shall not exceed the total fees paid by Customer in the six (6) months prior to the incident.",
+      "gt_category": "Limitation of Liability",
+      "gt_severity": "High",
+      "gt_party_bound": "Provider",
+      "gt_numbers": [
+        "six (6) months"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. TERMINATION FOR CONVENIENCE",
+      "text": "4. TERMINATION FOR CONVENIENCE. Provider may terminate this agreement at will upon thirty (30) days notice without refund of prepaid subscription fees.",
+      "gt_category": "Termination",
+      "gt_severity": "High",
+      "gt_party_bound": "Provider only",
+      "gt_numbers": [
+        "thirty (30) days"
+      ]
+    }
+  ]
+}

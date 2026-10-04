@@ -1,0 +1,52 @@
+{
+  "doc_id": "val_8_software_license",
+  "title": "ON-PREMISES ENTERPRISE SOFTWARE LICENSE AGREEMENT",
+  "party_a": "QuantumSoft Solutions Corp. (Licensor)",
+  "party_b": "Meridian Health Systems Inc. (Licensee)",
+  "reviewing_party": "Meridian Health Systems Inc.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. GRANT OF LICENSE AND USER SEATS",
+      "text": "1. GRANT OF LICENSE AND USER SEATS. Licensor grants Licensee a non-exclusive, non-transferable perpetual license for up to two hundred fifty (250) named concurrent users.",
+      "gt_category": "Intellectual Property",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "two hundred fifty (250)"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. LICENSE FEES AND ANNUAL MAINTENANCE",
+      "text": "2. LICENSE FEES AND ANNUAL MAINTENANCE. Licensee shall pay upfront fee of $75,000.00 and an optional annual support maintenance fee equal to 18% of license fees.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Licensee",
+      "gt_numbers": [
+        "$75,000.00",
+        "18%"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. AUDIT RIGHTS AND INSPECTION",
+      "text": "3. AUDIT RIGHTS AND INSPECTION. Licensor may audit Licensee's software deployment once annually upon thirty (30) days prior written notice during business hours.",
+      "gt_category": "Audit / Inspection",
+      "gt_severity": "Low",
+      "gt_party_bound": "Licensee",
+      "gt_numbers": [
+        "thirty (30) days"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. IP INFRINGEMENT INDEMNITY",
+      "text": "4. IP INFRINGEMENT INDEMNITY. Licensor defends and indemnifies Licensee against third-party copyright, patent, or trademark infringement suits regarding the software.",
+      "gt_category": "Indemnification",
+      "gt_severity": "Low",
+      "gt_party_bound": "Licensor",
+      "gt_numbers": []
+    }
+  ]
+}

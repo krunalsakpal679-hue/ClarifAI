@@ -248,6 +248,7 @@ def clean_legal_text(raw_text: str, preserve_page_markers: bool = True) -> Dict[
         if REGEX_PAGE_NUMBER_HEADER.match(stripped) or REGEX_RUNNING_FOOTER.match(stripped):
             page_furniture.append(stripped)
             rules_applied.append("strip_page_furniture")
+            rules_applied.append("strip_running_headers_footers")
             continue
         cleaned_lines.append(line)
     text = "\n".join(cleaned_lines)

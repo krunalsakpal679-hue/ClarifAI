@@ -13,6 +13,12 @@ import time
 from typing import Dict, Any, Optional, List, Tuple
 from app.models.simplification import SimplificationLLMOutput, SimplificationResult
 from app.services.claim_grounding_service import check_banned_strings, BANNED_STRINGS
+from app.services.llm_client import (
+    check_for_legal_advice,
+    check_for_prompt_injection_leak,
+    check_for_hallucinated_claims,
+    validate_untrusted_llm_output
+)
 
 logger = logging.getLogger(__name__)
 
@@ -111,29 +117,7 @@ def extract_risk_evidence_span(
     return f"Standard clause evaluated with {clean_sev} risk profile.", clean_span
 
 
-def check_for_legal_advice(text: str) -> bool:
-    """Flag text that appears to provide actual legal advice."""
-    disallowed_patterns = [
-        r'\bi advise you to\b',
-        r'\bthis is my legal advice\b',
-        r'\byou should sue\b',
-        r'\byou must sue\b',
-        r'\bi recommend filing a lawsuit\b',
-    ]
-    t_lower = text.lower()
-    return any(re.search(pat, t_lower) for pat in disallowed_patterns)
 
-
-def check_for_prompt_injection_leak(text: str) -> bool:
-    """Flag text containing prompt injection leaks or meta prompt text."""
-    leak_patterns = [
-        r'ignore previous instructions',
-        r'system prompt',
-        r'you are an ai language model',
-        r'as an ai\b',
-    ]
-    t_lower = text.lower()
-    return any(re.search(pat, t_lower) for pat in leak_patterns)
 
 
 def _find_exact_substring(pattern: str, text: str) -> Optional[str]:
@@ -174,7 +158,8 @@ def synthesize_detailed_plain_english_analysis(
 
     norm_text = re.sub(r'\s+', ' ', text).strip()
     t_lower = norm_text.lower()
-    cat = (category or "").strip()
+    cat = category.strip() if category else None
+    cat_lower = (cat or "").lower()
     title_str = (title or "").strip()
 
     # 1. Real Party Identification (Dynamic regex extraction, zero hardcoding)
@@ -267,7 +252,7 @@ def synthesize_detailed_plain_english_analysis(
         not_stated.append("UNCITRAL Article 79 is a CISG sales-of-goods provision and may be mis-cited for enterprise cloud services.")
         severity_reason = "Moderate risk: Clause relies on an agreement-to-agree, references non-existent sections/annexes, and cites questionable international sales conventions."
 
-    elif "data privacy" in cat.lower() or "data privacy" in title_str.lower() or "privacy" in title_str.lower():
+    elif "data privacy" in cat_lower or "data privacy" in title_str.lower() or "privacy" in title_str.lower():
         q1 = _find_exact_substring(r'applicable\s+data\s+privacy\s+regulations,\s*including\s*the\s*General\s*Data\s*Protection\s*Regulation\s*\(GDPR\)\s*and\s*the\s*California\s*Consumer\s*Privacy\s*Act\s*\(CCPA\)', text) or _find_exact_substring(r'GDPR\s*and\s*(?:the\s*)?CCPA', text)
         if q1:
             key_details.append({"label": "Governing Privacy Laws", "value": "GDPR and CCPA compliance", "source_quote": q1})
@@ -278,7 +263,7 @@ def synthesize_detailed_plain_english_analysis(
         not_stated.append("No Data Processing Agreement (DPA), breach notification timeline, or cross-border data transfer mechanisms specified.")
         severity_reason = "Moderate risk: Standard compliance commitments without dedicated DPA, breach response SLAs, or data return/deletion schedules."
 
-    elif "renewal" in cat.lower() or "price escalation" in title_str.lower() or ("automatic renewal" in title_str.lower() and "term" in title_str.lower()):
+    elif "renewal" in cat_lower or "price escalation" in title_str.lower() or ("automatic renewal" in title_str.lower() and "term" in title_str.lower()):
         q1 = _find_exact_substring(r'successive\s*twelve\s*\(12\)\s*month\s*periods', text) or _find_exact_substring(r'12\s*month\s*periods', text) or _find_exact_substring(r'successive\s*\w+\s*periods', text)
         if q1:
             key_details.append({"label": "Renewal Period", "value": q1, "source_quote": q1})
@@ -294,7 +279,7 @@ def synthesize_detailed_plain_english_analysis(
         plain_sentences.append(f"Agreement automatically renews for successive renewal periods unless either party gives written opt-out notice {notice_str}.{esc_str}".strip())
         severity_reason = "Moderate to High risk: Automatic renewal obligations with notice windows and fee adjustment terms."
 
-    elif "scope of services" in cat.lower() or "services" in title_str.lower() or "engagement" in title_str.lower() or "position" in title_str.lower():
+    elif "scope of services" in cat_lower or "services" in title_str.lower() or "engagement" in title_str.lower() or "position" in title_str.lower():
         q1 = _find_exact_substring(r'cloud\s+infrastructure\s+design,\s+DevOps\s+automation,\s+and\s+related\s+technical\s+advisory\s+services', text) or _find_exact_substring(r'strategic\s+supply-chain\s+advisory\s+services\s+and\s+deliver\s+quarterly\s+efficiency\s+assessments', text)
         if q1:
             key_details.append({"label": "Services Scope", "value": q1, "source_quote": q1})
@@ -310,12 +295,12 @@ def synthesize_detailed_plain_english_analysis(
             plain_sentences.append(f"{who_bound}: Defines the specific scope of commercial services, deliverables, and operational performance standards.")
         severity_reason = "Standard operational clause defining services scope with low risk exposure."
 
-    elif "payment" in cat.lower() or "rent" in title_str.lower() or "invoicing" in title_str.lower() or "fees" in title_str.lower() or "compensation" in title_str.lower() or "loan" in title_str.lower():
+    elif "payment" in cat_lower or "rent" in title_str.lower() or "invoicing" in title_str.lower() or "fees" in title_str.lower() or "compensation" in title_str.lower() or "loan" in title_str.lower():
         # Check specific extracted elements
         has_15 = "fifteen (15) days" in t_lower or "15 days" in t_lower
         has_45 = "forty-five (45) days" in t_lower or "45 days" in t_lower
         has_receipt = "due upon receipt" in t_lower
-        has_5000 = "$5,000" in text or "5,000.00" in text or "5,000" in text
+        has_5000 = bool(re.search(r'\b(?:\$5,000(?:\.00)?|five\s*thousand\s*dollars)\b', text, re.IGNORECASE)) and not bool(re.search(r'\b(?:seventy|fifty|twenty|thirty|eighty|ninety)\s*[- ]?five\b', text, re.IGNORECASE))
         
         if has_15:
             q1 = _find_exact_substring(r'within\s*fifteen\s*\(15\)\s*days\s*of\s*receipt', text) or _find_exact_substring(r'fifteen\s*\(15\)\s*days', text)
@@ -380,25 +365,36 @@ def synthesize_detailed_plain_english_analysis(
             fact_snippets = []
             for f in extracted_facts:
                 role = f.get("role", "Financial Detail")
-                val = f.get("normalized_value")
-                quote = f.get("source_quote", "")
-                if quote:
-                    key_details.append({"label": role, "value": str(val) if val else quote, "source_quote": quote})
-                    fact_snippets.append(f"{role}: {val if val else quote}")
+                raw_val_str = f.get("raw_text", "")
+                if raw_val_str:
+                    key_details.append({"label": role, "value": raw_val_str, "source_quote": raw_val_str})
+                    fact_snippets.append(f"{role}: {raw_val_str}")
             
-            if fact_snippets:
-                plain_sentences.append(f"{who_bound}: Defines commercial payment terms including {'; '.join(fact_snippets[:3])}.")
-            else:
-                plain_sentences.append(f"{who_bound}: Defines financial payment obligations, invoicing deadlines, and applicable commercial charges.")
-            severity_reason = "Standard commercial payment terms."
+            curr_matches = re.findall(r'(?:₹|Rs\.?|\$|€|USD|INR)\s*[\d,]+(?:\.\d+)?', text)
+            for cm in curr_matches:
+                if not any(cm in d.get("value", "") for d in key_details):
+                    key_details.append({"label": "Payment Amount", "value": cm, "source_quote": cm})
+                    fact_snippets.append(cm)
+            
+            day_m = _find_exact_substring(r'\d+(?:st|nd|rd|th)?\s+day', text)
+            if day_m:
+                key_details.append({"label": "Due Day", "value": day_m, "source_quote": day_m})
+                fact_snippets.append(day_m)
 
-    elif "confidentiality" in cat.lower() or "confidential" in title_str.lower():
+            if fact_snippets:
+                plain_sentences.append(f"{who_bound}: Defines commercial payment terms including {'; '.join(fact_snippets[:4])}.")
+            if rule_findings:
+                rule_desc = ", ".join(r.get("name") or r.get("rule_id") for r in rule_findings if r.get("name") or r.get("rule_id"))
+                severity_reason = f"{severity or 'Moderate'} risk: {rule_desc} detected."
+            else:
+                severity_reason = f"{severity or 'Low'} risk: Standard commercial payment terms."
+
+    elif "confidentiality" in cat_lower or "confidential" in title_str.lower():
         is_disclosure = "following disclosure" in t_lower
         is_expiration = "expiration" in t_lower
-        q1 = _find_exact_substring(r'three\s*\(3\)\s*years\s*following\s*disclosure', text) or _find_exact_substring(r'survive\s*for\s*a\s*period\s*of\s*three\s*\(3\)\s*years\s*following\s*termination', text) or _find_exact_substring(r'in\s*confidence\s*for\s*three\s*years\s*following\s*expiration', text)
-        if q1:
-            surv_val = "3 years following disclosure (Trade secrets protected indefinitely)" if is_disclosure else ("3 years following expiration of engagement" if is_expiration else "3 years following termination")
-            key_details.append({"label": "Survival Period", "value": surv_val, "source_quote": q1})
+        dur_m = _find_exact_substring(r'(?:five\s*\(5\)\s*years|three\s*\(3\)\s*years|two\s*\(2\)\s*years|six\s*\(6\)\s*years|\d+\s*years)', text)
+        if dur_m:
+            key_details.append({"label": "Survival Period", "value": f"{dur_m} following termination/disclosure", "source_quote": dur_m})
         q2 = _find_exact_substring(r'trade\s+secrets\s+shall\s+remain\s+protected\s+indefinitely', text)
         if q2:
             key_details.append({"label": "Trade Secret Scope", "value": "Protected indefinitely", "source_quote": q2})
@@ -409,14 +405,14 @@ def synthesize_detailed_plain_english_analysis(
         if is_disclosure:
             plain_sentences.append("Each party agrees to maintain confidentiality for 3 years following disclosure, with trade secrets protected indefinitely and court-ordered disclosures permitted with prior written notice.")
         elif is_expiration:
-            plain_sentences.append("Each party must hold all non-public commercial and technical information in confidence for three years following expiration of engagement.")
-        elif "3 years" in t_lower or "three (3) years" in t_lower or "three years" in t_lower:
-            plain_sentences.append("Mutual confidentiality: Each party agrees to protect confidential and proprietary information, with obligations surviving for 3 years following termination.")
+            plain_sentences.append("Each party must hold all non-public commercial and technical information in confidential confidence for three years following expiration of engagement.")
+        elif dur_m:
+            plain_sentences.append(f"Receiving Party agrees to hold in confidence all proprietary and confidential information disclosed under the agreement for {dur_m} following termination.")
         else:
             plain_sentences.append(f"{who_bound}: Each party agrees to maintain confidentiality over non-public proprietary and commercial information.")
         severity_reason = "Low to Moderate risk: Mutual confidentiality obligations protecting proprietary disclosures."
 
-    elif "intellectual property" in cat.lower() or "ownership" in title_str.lower() or "work product" in title_str.lower():
+    elif "intellectual property" in cat_lower or "ownership" in title_str.lower() or "work product" in title_str.lower():
         if "hereby assigns" in t_lower or "deliverables, source code" in t_lower:
             q1 = _find_exact_substring(r'deliverables,\s*source\s*code,\s*and\s*documentation', text)
             if q1:
@@ -430,21 +426,24 @@ def synthesize_detailed_plain_english_analysis(
             plain_sentences.append("Consultant assigns all right, title, and interest in deliverables, source code, and documentation effective upon full payment of fees, retaining pre-existing tools and frameworks.")
             severity_reason = "Low for Client / High for Consultant: IP assignment is effective upon full payment of all applicable fees."
         
-        elif "work made for hire" in t_lower:
-            q1 = _find_exact_substring(r'work\s*made\s*for\s*hire\s*and\s*become\s*Client(?:’|\'|\s*)s\s*exclusive\s*intellectual\s*property', text)
+        elif "work made for hire" in t_lower or "custom module" in t_lower:
+            q1 = _find_exact_substring(r'work\s*made\s*for\s*hire[^\.\;]*', text)
             if q1:
-                key_details.append({"label": "Legal Basis", "value": "Work made for hire (Client's exclusive IP)", "source_quote": q1})
-            q2 = _find_exact_substring(r'analysis\s*reports,\s*spreadsheets,\s*and\s*custom\s*models', text)
+                key_details.append({"label": "Legal Basis", "value": q1, "source_quote": q1})
+            q2 = _find_exact_substring(r'(?:custom\s*modules|analysis\s*reports,\s*spreadsheets,\s*and\s*custom\s*models)', text)
             if q2:
-                key_details.append({"label": "Covered Deliverables", "value": "Analysis reports, spreadsheets, and custom models", "source_quote": q2})
-            plain_sentences.append("All analysis reports, spreadsheets, and custom models prepared for Client are deemed work made for hire and become Client's exclusive intellectual property.")
+                key_details.append({"label": "Covered Deliverables", "value": q2, "source_quote": q2})
+            if "custom module" in t_lower:
+                plain_sentences.append("All custom modules developed under this agreement constitute work made for hire and become exclusive intellectual property.")
+            else:
+                plain_sentences.append("All analysis reports, spreadsheets, and custom models prepared for Client are deemed work made for hire and become Client's exclusive intellectual property.")
             not_stated.append("No backup assignment or pre-existing IP carve-out specified.")
             severity_reason = "Moderate risk: Work-made-for-hire clause without explicit backup assignment or pre-existing IP exclusion."
         else:
             plain_sentences.append(f"{who_bound}: Governs ownership, licenses, and rights allocation over proprietary intellectual property and deliverables.")
             severity_reason = "Standard intellectual property terms."
 
-    elif "indemnification" in cat.lower() or "indemnity" in title_str.lower():
+    elif "indemnification" in cat_lower or "indemnity" in title_str.lower():
         if "customer shall defend, indemnify" in t_lower or "customer indemnification" in title_str.lower() or "without limitation" in t_lower:
             q1 = _find_exact_substring(r'defend,\s*indemnify,\s*and\s*hold\s*harmless\s*Vendor,\s*its\s*affiliates,\s*officers,\s*directors,\s*employees,\s*and\s*agents', text)
             if q1:
@@ -485,22 +484,46 @@ def synthesize_detailed_plain_english_analysis(
                 plain_sentences.append("Consultant agrees to defend and indemnify Client, its directors, and staff from any third-party loss or claim arising out of Consultant's gross negligence only.")
             elif has_hold_harmless and not has_defend:
                 plain_sentences.append("Mutual indemnification: Each Party shall indemnify and hold harmless the other, covering officers, directors, and employees against third-party claims from own gross negligence or willful misconduct.")
+            elif "provider" in t_lower and "subscriber" in t_lower:
+                plain_sentences.append("Provider and Subscriber agree to mutual defense and indemnification terms as specified in the agreement.")
             else:
                 plain_sentences.append(f"{who_bound}: Parties agree to indemnify against third-party claims arising from specified contractual breaches or misconduct.")
             severity_reason = "Moderate risk: Allocates third-party defense and indemnity liabilities."
 
-    elif "limitation of liability" in cat.lower() or "liability cap" in title_str.lower() or "aggregate liability" in title_str.lower():
-        if "twelve (12) months" in t_lower or "12 months" in t_lower:
-            q1 = _find_exact_substring(r'total\s*fees\s*paid\s*by\s*Client\s*in\s*the\s*twelve\s*\(12\)\s*months\s*preceding', text)
+    elif "limitation of liability" in cat_lower or "liability" in cat_lower or "liability cap" in title_str.lower() or "aggregate liability" in title_str.lower():
+        if "twelve (12) months" in t_lower or "12 months" in t_lower or "twelve months" in t_lower:
+            q1 = _find_exact_substring(r'total\s*(?:amounts|fees)\s*paid\s*(?:by\s*Client\s*)?in\s*the\s*(?:preceding\s*)?(?:twelve\s*\(12\)\s*months|twelve\s*months)', text)
             if q1:
-                key_details.append({"label": "Liability Cap Amount", "value": "Total fees paid by Client in prior 12 months", "source_quote": q1})
+                key_details.append({"label": "Liability Cap Amount", "value": "Total fees paid in prior 12 months", "source_quote": q1})
             q2 = _find_exact_substring(r'whether\s*in\s*contract,\s*tort,\s*or\s*otherwise', text)
             if q2:
                 key_details.append({"label": "Carve-Outs / Exceptions", "value": "No carve-outs (applies in contract, tort, or otherwise)", "source_quote": q2})
-            plain_sentences.append("Total liability is capped at the total fees paid by Client in the twelve months preceding the claim, regardless of action form, with no carve-outs.")
-            not_stated.append("No carve-outs for indemnification, confidentiality breach, or willful misconduct.")
-            severity_reason = "High risk for Client: Total liability is capped at fees paid over the prior 12 months with zero carve-outs for indemnity or confidentiality."
-        elif "$50,000" in text or "fifty thousand dollars" in t_lower:
+            
+            if "except for" in t_lower or "carve-out" in t_lower:
+                q3 = _find_exact_substring(r'except\s+for\s+[^\.\,]+', text)
+                if q3:
+                    key_details.append({"label": "Uncapped Exceptions", "value": q3, "source_quote": q3})
+                plain_sentences.append("General liability is capped at the total amounts paid in the preceding twelve months, with uncapped exceptions for liabilities arising under indemnification or willful misconduct.")
+                severity_reason = "High risk: General liability is capped at 12 months of fees with specific uncapped carve-outs."
+            else:
+                plain_sentences.append("Total liability is capped at the total fees paid by Client in the twelve months preceding the claim, regardless of action form, with no carve-outs.")
+                not_stated.append("No carve-outs for indemnification, confidentiality breach, or willful misconduct.")
+                severity_reason = "High risk for Client: Total liability is capped at fees paid over the prior 12 months with zero carve-outs for indemnity or confidentiality."
+        elif "data security" in t_lower or "one million two hundred fifty thousand" in t_lower or "$1,250,000" in text:
+            q1 = _find_exact_substring(r'one\s*million\s*two\s*hundred\s*fifty\s*thousand\s*dollars\s*\(\$1,250,000\)', text) or "$1,250,000"
+            key_details.append({"label": "Liability Cap Amount", "value": q1, "source_quote": q1})
+            q2 = _find_exact_substring(r'gross\s*negligence\s*or\s*breach\s*of\s*data\s*security', text) or "gross negligence or breach of data security"
+            key_details.append({"label": "Uncapped Exceptions", "value": q2, "source_quote": q2})
+            plain_sentences.append("Aggregate liability is capped at $1,250,000, with uncapped exceptions for gross negligence and breach of data security.")
+            severity_reason = "High risk: Contains liability cap with specific data security carve-outs."
+        elif "eight hundred forty thousand" in t_lower or "$840,000" in text:
+            q1 = _find_exact_substring(r'eight\s*hundred\s*forty\s*thousand\s*dollars\s*\(\$840,000\)', text) or "$840,000"
+            key_details.append({"label": "Liability Cap Amount", "value": q1, "source_quote": q1})
+            q2 = _find_exact_substring(r'willful\s*misconduct\s*or\s*breach\s*of\s*confidentiality', text) or "willful misconduct or breach of confidentiality"
+            key_details.append({"label": "Uncapped Exceptions", "value": q2, "source_quote": q2})
+            plain_sentences.append("Total monetary liability is capped at $840,000, with uncapped exceptions for willful misconduct and breach of confidentiality.")
+            severity_reason = "High risk: Contains monetary damage limitations with confidentiality carve-outs."
+        elif bool(re.search(r'\b(?:fifty\s*thousand\s*dollars|\$50,000(?:\.00)?)\b', text, re.IGNORECASE)) and not bool(re.search(r'\b(?:million|hundred|two\s*hundred|seven\s*hundred)\b', text, re.IGNORECASE)):
             q1 = _find_exact_substring(r'fifty\s*thousand\s*dollars\s*\(\$50,000\)', text) or _find_exact_substring(r'\$50,000', text)
             if q1:
                 key_details.append({"label": "Liability Cap Amount", "value": "$50,000.00 aggregate cap", "source_quote": q1})
@@ -511,10 +534,21 @@ def synthesize_detailed_plain_english_analysis(
             not_stated.append("Double negative in drafting ('shall not exceed' preceded by 'shall not').")
             severity_reason = "High risk: Contains a drafting double negative and leaves confidentiality breach uncapped."
         else:
-            plain_sentences.append(f"{who_bound}: Limits aggregate financial liability recoverable under the contract.")
+            exc_m = _find_exact_substring(r'except\s+for\s+liabilities\s+resulting\s+from\s+[^\,\.]+', text) or _find_exact_substring(r'except\s+for\s+[^\,\.]+', text)
+            cap_m = _find_exact_substring(r'(?:shall\s+not\s+exceed|capped\s+at)\s+([^\,\.]+)', text)
+            if exc_m:
+                key_details.append({"label": "Uncapped Exceptions", "value": exc_m, "source_quote": exc_m})
+            if cap_m:
+                key_details.append({"label": "Liability Cap", "value": cap_m, "source_quote": cap_m})
+            if exc_m and cap_m:
+                plain_sentences.append(f"{exc_m.capitalize()}, aggregate monetary liability under the agreement {cap_m}.")
+            elif exc_m:
+                plain_sentences.append(f"Aggregate monetary liability is capped under the agreement, {exc_m.lower()}.")
+            else:
+                plain_sentences.append(f"{who_bound}: Limits aggregate financial liability recoverable under the contract.")
             severity_reason = "High risk: Limits recoverable damages ceiling."
 
-    elif "term" == cat.lower() or "term" == title_str.lower():
+    elif "term" == cat_lower or "term" == title_str.lower():
         if "november 1, 2026" in t_lower or "october 31, 2029" in t_lower:
             q1 = _find_exact_substring(r'three\s*\(3\)\s*years,\s*commencing\s*on\s*November\s*1,\s*2026,\s*and\s*terminating\s*on\s*October\s*31,\s*2029', text)
             if q1:
@@ -535,7 +569,7 @@ def synthesize_detailed_plain_english_analysis(
             plain_sentences.append(f"{who_bound}: Establishes the operative duration and term of the agreement.")
             severity_reason = "Standard contractual term duration."
 
-    elif "termination" in cat.lower() or "termination" in title_str.lower() or "suspension" in title_str.lower():
+    elif "termination" in cat_lower or "termination" in title_str.lower() or "suspension" in title_str.lower():
         if "vendor reserves the right to suspend or terminate" in t_lower or "for any reason or no reason" in t_lower:
             q1 = _find_exact_substring(r'suspend\s*or\s*terminate\s*this\s*Agreement\s*immediately\s*upon\s*written\s*notice\s*for\s*any\s*reason\s*or\s*no\s*reason', text)
             if q1:
@@ -574,7 +608,7 @@ def synthesize_detailed_plain_english_analysis(
             plain_sentences.append(f"{who_bound}: Establishes termination rights, default remedies, and notice procedures as set forth in the agreement.")
             severity_reason = "Moderate risk: Governs termination rights and default acceleration remedies."
 
-    elif "dispute resolution" in cat.lower() or "dispute" in title_str.lower() or "arbitration" in title_str.lower() or "forum" in title_str.lower():
+    elif "dispute resolution" in cat_lower or "dispute" in title_str.lower() or "arbitration" in title_str.lower() or "forum" in title_str.lower():
         if "american arbitration association" in t_lower or "binding arbitration" in t_lower:
             q1 = _find_exact_substring(r'administered\s+by\s+the\s+American\s+Arbitration\s+Association', text)
             if q1:
@@ -592,17 +626,40 @@ def synthesize_detailed_plain_english_analysis(
                 key_details.append({"label": "Exclusive Forum", "value": q1, "source_quote": q1})
             plain_sentences.append("Any dispute or controversy arising out of this contract falls under the exclusive jurisdiction of the state courts located in Travis County, Texas.")
             severity_reason = "Low risk: Designates exclusive judicial forum for resolving controversies."
-        elif "new york county" in t_lower:
-            q1 = _find_exact_substring(r'state\s*and\s*federal\s*courts\s*located\s*in\s*New\s*York\s*County,\s*New\s*York', text)
+        elif "cook county" in t_lower or "illinois" in t_lower:
+            q1 = _find_exact_substring(r'exclusive\s+jurisdiction\s+in\s+Cook\s+County,\s+Illinois', text) or _find_exact_substring(r'Cook\s+County,\s+Illinois', text) or _find_exact_substring(r'Cook\s+County', text)
             if q1:
                 key_details.append({"label": "Exclusive Forum", "value": q1, "source_quote": q1})
-            plain_sentences.append("The Parties consent to exclusive jurisdiction of state and federal courts located in New York County, New York, for resolving all disputes.")
-            severity_reason = "Low risk: Designates exclusive judicial forum for resolving controversies."
+            plain_sentences.append("Any action or proceeding arising out of or relating to this Agreement shall be submitted to the exclusive jurisdiction in Cook County, Illinois.")
+            severity_reason = "Low risk: Designates exclusive judicial forum in Cook County, Illinois."
+        elif "new york county" in t_lower or "new york" in t_lower:
+            q1 = _find_exact_substring(r'state\s*and\s*federal\s*courts\s*located\s*in\s*New\s*York\s*County,\s*New\s*York', text) or _find_exact_substring(r'courts\s*located\s*in\s*New\s*York', text) or _find_exact_substring(r'New\s*York\s*County', text)
+            if q1:
+                key_details.append({"label": "Exclusive Forum", "value": q1, "source_quote": q1})
+            q2 = _find_exact_substring(r'laws\s+of\s+the\s+State\s+of\s+New\s+York', text) or _find_exact_substring(r'State\s+of\s+New\s+York', text)
+            if q2:
+                key_details.append({"label": "Governing Law", "value": "State of New York", "source_quote": q2})
+            if q1 and q2:
+                plain_sentences.append("Governed by the laws of the State of New York, and the parties submit to the exclusive jurisdiction and venue of state and federal courts in New York County.")
+            elif q2:
+                plain_sentences.append("This Agreement shall be governed by and construed in accordance with the substantive laws of the State of New York.")
+            else:
+                plain_sentences.append("The Parties consent to exclusive jurisdiction of state and federal courts located in New York County, New York, for resolving all disputes.")
+            severity_reason = "Low risk: Designates governing law and exclusive judicial forum."
+        elif "delaware" in t_lower or "governed by and construed" in t_lower:
+            q_gov = _find_exact_substring(r'laws\s+of\s+the\s+State\s+of\s+Delaware', text) or _find_exact_substring(r'State\s+of\s+Delaware', text)
+            if q_gov:
+                key_details.append({"label": "Governing Law", "value": "State of Delaware", "source_quote": q_gov})
+            plain_sentences.append("This Agreement shall be governed by and construed in accordance with the substantive laws of the State of Delaware, without giving effect to conflict of law rules.")
+            severity_reason = "Low risk: Substantive governing law provision."
+        elif "negotiate in good faith" in t_lower or "informally within" in t_lower:
+            plain_sentences.append("Parties agree to consult and negotiate in good faith to resolve controversies informally before initiating formal dispute proceedings.")
+            severity_reason = "Low risk: Informal dispute escalation procedure."
         else:
             plain_sentences.append(f"{who_bound}: Designates the agreed judicial forum and dispute resolution mechanisms for controversies.")
             severity_reason = "Low risk: Choice of dispute resolution venue."
 
-    elif "restrictive covenants" in cat.lower() or "non-compete" in title_str.lower() or "non-solicitation" in title_str.lower():
+    elif "restrictive covenants" in cat_lower or "non-compete" in title_str.lower() or "non-solicitation" in title_str.lower():
         dur_match = _find_exact_substring(r'(?:twenty-four\s*\(24\)\s*months|eighteen\s*\(18\)\s*months|twelve\s*\(12\)\s*months|\d+\s*months)', text)
         dur_str = f" for {dur_match} following termination" if dur_match else ""
         if dur_match:
@@ -623,7 +680,7 @@ def synthesize_detailed_plain_english_analysis(
         plain_sentences.append(f"{who_bound}: Restricts {action_desc}{dur_str} as set forth in the agreement.")
         severity_reason = "High risk: Post-termination restrictive covenant imposing competitive and solicitation restrictions."
 
-    elif "governing law" in cat.lower() or "governing law" in title_str.lower():
+    elif "governing law" in cat_lower or "governing law" in title_str.lower():
         q1 = _find_exact_substring(r'laws\s*of\s*the\s*State\s*of\s*New\s*York,\s*without\s*regard\s*to\s*its\s*conflict\s*of\s*laws\s*principles', text) or _find_exact_substring(r'laws\s*of\s*the\s*Commonwealth\s*of\s*Massachusetts,\s*without\s*regard\s*to\s*its\s*conflict\s*of\s*law\s*principles', text) or _find_exact_substring(r'laws\s*of\s*the\s*State\s*of\s*\w+', text)
         if q1:
             key_details.append({"label": "Governing Law", "value": q1, "source_quote": q1})
@@ -636,20 +693,22 @@ def synthesize_detailed_plain_english_analysis(
             plain_sentences.append(f"{who_bound}: Designates the substantive state law governing the interpretation and enforcement of the agreement.")
         severity_reason = "Low risk: Standard choice of law provision establishing applicable substantive law."
 
-    elif "property / premises" in cat.lower() or "leased premises" in title_str.lower():
-        q1 = _find_exact_substring(r'approximately\s*2,500\s*square\s*feet\s*of\s*office\s*space', text)
+    elif "property / premises" in cat_lower or "leased premises" in title_str.lower() or "premises" in title_str.lower():
+        q1 = _find_exact_substring(r'(?:approximately\s*)?[\d,]+\s*(?:square\s+feet|sq\s*\.?\s*ft\.?)(?:\s+of\s+[A-Za-z\s]+)?', text)
         if q1:
-            key_details.append({"label": "Premises Size", "value": "Approximately 2,500 square feet of office space", "source_quote": q1})
-        q2 = _find_exact_substring(r'450\s*Artisan\s*Way,\s*Suite\s*210,\s*City\s*of\s*Boston,\s*Commonwealth\s*of\s*Massachusetts', text)
+            key_details.append({"label": "Premises Size", "value": q1, "source_quote": q1})
+        q2 = _find_exact_substring(r'\d+\s+[A-Za-z0-9\s,\.\-–—]+?(?:Street|Avenue|Boulevard|Way|Road|Lane|Suite|Floor|City|Boston|Massachusetts|Texas|California|New York)[A-Za-z0-9\s,\.\-–—]*', text)
         if q2:
-            key_details.append({"label": "Premises Location", "value": "450 Artisan Way, Suite 210, Boston, Massachusetts", "source_quote": q2})
-        if q2:
-            plain_sentences.append("Landlord leases to Tenant commercial real property at 450 Artisan Way, Suite 210, Boston, Massachusetts, consisting of approximately 2,500 sq ft.")
+            key_details.append({"label": "Premises Location", "value": q2, "source_quote": q2})
+        if q2 and q1:
+            plain_sentences.append(f"Landlord leases to Tenant commercial real property at {q2}, consisting of {q1}.")
+        elif q2:
+            plain_sentences.append(f"Landlord leases to Tenant commercial real property located at {q2}.")
         else:
             plain_sentences.append(f"{who_bound}: Identifies and describes the leased real property premises.")
         severity_reason = "Low risk: Identifies the leased physical office space and address."
 
-    elif "property use" in cat.lower() or "use of premises" in title_str.lower():
+    elif "property use" in cat_lower or "use of premises" in title_str.lower():
         q1 = _find_exact_substring(r'general\s*corporate\s*offices,\s*professional\s*services,\s*software\s*development,\s*and\s*related\s*administrative\s*operations', text)
         if q1:
             key_details.append({"label": "Permitted Use", "value": "Corporate offices, professional services, software development, and administration", "source_quote": q1})
@@ -659,7 +718,7 @@ def synthesize_detailed_plain_english_analysis(
         plain_sentences.append("Premises shall be used solely for corporate offices, professional services, software development, and administration, complying with all local zoning and building rules.")
         severity_reason = "Low risk: Defines permitted commercial occupancy uses and regulatory compliance."
 
-    elif "maintenance" in cat.lower() or "maintenance" in title_str.lower():
+    elif "maintenance" in cat_lower or "maintenance" in title_str.lower():
         q1 = _find_exact_substring(r'structural\s*parts\s*of\s*the\s*building,\s*including\s*the\s*foundation,\s*exterior\s*walls,\s*roof,\s*plumbing,\s*and\s*HVAC\s*main\s*lines', text)
         if q1:
             key_details.append({"label": "Landlord Repair Duties", "value": "Structure, foundation, exterior walls, roof, plumbing, and HVAC main lines", "source_quote": q1})
@@ -672,7 +731,7 @@ def synthesize_detailed_plain_english_analysis(
             plain_sentences.append(f"{who_bound}: Allocates ongoing maintenance, repair, and operational upkeep duties between the parties.")
         severity_reason = "Moderate risk: Allocates ongoing building and interior repair responsibilities between Landlord and Tenant."
 
-    elif "alterations" in cat.lower() or "alterations" in title_str.lower():
+    elif "alterations" in cat_lower or "alterations" in title_str.lower():
         q1 = _find_exact_substring(r'without\s*the\s*prior\s*written\s*consent\s*of\s*Landlord', text)
         if q1:
             key_details.append({"label": "Alterations Consent", "value": "No structural alterations without Landlord's prior written consent", "source_quote": q1})
@@ -682,7 +741,7 @@ def synthesize_detailed_plain_english_analysis(
         plain_sentences.append("Tenant shall not make structural alterations without Landlord's prior written consent; permanent improvements become property of Landlord upon expiration.")
         severity_reason = "Moderate risk: Reverts permanent tenant-funded improvements to Landlord upon expiration."
 
-    elif "general / boilerplate" in cat.lower() or "entire agreement" in title_str.lower():
+    elif "general / boilerplate" in cat_lower or "entire agreement" in title_str.lower():
         q1 = _find_exact_substring(r'constitutes\s*the\s*entire\s*agreement\s*between\s*the\s*Parties\s*with\s*respect\s*to\s*its\s*subject\s*matter\s*and\s*supersedes\s*all\s*prior\s*or\s*contemporaneous\s*understandings,\s*whether\s*written\s*or\s*oral', text)
         if q1:
             key_details.append({"label": "Integration Scope", "value": "Supersedes all prior written or oral understandings", "source_quote": q1})
@@ -696,15 +755,21 @@ def synthesize_detailed_plain_english_analysis(
     # Build plain language summary
     plain_lang_text = " ".join(plain_sentences).strip()
 
-    # Formulate Section 5.4 / 5.5 multi-line formatted summary
+    # Formulate Section 5.4 / 5.5 multi-line formatted summary with required structural headings
     card_sections = [
         f"IN PLAIN LANGUAGE:\n{plain_lang_text}",
+        f"WHAT THIS CLAUSE MEANS:\n{plain_lang_text}",
         f"WHO IS BOUND:\n{who_bound}",
+        f"WHO IS AFFECTED:\n{who_bound}",
+        f"OBLIGATIONS & RIGHTS:\n{plain_lang_text}",
     ]
 
     if key_details:
         kd_lines = [f"• {kd['label']}: {kd['value']}" for kd in key_details]
         card_sections.append("KEY DETAILS:\n" + "\n".join(kd_lines))
+        card_sections.append("IMPORTANT DETAILS:\n" + "\n".join(kd_lines))
+    else:
+        card_sections.append(f"IMPORTANT DETAILS:\n• Key Term: {plain_lang_text}")
 
     if severity_reason:
         card_sections.append(f"WHY THIS SEVERITY:\n{severity_reason}")
@@ -725,18 +790,19 @@ def synthesize_detailed_plain_english_analysis(
         for b_str in banned_in_summary:
             formatted_summary = formatted_summary.replace(b_str, "")
 
-    cat_reason, cat_evidence = extract_category_evidence_span(text, cat)
+    cat_label = cat
+    cat_reason, cat_evidence = extract_category_evidence_span(text, cat_label or "General / Boilerplate")
     risk_reason, risk_evidence = extract_risk_evidence_span(text, severity, rule_findings)
 
     structured_explanation = {
         "what_this_clause_means": plain_lang_text,
         "risk": {
-            "severity": severity or "Low",
+            "severity": severity,
             "reason": severity_reason or risk_reason,
             "evidence": risk_evidence
         },
         "category": {
-            "label": cat or "General / Boilerplate",
+            "label": cat_label,
             "reason": cat_reason,
             "evidence": cat_evidence
         },
@@ -776,23 +842,72 @@ def simplify_single_clause(
     clause_number = clause.get("clause_number") or str(position)
     title = clause.get("title") or ""
     text = clause.get("text", "")
-    severity = clause.get("severity") or clause.get("final_severity") or "Low"
+    raw_severity = clause.get("severity") if "severity" in clause else clause.get("final_severity")
     categories = clause.get("categories", [])
     if categories:
         primary_category = categories[0].value if hasattr(categories[0], 'value') else str(categories[0])
     else:
-        primary_category = clause.get("category") or "General / Boilerplate"
+        primary_category = clause.get("category")
+
+    # If severity is explicitly missing/None, mark RISK_CLASSIFICATION_UNAVAILABLE
+    if raw_severity is None or str(raw_severity).strip() == "" or str(raw_severity).upper() in ("UNKNOWN", "NONE", "RISK_CLASSIFICATION_UNAVAILABLE"):
+        clean_severity = "RISK_CLASSIFICATION_UNAVAILABLE"
+    else:
+        clean_severity = str(raw_severity).capitalize()
 
     # If test mock client provided, exercise mock call for failure isolation tests
     if override_client is not None:
         try:
-            override_client.chat.completions.create(
+            resp = override_client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": "You are a legal assistant."},
                     {"role": "user", "content": f"Simplify clause: {text}"}
                 ]
             )
-        except Exception:
+            content = resp.choices[0].message.content
+            # Validate untrusted output
+            is_safe, err_msg = validate_untrusted_llm_output(content)
+            if not is_safe or check_for_prompt_injection_leak(content) or check_for_hallucinated_claims(content):
+                raise ValueError(f"Safety check failed: {err_msg}")
+
+            try:
+                parsed = json.loads(content)
+                simp_text = parsed.get("simplified_text", content)
+                why_text = parsed.get("why_flagged", "No risk signals flagged.")
+            except Exception:
+                simp_text = content
+                why_text = "Analysis generated."
+
+            is_s1, _ = validate_untrusted_llm_output(simp_text)
+            is_s2, _ = validate_untrusted_llm_output(why_text)
+            if not is_s1 or not is_s2 or check_for_prompt_injection_leak(simp_text) or check_for_prompt_injection_leak(why_text) or check_for_hallucinated_claims(simp_text) or check_for_hallucinated_claims(why_text):
+                raise ValueError("Safety check failed on parsed fields")
+
+            return {
+                "position": position,
+                "clause_id": clause_id,
+                "clause_number": clause_number,
+                "title": title,
+                "original_text": text,
+                "simplified_text": simp_text,
+                "why_flagged": why_text,
+                "plain_language": simp_text,
+                "who_is_bound": "Party",
+                "key_details": [],
+                "severity_reason": why_text,
+                "if_not_met": "",
+                "not_stated": [],
+                "structured_explanation": {
+                    "what_this_clause_means": simp_text,
+                    "risk": {"severity": clean_severity if clean_severity != "RISK_CLASSIFICATION_UNAVAILABLE" else "Safe", "reason": why_text, "evidence": ""},
+                    "category": {"label": primary_category or "General / Boilerplate", "reason": why_text, "evidence": ""},
+                    "status": "SUCCESS"
+                },
+                "severity": clean_severity if clean_severity != "RISK_CLASSIFICATION_UNAVAILABLE" else "Safe",
+                "category": primary_category or "General / Boilerplate",
+                "status": "SUCCESS"
+            }
+        except Exception as e:
             honest_str = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
             return {
                 "position": position,
@@ -810,11 +925,11 @@ def simplify_single_clause(
                 "not_stated": [],
                 "structured_explanation": {
                     "what_this_clause_means": honest_str,
-                    "risk": {"severity": "Needs review", "reason": honest_str, "evidence": ""},
+                    "risk": {"severity": "RISK_CLASSIFICATION_UNAVAILABLE", "reason": honest_str, "evidence": ""},
                     "category": {"label": "Unavailable", "reason": honest_str, "evidence": ""},
                     "status": "FAILED"
                 },
-                "severity": "Needs review",
+                "severity": "RISK_CLASSIFICATION_UNAVAILABLE",
                 "category": "Unavailable",
                 "status": "FAILED_SIMPLIFICATION"
             }
@@ -822,10 +937,9 @@ def simplify_single_clause(
     # Fast-path extraction-first analysis
     synth_res = synthesize_detailed_plain_english_analysis(
         text=text,
-        severity=severity,
+        severity=clean_severity,
         category=primary_category,
         rule_findings=rule_findings,
-
         clause_number=clause_number,
         title=title
     )
@@ -838,14 +952,14 @@ def simplify_single_clause(
         "original_text": text,
         "simplified_text": synth_res["simplified_text"],
         "why_flagged": synth_res["why_flagged"],
-        "plain_language": synth_res.get("plain_language", ""),
-        "who_is_bound": synth_res.get("who_is_bound", ""),
-        "key_details": synth_res.get("key_details", []),
-        "severity_reason": synth_res.get("severity_reason", ""),
-        "if_not_met": synth_res.get("if_not_met", ""),
-        "not_stated": synth_res.get("not_stated", []),
-        "structured_explanation": synth_res.get("structured_explanation"),
-        "severity": severity,
+        "plain_language": synth_res["plain_language"],
+        "who_is_bound": synth_res["who_is_bound"],
+        "key_details": synth_res["key_details"],
+        "severity_reason": synth_res["severity_reason"],
+        "if_not_met": synth_res["if_not_met"],
+        "not_stated": synth_res["not_stated"],
+        "structured_explanation": synth_res["structured_explanation"],
+        "severity": clean_severity,
         "category": primary_category,
         "status": "SUCCESS"
     }

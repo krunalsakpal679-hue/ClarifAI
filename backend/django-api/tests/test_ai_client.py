@@ -29,6 +29,7 @@ from services.ai_client import (
 )
 
 
+@override_settings(AI_SERVICE_USE_MOCK=True)
 class AIClientAdapterTestCase(TestCase):
 
     def test_mock_all_four_functions_happy_path(self):

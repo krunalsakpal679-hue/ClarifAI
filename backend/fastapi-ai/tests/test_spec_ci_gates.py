@@ -15,9 +15,12 @@ from app.services.summarization_service import generate_document_executive_summa
 from app.services.claim_grounding_service import BANNED_STRINGS, check_banned_strings
 
 
-CONTRACT_A_PATH = "sample_documents/Sample_Cloud_Consulting_Agreement.pdf"
-CONTRACT_B_PATH = "sample_documents/Document_B_Consulting_Services_Agreement.pdf"
-CONTRACT_C_PATH = "sample_documents/Sample_Commercial_Lease_Agreement.pdf"
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+CONTRACT_A_PATH = str(_ROOT / "sample_documents" / "Sample_Cloud_Consulting_Agreement.pdf")
+CONTRACT_B_PATH = str(_ROOT / "sample_documents" / "Document_B_Consulting_Services_Agreement.pdf")
+CONTRACT_C_PATH = str(_ROOT / "sample_documents" / "Sample_Commercial_Lease_Agreement.pdf")
 
 # Ground Truth Targets from Spec Part 2
 GROUND_TRUTH_A = {

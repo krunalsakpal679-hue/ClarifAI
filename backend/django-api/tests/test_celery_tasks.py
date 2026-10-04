@@ -24,7 +24,8 @@ User = get_user_model()
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
     CELERY_RESULT_BACKEND=None,
-    CELERY_BROKER_URL='memory://'
+    CELERY_BROKER_URL='memory://',
+    AI_SERVICE_USE_MOCK=True
 )
 class CeleryTaskAndStateMachineTestCase(TestCase):
 

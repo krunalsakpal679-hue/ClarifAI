@@ -1,0 +1,53 @@
+{
+  "doc_id": "val_3_commercial_lease",
+  "title": "COMMERCIAL REAL ESTATE LEASE AGREEMENT",
+  "party_a": "Harborview Realty Partners LLC (Landlord)",
+  "party_b": "NextGen Software Labs Inc. (Tenant)",
+  "reviewing_party": "NextGen Software Labs Inc.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. LEASED PREMISES AND USE",
+      "text": "1. LEASED PREMISES AND USE. Landlord leases 4,000 square feet of commercial office space at 200 Harbor Boulevard, Suite 500, Seattle, WA for general software engineering use.",
+      "gt_category": "Premises",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "4,000 square feet"
+      ]
+    },
+    {
+      "position": 2,
+      "title": "2. BASE RENT AND SECURITY DEPOSIT",
+      "text": "2. BASE RENT AND SECURITY DEPOSIT. Tenant shall pay monthly rent of $9,200.00 USD on the 1st of each month and deposit an initial security deposit of $18,400.00 USD.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Tenant",
+      "gt_numbers": [
+        "$9,200.00",
+        "$18,400.00"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. LEASE TERM AND RENEWAL NOTICE",
+      "text": "3. LEASE TERM AND RENEWAL NOTICE. Lease duration is thirty-six (36) months commencing January 1, 2027, with renewal option on ninety (90) days advance written notice.",
+      "gt_category": "Term",
+      "gt_severity": "Low",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": [
+        "thirty-six (36) months",
+        "ninety (90) days"
+      ]
+    },
+    {
+      "position": 4,
+      "title": "4. MAINTENANCE DIVISION OF RESPONSIBILITIES",
+      "text": "4. MAINTENANCE DIVISION OF RESPONSIBILITIES. Landlord maintains exterior roof, foundation, and elevators; Tenant maintains interior lighting and plumbing fixtures.",
+      "gt_category": "Maintenance",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Both parties",
+      "gt_numbers": []
+    }
+  ]
+}

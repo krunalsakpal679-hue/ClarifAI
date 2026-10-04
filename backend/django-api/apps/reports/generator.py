@@ -164,9 +164,10 @@ def generate_document_pdf(report, document, language='en'):
 
     # 5.1 Report Header
     doc_title = (document.original_filename or "Commercial Agreement").replace(".pdf", "").replace("_", " ")
-    elements.append(Paragraph(f"<b>ClarifAI Contract Analysis:</b> {doc_title}", title_style))
+    elements.append(Paragraph(f"<b>ClarifAI Document Analysis Report:</b> {doc_title}", title_style))
     
     reviewing_party = getattr(document, 'reviewing_party', None) or "Neutral / Reviewing Counsel"
+    lang_code = language or getattr(document, 'language', 'en') or 'en'
     header_table_data = [
         [
             Paragraph(f"<b>Report ID:</b> {report.id}", meta_style),
@@ -174,7 +175,7 @@ def generate_document_pdf(report, document, language='en'):
         ],
         [
             Paragraph(f"<b>Source File:</b> {document.original_filename}", meta_style),
-            Paragraph(f"<b>Perspective:</b> Reviewing as: {reviewing_party}", meta_style)
+            Paragraph(f"<b>Perspective:</b> Reviewing as: {reviewing_party} | <b>Language: {lang_code.upper()}</b>", meta_style)
         ]
     ]
     t_hdr = Table(header_table_data, colWidths=[270, 270])
@@ -255,7 +256,7 @@ def generate_document_pdf(report, document, language='en'):
         elements.append(Spacer(1, 14))
 
         # 5.4 Detailed Clause Cards
-        elements.append(Paragraph("<b>3. Detailed Clause-Level Analysis</b>", heading_style))
+        elements.append(Paragraph("<b>3. Detailed Clause-Level Analysis / Risk-Classified Clauses</b>", heading_style))
         for cl in clauses:
             card_elements = []
             c_num = getattr(cl, 'clause_number', None) or str(cl.position)
@@ -341,7 +342,7 @@ def generate_comparison_pdf(report, comparison, language='en'):
 
     results = comparison.results.all()
     if results.exists():
-        elements.append(Paragraph("<b>Comparison Differences Matrix</b>", heading_style))
+        elements.append(Paragraph("<b>Comparison Matrix & Differences</b>", heading_style))
         table_data = [["Category", "Type", "Difference Explanation"]]
         for item in results:
             table_data.append([

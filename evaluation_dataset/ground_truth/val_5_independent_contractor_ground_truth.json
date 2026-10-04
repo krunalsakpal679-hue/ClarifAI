@@ -1,0 +1,50 @@
+{
+  "doc_id": "val_5_independent_contractor",
+  "title": "INDEPENDENT CONTRACTOR SERVICES AGREEMENT",
+  "party_a": "BlueStone Financial LLC (Client)",
+  "party_b": "Vektor Infosec Advisory Inc. (Contractor)",
+  "reviewing_party": "Vektor Infosec Advisory Inc.",
+  "clauses": [
+    {
+      "position": 1,
+      "title": "1. CONSULTING SERVICES AND DELIVERABLES",
+      "text": "1. CONSULTING SERVICES AND DELIVERABLES. Contractor delivers cloud penetration testing and risk assessment reports as described in Schedule A Statement of Work.",
+      "gt_category": "Scope of Services",
+      "gt_severity": "Safe",
+      "gt_party_bound": "Contractor",
+      "gt_numbers": []
+    },
+    {
+      "position": 2,
+      "title": "2. PROFESSIONAL FEES AND INVOICING",
+      "text": "2. PROFESSIONAL FEES AND INVOICING. Client remits fixed project fee of $24,000.00 within forty-five (45) days after milestone completion approval.",
+      "gt_category": "Payment / Rent",
+      "gt_severity": "Low",
+      "gt_party_bound": "Client",
+      "gt_numbers": [
+        "$24,000.00",
+        "forty-five (45) days"
+      ]
+    },
+    {
+      "position": 3,
+      "title": "3. CONTRACTOR INDEMNIFICATION BURDEN",
+      "text": "3. CONTRACTOR INDEMNIFICATION BURDEN. Contractor shall defend and indemnify Client against all claims, losses, damages, and legal costs arising from Contractor's negligence.",
+      "gt_category": "Indemnification",
+      "gt_severity": "High",
+      "gt_party_bound": "Contractor only",
+      "gt_numbers": []
+    },
+    {
+      "position": 4,
+      "title": "4. TERMINATION NOTICE FOR CONVENIENCE",
+      "text": "4. TERMINATION NOTICE FOR CONVENIENCE. Client may terminate this contract for convenience upon fourteen (14) days advance written notice.",
+      "gt_category": "Termination",
+      "gt_severity": "Moderate",
+      "gt_party_bound": "Client only",
+      "gt_numbers": [
+        "fourteen (14) days"
+      ]
+    }
+  ]
+}

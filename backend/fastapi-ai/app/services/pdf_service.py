@@ -21,8 +21,8 @@ MAX_PDF_SIZE_BYTES: int = 20 * 1024 * 1024
 # Scanned page OCR threshold: pages with < 50 non-whitespace characters are flagged as needing OCR
 OCR_CHARACTER_THRESHOLD: int = 50
 
-# Render DPI for converting PyMuPDF pages to images for Tesseract OCR
-OCR_RENDER_DPI: int = 150
+# Render DPI for converting PyMuPDF pages to images for Tesseract OCR (standard 300 DPI per Chapter 14)
+OCR_RENDER_DPI: int = 300
 
 SCHEMA_VERSION: str = "1.0.0"
 

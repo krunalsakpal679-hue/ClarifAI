@@ -1,12 +1,12 @@
 {
   "total_documents": 5,
   "total_clauses_evaluated": 30,
-  "category_accuracy": 73.33,
-  "severity_accuracy": 53.33,
-  "no_invention_rate": 90.0,
-  "low_omission_rate": 60.0,
+  "category_accuracy": 76.67,
+  "severity_accuracy": 60.0,
+  "no_invention_rate": 100.0,
+  "low_omission_rate": 56.67,
   "directionality_accuracy": 100.0,
-  "conditions_preservation_rate": 83.33,
+  "conditions_preservation_rate": 80.0,
   "exceptions_preservation_rate": 100.0,
   "per_document_results": [
     {
@@ -564,17 +564,19 @@
       "document_title": "HEAVY INDUSTRIAL EQUIPMENT LEASE AGREEMENT",
       "document_type": "Equipment Lease Agreement",
       "total_clauses": 6,
-      "pipeline_clauses_count": 6,
+      "pipeline_clauses_count": 5,
       "clause_evaluations": [
         {
           "clause_number": "1",
           "title": "LEASED EQUIPMENT AND TERM DURATION",
           "gt_category": "Renewal",
-          "predicted_categories": [],
+          "predicted_categories": [
+            "payment"
+          ],
           "category_correct": false,
           "gt_severity": "Safe",
-          "predicted_severity": "Moderate",
-          "severity_correct": false,
+          "predicted_severity": "Safe",
+          "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
           "omission_rate": 1.0,
@@ -585,43 +587,42 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause."
+          "what_this_clause_means": "This clause defines payment obligations, specifying that the Tenant (Lessee) must pay agreed rent, fees, and financial sums according to strict contractual deadlines. The Tenant (Lessee) is legally obligated to remit payment to the Landlord (Lessor) on or before the designated due date."
         },
         {
           "clause_number": "2",
           "title": "MONTHLY RENTAL AND SECURITY DEPOSIT",
           "gt_category": "Payment",
           "predicted_categories": [
-            "payment"
+            "liability"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Safe",
-          "predicted_severity": "Moderate",
-          "severity_correct": false,
-          "has_invention": true,
-          "invented_items": [
-            "000",
-            "4800"
-          ],
+          "predicted_severity": "Safe",
+          "severity_correct": true,
+          "has_invention": false,
+          "invented_items": [],
           "omission_rate": 1.0,
           "omitted_claims": [
             "Monthly rent of $14,500 per unit due on the first day of each month",
             "Security deposit of $30,000 required"
           ],
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines payment obligations, specifying that the Obligated Party must pay agreed rent, fees, and financial sums according to strict contractual deadlines. The Obligated Party is legally obligated to remit payment to the Counterparty on or before the designated due date. Financial Amount: $4800, $000."
+          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Financial Terms: rs,. Replacement Value: rs,."
         },
         {
           "clause_number": "3",
           "title": "EQUIPMENT MAINTENANCE AND REPAIRS",
           "gt_category": "Liability",
-          "predicted_categories": [],
-          "category_correct": false,
+          "predicted_categories": [
+            "liability"
+          ],
+          "category_correct": true,
           "gt_severity": "Moderate",
-          "predicted_severity": "Moderate",
-          "severity_correct": true,
+          "predicted_severity": "Low",
+          "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
           "omission_rate": 1.0,
@@ -632,23 +633,21 @@
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause."
+          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value."
         },
         {
           "clause_number": "4",
           "title": "INSURANCE AND CASUALTY INDEMNITY",
           "gt_category": "Liability",
           "predicted_categories": [
-            "payment"
+            "liability"
           ],
-          "category_correct": false,
+          "category_correct": true,
           "gt_severity": "High",
           "predicted_severity": "High",
           "severity_correct": true,
-          "has_invention": true,
-          "invented_items": [
-            "2000.00"
-          ],
+          "has_invention": false,
+          "invented_items": [],
           "omission_rate": 1.0,
           "omitted_claims": [
             "Mandatory commercial general liability insurance of at least $2,000,000",
@@ -657,31 +656,31 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Financial Terms: $2000.00. Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value."
+          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages. Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches. Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value. In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
         },
         {
           "clause_number": "5",
           "title": "TOTAL CASUALTY LOSS AND REPLACEMENT VALUE",
           "gt_category": "Liability",
           "predicted_categories": [
-            "payment"
+            "dispute resolution"
           ],
           "category_correct": false,
           "gt_severity": "High",
-          "predicted_severity": "Moderate",
+          "predicted_severity": "Safe",
           "severity_correct": false,
-          "has_invention": true,
-          "invented_items": [
-            "580.00"
-          ],
-          "omission_rate": 0.3333333333333333,
+          "has_invention": false,
+          "invented_items": [],
+          "omission_rate": 1.0,
           "omitted_claims": [
+            "Agreed replacement valuation is $380,000 per excavator",
+            "Triggered upon total destruction or theft",
             "Payment must be made within thirty (30) days"
           ],
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines the employment/engagement position, job responsibilities, reporting structure, and performance deliverables agreed upon by the parties. The Obligated Party is obligated to perform the agreed deliverables, duties, and professional tasks as authorized by the Counterparty. Scope: Performance of agreed professional tasks, deliverables, and responsibilities. Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value. Replacement Value / Asset Worth: $580.00."
+          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes. Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law. Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum. Geographic Scope / Jurisdiction: Ohio."
         },
         {
           "clause_number": "6",
@@ -690,8 +689,8 @@
           "predicted_categories": [],
           "category_correct": false,
           "gt_severity": "Safe",
-          "predicted_severity": "High",
-          "severity_correct": false,
+          "predicted_severity": "Safe",
+          "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
           "omission_rate": 1.0,
@@ -702,11 +701,11 @@
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the dispute resolution procedure, requiring the parties to attempt informal dispute escalation or alternative dispute resolution before initiating formal proceedings. Both parties are obligated to participate in good-faith dispute resolution procedures prior to pursuing further legal remedies. Dispute Resolution: Mandatory pre-litigation escalation and dispute resolution process."
+          "what_this_clause_means": ""
         }
       ],
-      "category_accuracy": 0.16666666666666666,
-      "severity_accuracy": 0.3333333333333333
+      "category_accuracy": 0.3333333333333333,
+      "severity_accuracy": 0.6666666666666666
     }
   ]
 }

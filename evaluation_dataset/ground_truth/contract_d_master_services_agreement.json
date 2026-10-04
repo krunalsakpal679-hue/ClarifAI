@@ -1,0 +1,89 @@
+{
+  "document_name": "contract_d_master_services_agreement.pdf",
+  "document_title": "Master Services Agreement, Enterprise Cloud Services",
+  "document_type": "Master Services Agreement",
+  "total_clauses": 9,
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "CUSTOMER INDEMNIFICATION AND THIRD-PARTY DEFENSE",
+      "category": "Indemnification",
+      "severity": "High",
+      "directionality": "Customer only",
+      "must_contain": ["defend, indemnify, and hold harmless", "Vendor, its affiliates, officers, directors, employees, and agents", "without limitation"],
+      "must_not_contain": ["mutual", "third-party claims only"]
+    },
+    {
+      "clause_number": "2",
+      "title": "TERMINATION FOR CONVENIENCE AND SUSPENSION",
+      "category": "Termination",
+      "severity": "High",
+      "directionality": "Vendor only",
+      "must_contain": ["Vendor reserves the right to suspend or terminate", "for any reason or no reason", "without refund of any prepaid fees"],
+      "must_not_contain": ["both parties"]
+    },
+    {
+      "clause_number": "3",
+      "title": "TERM, AUTOMATIC RENEWAL AND ANNUAL PRICE ESCALATION",
+      "category": "Renewal",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["successive twelve (12) month periods", "sixty (60) days", "fifteen percent (15%)"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "4",
+      "title": "INVOICING, PAYMENT TERMS AND LATE PAYMENT ACCRUALS",
+      "category": "Payment",
+      "severity": "Moderate",
+      "directionality": "Customer to Vendor",
+      "must_contain": ["fifteen (15) days", "1.5% per month, compounded monthly", "collection costs and reasonable legal fees"],
+      "must_not_contain": ["whichever is less", "billing cadence", "Obligated Party"]
+    },
+    {
+      "clause_number": "5",
+      "title": "CONFIDENTIALITY AND TRADE SECRET PRESERVATION",
+      "category": "Confidentiality",
+      "severity": "Low",
+      "directionality": "Mutual",
+      "must_contain": ["three (3) years following disclosure", "trade secrets shall remain protected indefinitely", "court order"],
+      "must_not_contain": ["reasonable care", "authorized personnel", "material breach"]
+    },
+    {
+      "clause_number": "6",
+      "title": "INTELLECTUAL PROPERTY AND TELEMETRY LICENSING",
+      "category": "Intellectual Property",
+      "severity": "High",
+      "directionality": "Customer to Vendor",
+      "must_contain": ["Vendor retains all right, title, and interest", "perpetual, irrevocable, royalty-free, worldwide license", "operational usage telemetry"],
+      "must_not_contain": ["work made for hire", "Customer transfers IP to Vendor", "analysis reports"]
+    },
+    {
+      "clause_number": "7",
+      "title": "DATA PRIVACY AND COMPLIANCE SAFEGUARDS",
+      "category": "Privacy",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["GDPR", "CCPA", "appropriate technical and organizational safeguards"],
+      "must_not_contain": ["biometric"]
+    },
+    {
+      "clause_number": "8",
+      "title": "GOVERNING JURISDICTION AND BINDING ARBITRATION",
+      "category": "Dispute Resolution",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["State of Delaware", "American Arbitration Association"],
+      "must_not_contain": ["courts as exclusive venue", "litigated in courts", "jury waiver"]
+    },
+    {
+      "clause_number": "9",
+      "title": "CROSS-BORDER TARIFFS AND STATUTORY ALLOCATION",
+      "category": "General / Boilerplate",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["Annex IV", "dynamically negotiated", "UNCITRAL Article 79", "Section 7.2"],
+      "must_not_contain": []
+    }
+  ]
+}

@@ -1,14 +1,867 @@
 {
-  "total_documents": 5,
-  "total_clauses_evaluated": 30,
-  "category_accuracy": 76.67,
-  "severity_accuracy": 60.0,
-  "no_invention_rate": 100.0,
-  "low_omission_rate": 56.67,
+  "total_documents": 9,
+  "total_clauses_evaluated": 65,
+  "category_accuracy": 60.0,
+  "severity_accuracy": 26.15,
+  "no_invention_rate": 93.85,
+  "fact_retention_rate": 43.08,
+  "substance_rate": 98.46,
+  "filler_rate": 0.0,
   "directionality_accuracy": 100.0,
-  "conditions_preservation_rate": 80.0,
-  "exceptions_preservation_rate": 100.0,
+  "conditions_preservation_rate": 76.92,
+  "exceptions_preservation_rate": 95.38,
   "per_document_results": [
+    {
+      "document_name": "contract_a_cloud_consulting.pdf",
+      "document_title": "Cloud Infrastructure Consulting Agreement",
+      "document_type": "Consulting Agreement",
+      "total_clauses": 12,
+      "pipeline_clauses_count": 12,
+      "clause_evaluations": [
+        {
+          "clause_number": "1",
+          "title": "SERVICES AND STATEMENTS OF WORK",
+          "gt_category": "Scope of Services",
+          "predicted_categories": [
+            "scope of services"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Consultant shall provide cloud infrastructure design, DevOps automation, and technical advisory services under Statements of Work."
+        },
+        {
+          "clause_number": "2",
+          "title": "FEES, INVOICING, AND PAYMENT TERMS",
+          "gt_category": "Payment",
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Client shall pay all undisputed invoices within 45 days of invoice date; past due balances incur interest at 2.0% per month until paid."
+        },
+        {
+          "clause_number": "3",
+          "title": "CONFIDENTIALITY AND NON-DISCLOSURE",
+          "gt_category": "Confidentiality",
+          "predicted_categories": [
+            "confidentiality"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Low",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Mutual confidentiality: Each party agrees to protect confidential and proprietary information, with obligations surviving for 3 years following termination."
+        },
+        {
+          "clause_number": "4",
+          "title": "INTELLECTUAL PROPERTY AND DELIVERABLES",
+          "gt_category": "Intellectual Property",
+          "predicted_categories": [
+            "intellectual property"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Consultant assigns all right, title, and interest in deliverables, source code, and documentation effective upon full payment of fees, retaining pre-existing tools and frameworks."
+        },
+        {
+          "clause_number": "5",
+          "title": "INDEMNIFICATION AND THIRD-PARTY CLAIMS",
+          "gt_category": "Indemnification",
+          "predicted_categories": [
+            "indemnification"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Mutual indemnification: Each Party shall indemnify and hold harmless the other, covering officers, directors, and employees against third-party claims from own gross negligence or willful misconduct."
+        },
+        {
+          "clause_number": "6",
+          "title": "LIMITATION OF LIABILITY AND DAMAGES CAP",
+          "gt_category": "Limitation of Liability",
+          "predicted_categories": [
+            "limitation of liability"
+          ],
+          "category_correct": true,
+          "gt_severity": "High",
+          "predicted_severity": "High",
+          "severity_correct": true,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Total liability is capped at the total fees paid by Client in the twelve months preceding the claim, regardless of action form, with no carve-outs."
+        },
+        {
+          "clause_number": "7",
+          "title": "TERM AND DURATION",
+          "gt_category": "Term",
+          "predicted_categories": [
+            "term"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Fixed term of two years from the Effective Date, terminating automatically unless parties execute a new written agreement extending or renewing."
+        },
+        {
+          "clause_number": "8",
+          "title": "TERMINATION FOR CAUSE AND CONVENIENCE",
+          "gt_category": "Termination",
+          "predicted_categories": [
+            "termination"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Either Party may terminate immediately upon written notice for material breach, or terminate for convenience upon thirty (30) days' prior written notice."
+        },
+        {
+          "clause_number": "9",
+          "title": "DISPUTE RESOLUTION AND EXCLUSIVE JURISDICTION",
+          "gt_category": "Dispute Resolution",
+          "predicted_categories": [
+            "dispute resolution"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "The Parties consent to exclusive jurisdiction of state and federal courts located in New York County, New York, for resolving all disputes."
+        },
+        {
+          "clause_number": "10",
+          "title": "RESTRICTIVE COVENANTS AND NON-SOLICITATION",
+          "gt_category": "Restrictive Covenants",
+          "predicted_categories": [
+            "restrictive covenants"
+          ],
+          "category_correct": true,
+          "gt_severity": "High",
+          "predicted_severity": "High",
+          "severity_correct": true,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Binds Consultant only: during term and for 24 months thereafter, Consultant shall not compete for clients introduced by Client, nor solicit materially involved Client employees."
+        },
+        {
+          "clause_number": "11",
+          "title": "GOVERNING LAW AND JURISDICTION",
+          "gt_category": "Governing Law",
+          "predicted_categories": [
+            "governing law"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Governed by and construed in accordance with the laws of the State of New York, without regard to conflict of laws principles."
+        },
+        {
+          "clause_number": "12",
+          "title": "ENTIRE AGREEMENT AND INTEGRATION",
+          "gt_category": "General / Boilerplate",
+          "predicted_categories": [
+            "general / boilerplate"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Agreement and Statements of Work constitute the entire agreement between Parties, superseding all prior written or oral understandings."
+        }
+      ],
+      "category_accuracy": 1.0,
+      "severity_accuracy": 0.16666666666666666
+    },
+    {
+      "document_name": "contract_b_consulting_services.pdf",
+      "document_title": "Strategic Consulting Services Agreement",
+      "document_type": "Consulting Agreement",
+      "total_clauses": 7,
+      "pipeline_clauses_count": 7,
+      "clause_evaluations": [
+        {
+          "clause_number": "1",
+          "title": "ENGAGEMENT AND DELIVERABLES",
+          "gt_category": "Scope of Services",
+          "predicted_categories": [
+            "scope of services"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Consultant shall render strategic supply-chain advisory services and deliver quarterly efficiency assessments per project schedules."
+        },
+        {
+          "clause_number": "2",
+          "title": "INVOICING AND FINANCE CHARGES",
+          "gt_category": "Payment",
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.6666666666666666,
+          "omission_rate": 0.33333333333333337,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Invoices are due upon receipt. Unpaid balances past due by more than thirty days accrue 2.0% monthly compounding interest."
+        },
+        {
+          "clause_number": "3",
+          "title": "WORK PRODUCT OWNERSHIP",
+          "gt_category": "Intellectual Property",
+          "predicted_categories": [
+            "intellectual property"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "All analysis reports, spreadsheets, and custom models prepared for Client are deemed work made for hire and become Client's exclusive intellectual property."
+        },
+        {
+          "clause_number": "4",
+          "title": "INDEMNITY OBLIGATIONS",
+          "gt_category": "Indemnification",
+          "predicted_categories": [
+            "indemnification"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Consultant agrees to defend and indemnify Client, its directors, and staff from any third-party loss or claim arising out of Consultant's gross negligence only."
+        },
+        {
+          "clause_number": "5",
+          "title": "AGGREGATE LIABILITY CAP",
+          "gt_category": "Limitation of Liability",
+          "predicted_categories": [
+            "limitation of liability"
+          ],
+          "category_correct": true,
+          "gt_severity": "High",
+          "predicted_severity": "High",
+          "severity_correct": true,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Aggregate liability is capped at $50,000, with uncapped exceptions for gross negligence and breach of confidentiality."
+        },
+        {
+          "clause_number": "6",
+          "title": "GOVERNING FORUM",
+          "gt_category": "Dispute Resolution",
+          "predicted_categories": [
+            "dispute resolution"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Any dispute or controversy arising out of this contract falls under the exclusive jurisdiction of the state courts located in Travis County, Texas."
+        },
+        {
+          "clause_number": "7",
+          "title": "CONFIDENTIALITY COVENANT",
+          "gt_category": "Confidentiality",
+          "predicted_categories": [
+            "confidentiality"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Each party must hold all non-public commercial and technical information in confidence for three years following expiration of engagement."
+        }
+      ],
+      "category_accuracy": 1.0,
+      "severity_accuracy": 0.14285714285714285
+    },
+    {
+      "document_name": "contract_c_commercial_lease.pdf",
+      "document_title": "Commercial Lease Agreement",
+      "document_type": "Lease Agreement",
+      "total_clauses": 7,
+      "pipeline_clauses_count": 7,
+      "clause_evaluations": [
+        {
+          "clause_number": "1",
+          "title": "LEASED PREMISES",
+          "gt_category": "Property / Premises",
+          "predicted_categories": [
+            "property / premises"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Landlord leases to Tenant commercial real property at 450 Artisan Way, Suite 210, Boston, Massachusetts, consisting of approximately 2,500 sq ft."
+        },
+        {
+          "clause_number": "2",
+          "title": "LEASE TERM",
+          "gt_category": "Term",
+          "predicted_categories": [
+            "term"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Lease term is for a fixed period of three (3) years, commencing on November 1, 2026, and terminating on October 31, 2029."
+        },
+        {
+          "clause_number": "3",
+          "title": "BASE RENT AND SECURITY DEPOSIT",
+          "gt_category": "Payment",
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Tenant agrees to pay monthly base rent of $5,000.00 USD due on the 1st, a $10,000.00 USD deposit upon execution, and a flat 5% late fee if paid after the 5th."
+        },
+        {
+          "clause_number": "4",
+          "title": "USE OF PREMISES",
+          "gt_category": "Property Use",
+          "predicted_categories": [
+            "property use"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Premises shall be used solely for corporate offices, professional services, software development, and administration, complying with all local zoning and building rules."
+        },
+        {
+          "clause_number": "5",
+          "title": "MAINTENANCE AND REPAIRS",
+          "gt_category": "Maintenance",
+          "predicted_categories": [
+            "maintenance"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Landlord maintains building structure, foundation, exterior walls, roof, plumbing, and HVAC main lines; Tenant maintains interior premises, minor repairs, and janitorial services."
+        },
+        {
+          "clause_number": "6",
+          "title": "ALTERATIONS AND IMPROVEMENTS",
+          "gt_category": "Alterations",
+          "predicted_categories": [
+            "alterations"
+          ],
+          "category_correct": true,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Tenant shall not make structural alterations without Landlord's prior written consent; permanent improvements become property of Landlord upon expiration."
+        },
+        {
+          "clause_number": "7",
+          "title": "GOVERNING LAW",
+          "gt_category": "Governing Law",
+          "predicted_categories": [
+            "governing law"
+          ],
+          "category_correct": true,
+          "gt_severity": "Low",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Governed by, construed, and enforced in accordance with the laws of the Commonwealth of Massachusetts, without regard to conflict of law principles."
+        }
+      ],
+      "category_accuracy": 1.0,
+      "severity_accuracy": 0.0
+    },
+    {
+      "document_name": "contract_d_master_services_agreement.pdf",
+      "document_title": "Master Services Agreement, Enterprise Cloud Services",
+      "document_type": "Master Services Agreement",
+      "total_clauses": 9,
+      "pipeline_clauses_count": 9,
+      "clause_evaluations": [
+        {
+          "clause_number": "1",
+          "title": "CUSTOMER INDEMNIFICATION AND THIRD-PARTY DEFENSE",
+          "gt_category": "Indemnification",
+          "predicted_categories": [
+            "scope of services"
+          ],
+          "category_correct": false,
+          "gt_severity": "High",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Defines the specific scope of commercial services, deliverables, and operational performance standards."
+        },
+        {
+          "clause_number": "2",
+          "title": "TERMINATION FOR CONVENIENCE AND SUSPENSION",
+          "gt_category": "Termination",
+          "predicted_categories": [
+            "payment"
+          ],
+          "category_correct": false,
+          "gt_severity": "High",
+          "predicted_severity": "High",
+          "severity_correct": true,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
+        },
+        {
+          "clause_number": "3",
+          "title": "TERM, AUTOMATIC RENEWAL AND ANNUAL PRICE ESCALATION",
+          "gt_category": "Renewal",
+          "predicted_categories": [
+            "confidentiality"
+          ],
+          "category_correct": false,
+          "gt_severity": "Moderate",
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Mutual confidentiality: Each party agrees to protect confidential and proprietary information, with obligations surviving for 3 years following termination."
+        },
+        {
+          "clause_number": "4",
+          "title": "INVOICING, PAYMENT TERMS AND LATE PAYMENT ACCRUALS",
+          "gt_category": "Payment",
+          "predicted_categories": [
+            "intellectual property"
+          ],
+          "category_correct": false,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Governs ownership, licenses, and rights allocation over proprietary intellectual property and deliverables."
+        },
+        {
+          "clause_number": "5",
+          "title": "CONFIDENTIALITY AND TRADE SECRET PRESERVATION",
+          "gt_category": "Confidentiality",
+          "predicted_categories": [
+            "indemnification"
+          ],
+          "category_correct": false,
+          "gt_severity": "Low",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Indemnification: Parties agree to defend and indemnify against third-party claims arising from gross negligence or willful misconduct."
+        },
+        {
+          "clause_number": "6",
+          "title": "INTELLECTUAL PROPERTY AND TELEMETRY LICENSING",
+          "gt_category": "Intellectual Property",
+          "predicted_categories": [
+            "limitation of liability"
+          ],
+          "category_correct": false,
+          "gt_severity": "High",
+          "predicted_severity": "High",
+          "severity_correct": true,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Total liability is capped at the total fees paid by Client in the twelve months preceding the claim, regardless of action form, with no carve-outs."
+        },
+        {
+          "clause_number": "7",
+          "title": "DATA PRIVACY AND COMPLIANCE SAFEGUARDS",
+          "gt_category": "Privacy",
+          "predicted_categories": [
+            "termination"
+          ],
+          "category_correct": false,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Either Party may terminate immediately upon written notice for material breach, or terminate for convenience upon thirty (30) days' prior written notice."
+        },
+        {
+          "clause_number": "8",
+          "title": "GOVERNING JURISDICTION AND BINDING ARBITRATION",
+          "gt_category": "Dispute Resolution",
+          "predicted_categories": [
+            "governing law"
+          ],
+          "category_correct": false,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": false,
+          "invented_items": [],
+          "fact_retention": 0.5,
+          "omission_rate": 0.5,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Governed by and construed in accordance with the laws of the State of New York, without regard to conflict of laws principles."
+        },
+        {
+          "clause_number": "9",
+          "title": "CROSS-BORDER TARIFFS AND STATUTORY ALLOCATION",
+          "gt_category": "General / Boilerplate",
+          "predicted_categories": [
+            "restrictive covenants"
+          ],
+          "category_correct": false,
+          "gt_severity": "Moderate",
+          "predicted_severity": "High",
+          "severity_correct": false,
+          "has_invention": true,
+          "invented_items": [
+            "24"
+          ],
+          "fact_retention": 0.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
+          "directionality_correct": true,
+          "conditions_preserved": true,
+          "exceptions_preserved": true,
+          "what_this_clause_means": "Binds Consultant only: during term and for 24 months thereafter, Consultant shall not compete for clients introduced by Client, nor solicit materially involved Client employees."
+        }
+      ],
+      "category_accuracy": 0.0,
+      "severity_accuracy": 0.2222222222222222
+    },
     {
       "document_name": "new_doc_1_employment_agreement.pdf",
       "document_title": "EXECUTIVE EMPLOYMENT AGREEMENT",
@@ -21,7 +874,7 @@
           "title": "POSITION AND OPERATIONAL DUTIES",
           "gt_category": "Unclassified",
           "predicted_categories": [
-            "payment"
+            "scope of services"
           ],
           "category_correct": false,
           "gt_severity": "Safe",
@@ -29,12 +882,19 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "Executive serves as Chief Technology Officer (CTO)",
+            "Executive reports directly to CEO and Board of Directors",
+            "Executive renders full-time professional services in biometric cryptography"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines the employment position, job responsibilities, reporting structure, and professional duties agreed upon by the parties. The Obligated Party is obligated to perform the agreed executive duties, responsibilities, and professional tasks as authorized by the Counterparty. Position / Role: Chief Technology Officer reporting directly to the Chief Executive Officer and the Board of. Subject Domain: Biometric identity verification and cryptography."
+          "what_this_clause_means": "Defines the specific scope of commercial services, deliverables, and operational performance standards."
         },
         {
           "clause_number": "2",
@@ -49,12 +909,18 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "Annual base salary is $240,000 payable semi-monthly",
+            "Discretionary performance bonus up to 30% of base salary upon meeting corporate milestones"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines employee compensation, regular salary payments, payroll schedules, and fringe benefits eligibility. The Counterparty is obligated to pay the agreed base compensation and provide employment benefits to the Obligated Party. Salary / Compensation: $240,000. Bonus / Incentive / Match Percentage: (30%)."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "3",
@@ -69,34 +935,46 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "All inventions, algorithms, source code, and patentable discoveries belong exclusively to Company",
+            "Assigned as works made for hire during employment term"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes intellectual property ownership, providing that analysis reports, deliverables, and custom work product created under the agreement constitute works made for hire belonging exclusively to the client. The Obligated Party transfers or assigns intellectual property rights in agreed deliverables to the Counterparty as work made for hire. Work Made for Hire: Custom deliverables are created on a work-made-for-hire basis and vest exclusively in the ordering party. IP Scope: All inventions, algorithms, source code, and patentable discoveries assign exclusively to Company."
+          "what_this_clause_means": "Governs ownership, licenses, and rights allocation over proprietary intellectual property and deliverables."
         },
         {
           "clause_number": "4",
           "title": "POST-EMPLOYMENT NON-COMPETE COVENANT",
           "gt_category": "Confidentiality",
           "predicted_categories": [
-            "liability"
+            "restrictive covenants"
           ],
           "category_correct": false,
           "gt_severity": "High",
           "predicted_severity": "High",
           "severity_correct": true,
-          "has_invention": false,
-          "invented_items": [],
-          "omission_rate": 0.3333333333333333,
-          "omitted_claims": [
-            "Non-compete covenant lasts during employment plus 18 months post-termination"
+          "has_invention": true,
+          "invented_items": [
+            "24"
           ],
+          "fact_retention": 1.0,
+          "omission_rate": 0.6666666666666666,
+          "omitted_claims": [
+            "Covers competing biometric identity verification businesses",
+            "Geographic scope is North America"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause restricts parties from engaging in directly competing commercial activities during and after the contractual relationship. The Obligated Party agrees not to engage in or advise directly competing business within designated territories. Geographic Scope / Jurisdiction: North America. Subject Domain: Biometric identity verification and cryptography."
+          "what_this_clause_means": "Binds Consultant only: during term and for 24 months thereafter, Consultant shall not compete for clients introduced by Client, nor solicit materially involved Client employees."
         },
         {
           "clause_number": "5",
@@ -111,38 +989,47 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.3333333333333333,
+          "fact_retention": 1.0,
+          "omission_rate": 0.6666666666666666,
           "omitted_claims": [
-            "Termination without cause requires 30 days written notice by either party"
+            "Termination by Company without Cause entitles Executive to 6 months base salary severance continuation",
+            "Severance is conditioned on signing an effective general release of claims"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
-          "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines employee compensation, regular salary payments, payroll schedules, and fringe benefits eligibility. The Counterparty is obligated to pay the agreed base compensation and provide employment benefits to the Obligated Party. Severance Condition: Severance continuation is conditioned upon signing an effective general release of claims."
+          "exceptions_preserved": false,
+          "what_this_clause_means": "Either Party may terminate immediately upon written notice for material breach, or terminate for convenience upon thirty (30) days' prior written notice."
         },
         {
           "clause_number": "6",
           "title": "GOVERNING LAW AND JURISDICTION",
           "gt_category": "Dispute Resolution",
           "predicted_categories": [
-            "dispute resolution"
+            "governing law"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Safe",
-          "predicted_severity": "Safe",
-          "severity_correct": true,
+          "predicted_severity": "High",
+          "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.5,
+          "omitted_claims": [
+            "Exclusive jurisdiction in state courts of Suffolk County, Massachusetts"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes. Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law. Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum. Geographic Scope / Jurisdiction: Massachusetts."
+          "what_this_clause_means": "Governed by, construed, and enforced in accordance with the laws of the Commonwealth of Massachusetts, without regard to conflict of law principles."
         }
       ],
-      "category_accuracy": 0.6666666666666666,
-      "severity_accuracy": 0.6666666666666666
+      "category_accuracy": 0.5,
+      "severity_accuracy": 0.5
     },
     {
       "document_name": "new_doc_2_commercial_loan_agreement.pdf",
@@ -164,12 +1051,18 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "Single-draw commercial term loan of $3,500,000",
+            "Disbursement purpose is hotel facility expansion"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. The Borrower must pay principal installments and accrued interest to the Lender strictly according to schedule. Principal / Repayment Amount: $3,500,000. Facility Purpose: Hotel facility expansion."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "2",
@@ -180,18 +1073,23 @@
           ],
           "category_correct": true,
           "gt_severity": "Moderate",
-          "predicted_severity": "High",
+          "predicted_severity": "Safe",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.3333333333333333,
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
           "omitted_claims": [
-            "Loan maturity period is 60 months"
+            "Fixed interest rate of 7.25% per annum payable in monthly installments",
+            "Loan maturity period is 60 months",
+            "Penalty interest rate is 12.0% per annum upon uncured default"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. The Borrower must pay principal installments and accrued interest to the Lender strictly according to schedule. Interest Rate / Surcharge: (7.25%) per annum, (12.0%) per annum."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "3",
@@ -202,16 +1100,23 @@
           ],
           "category_correct": true,
           "gt_severity": "High",
-          "predicted_severity": "High",
-          "severity_correct": true,
+          "predicted_severity": "Low",
+          "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "Minimum Debt Service Coverage Ratio (DSCR) of 1.25x",
+            "DSCR tested at the end of each fiscal quarter",
+            "Failure to maintain DSCR is an immediate Event of Default"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. The Borrower must pay principal installments and accrued interest to the Lender strictly according to schedule. Financial Covenant: Maintain required Debt Service Coverage Ratio (DSCR) tested periodically. A default allows the lender to accelerate the total outstanding balance, making all principal and interest immediately due and payable."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "4",
@@ -226,14 +1131,19 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.3333333333333333,
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
           "omitted_claims": [
+            "Prepayment permitted subject to fee schedule",
+            "3.0% fee in Year 1, 2.0% in Year 2, 1.0% in Year 3",
             "0% prepayment penalty after Year 3"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
-          "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. The Borrower must pay principal installments and accrued interest to the Lender strictly according to schedule. Interest Rate / Surcharge: (3.0%), (2.0%), (1.0%). Prepayment Terms: Prepayment is subject to specific notice requirements and premium fees."
+          "conditions_preserved": false,
+          "exceptions_preserved": false,
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "5",
@@ -244,18 +1154,24 @@
           ],
           "category_correct": false,
           "gt_severity": "High",
-          "predicted_severity": "High",
-          "severity_correct": true,
-          "has_invention": false,
-          "invented_items": [],
-          "omission_rate": 0.5,
+          "predicted_severity": "Safe",
+          "severity_correct": false,
+          "has_invention": true,
+          "invented_items": [
+            "30"
+          ],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
           "omitted_claims": [
+            "Lender can declare entire principal, accrued interest, and fees immediately due upon Event of Default",
             "No presentment or demand required for acceleration"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the loan financing terms, interest rate obligations, repayment schedule, and financial covenants governing the credit facility. The Borrower must pay principal installments and accrued interest to the Lender strictly according to schedule. A default allows the lender to accelerate the total outstanding balance, making all principal and interest immediately due and payable."
+          "what_this_clause_means": "Either Party may terminate immediately upon written notice for material breach, or terminate for convenience upon thirty (30) days' prior written notice."
         },
         {
           "clause_number": "6",
@@ -270,16 +1186,19 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 0.0,
           "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes that the agreement is governed by the laws of State of New York and designates the courts of State of New York as the exclusive venue for resolving disputes. Both parties agree that the contract is governed by the laws of State of New York and legal controversies must be litigated exclusively in the courts located in State of New York. Governing Law & Venue: Governed by the laws of State of New York with exclusive jurisdiction in State of New York. Geographic Scope / Jurisdiction: New York."
+          "what_this_clause_means": "The Parties consent to exclusive jurisdiction of state and federal courts located in New York County, New York, for resolving all disputes."
         }
       ],
       "category_accuracy": 0.8333333333333334,
-      "severity_accuracy": 0.6666666666666666
+      "severity_accuracy": 0.3333333333333333
     },
     {
       "document_name": "new_doc_3_saas_terms_of_service.pdf",
@@ -301,99 +1220,123 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "Non-exclusive, non-transferable, revocable subscription right granted",
+            "Use restricted solely to internal business operations"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines subscription access rights, granting a non-exclusive right to access and use the software or service in accordance with agreement terms. The Customer is granted non-exclusive rights to access the service, subject to compliance with agreement terms. License Scope: Non-exclusive, non-transferable subscription access right. Usage Scope: Cloud access permitted for internal business operations only; prohibits reverse engineering, decompiling, or sublicensing."
+          "what_this_clause_means": "Governs ownership, licenses, and rights allocation over proprietary intellectual property and deliverables."
         },
         {
           "clause_number": "2",
           "title": "SERVICE AVAILABILITY AND SERVICE CREDITS",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "limitation of liability"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Moderate",
           "predicted_severity": "High",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
+          "omitted_claims": [
+            "99.9% monthly service uptime target",
+            "5.0% service credit per 1% downtime below target",
+            "Service credits are the sole and exclusive remedy for downtime"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
-          "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Rates & Percentages: (99.9%), 99.9%, (5.0%), 1%. Service Availability Target: (99.9%), 99.9%, (5.0%), 1%. Remedy: Service credits constitute sole and exclusive remedy for downtime."
+          "conditions_preserved": false,
+          "exceptions_preserved": false,
+          "what_this_clause_means": "Limits aggregate financial liability recoverable under the contract."
         },
         {
           "clause_number": "3",
           "title": "DISCLAIMER OF CONSEQUENTIAL DAMAGES",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "limitation of liability"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Moderate",
           "predicted_severity": "High",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.5,
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
           "omitted_claims": [
+            "Provider disclaims liability for indirect, incidental, special, punitive, or consequential damages",
             "Explicitly excludes loss of profits, data corruption, or business interruption"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Damages Disclaimer: Disclaims indirect, incidental, special, punitive, and consequential damages including lost profits."
+          "what_this_clause_means": "Limits aggregate financial liability recoverable under the contract."
         },
         {
           "clause_number": "4",
           "title": "AGGREGATE MONETARY LIABILITY LIMITATION",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "limitation of liability"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "High",
-          "predicted_severity": "High",
-          "severity_correct": true,
+          "predicted_severity": "Low",
+          "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Total cumulative monetary liability capped at fees paid in preceding 6 months"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages. Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches. In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
+          "what_this_clause_means": "Limits aggregate financial liability recoverable under the contract."
         },
         {
           "clause_number": "5",
           "title": "UNILATERAL MODIFICATION OF TERMS",
           "gt_category": "Termination",
           "predicted_categories": [
-            "termination"
+            "general / boilerplate"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "High",
           "predicted_severity": "High",
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.6666666666666666,
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
           "omitted_claims": [
             "Provider reserves right to unilaterally modify terms and subscription pricing",
-            "Requires 30 days email notice"
+            "Requires 30 days email notice",
+            "Continued use constitutes binding acceptance"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Modification & Acceptance: Advance notice provided for term modifications; continued use constitutes binding acceptance."
+          "what_this_clause_means": "Agreement and Statements of Work constitute the entire agreement between Parties, superseding all prior written or oral understandings."
         },
         {
           "clause_number": "6",
@@ -408,16 +1351,21 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.5,
+          "omitted_claims": [
+            "Both parties waive class action rights"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause establishes the exclusive legal forum and jurisdiction in California, designating the courts of California for resolving contract disputes. Both parties agree that legal controversies must be litigated exclusively in the courts located in California. Jurisdiction & Venue: Exclusive jurisdiction in California. Geographic Scope / Jurisdiction: California. Arbitration & Waiver: Mandatory individual arbitration administered by AAA with class action waiver barring collective proceedings."
+          "what_this_clause_means": "Governed by the laws of Delaware, with all disputes resolved exclusively through binding arbitration administered by the American Arbitration Association."
         }
       ],
-      "category_accuracy": 1.0,
-      "severity_accuracy": 0.5
+      "category_accuracy": 0.3333333333333333,
+      "severity_accuracy": 0.3333333333333333
     },
     {
       "document_name": "new_doc_4_lettered_supplier_agreement.pdf",
@@ -439,15 +1387,18 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Supplier manufactures and delivers precision sensor assemblies pursuant to Buyer purchase orders",
             "Guaranteed production lead time is forty-five (45) business days"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Lead Time: Delivery subject to designated lead time. Operational Terms: Components manufactured per purchase orders with rolling forecasts and advance lead times."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "Section B",
@@ -462,56 +1413,69 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.3333333333333333,
+          "fact_retention": 1.0,
+          "omission_rate": 1.0,
           "omitted_claims": [
+            "Unit component prices fixed for initial 12 months",
+            "Annual price increases capped at 5.0%",
             "Requires 60 days advance documented cost justification"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": true,
+          "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages. Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches. Limit Percentage: (5.0%). Cap Period / Timeframe: twelve months. Pricing Structure: Fixed pricing in USD with annual price adjustments capped and tied to the CPI index. In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "Section C",
           "title": "Product Warranty and Defect Remedies",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "warranty"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Safe",
           "predicted_severity": "Safe",
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 0.5,
           "omitted_claims": [
             "Supplier must repair or replace defective parts within 14 calendar days"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Warranty & Remedies: Warranty against manufacturing defects with repair or replacement obligations."
+          "what_this_clause_means": "Section C. Product Warranty and Defect Remedies Supplier warrants that all deliv"
         },
         {
           "clause_number": "Section D",
           "title": "Patent Infringement and Product Indemnification",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "indemnification"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "High",
           "predicted_severity": "High",
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
-          "omission_rate": 0.0,
-          "omitted_claims": [],
+          "fact_retention": 1.0,
+          "omission_rate": 0.5,
+          "omitted_claims": [
+            "Covers third-party patent infringement claims and personal injury claims from manufacturing defects"
+          ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines indemnity obligations, specifying who is financially responsible for defending lawsuits, paying legal defense expenses, and satisfying damages if a third party files a lawsuit. The obligated party must defend, indemnify, and hold harmless the counterparty from and against covered third-party claims. Defense Duty: Obligated party must defend and hold the indemnified party harmless from covered claims. Warranty & Remedies: Warranty against manufacturing defects with repair or replacement obligations. Patent Indemnity: Supplier defends and indemnifies Customer against third-party patent infringement claims and judgments. If a covered third-party claim is initiated, the indemnifying party must bear the financial defense and liability obligations."
+          "what_this_clause_means": "Consultant agrees to defend and indemnify Client, its directors, and staff from any third-party loss or claim arising out of Consultant's gross negligence only."
         },
         {
           "clause_number": "Section E",
@@ -522,41 +1486,49 @@
           ],
           "category_correct": true,
           "gt_severity": "Moderate",
-          "predicted_severity": "Safe",
+          "predicted_severity": "High",
           "severity_correct": false,
-          "has_invention": false,
-          "invented_items": [],
+          "has_invention": true,
+          "invented_items": [
+            "30"
+          ],
+          "fact_retention": 1.0,
           "omission_rate": 0.0,
           "omitted_claims": [],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
-          "conditions_preserved": false,
+          "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause permits either party to terminate the agreement for convenience without cause by providing advance written notice. Either party may terminate the agreement for convenience by delivering the designated advance written notice to the counterparty."
+          "what_this_clause_means": "Either Party may terminate immediately upon written notice for material breach, or terminate for convenience upon thirty (30) days' prior written notice."
         },
         {
           "clause_number": "Section F",
           "title": "Applicable Law and Judicial Jurisdiction",
           "gt_category": "Dispute Resolution",
           "predicted_categories": [
-            "dispute resolution"
+            "governing law"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Safe",
           "predicted_severity": "High",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 0.5,
           "omitted_claims": [
-            "Governed by substantive laws of England and Wales"
+            "Exclusive jurisdiction in the High Court of Justice in London"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes. Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law. Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum. Geographic Scope / Jurisdiction: London. Judicial Venue: Exclusive jurisdiction in the High Court of Justice in London."
+          "what_this_clause_means": "Governed by and construed in accordance with the laws of the State of New York, without regard to conflict of laws principles."
         }
       ],
-      "category_accuracy": 1.0,
+      "category_accuracy": 0.5,
       "severity_accuracy": 0.5
     },
     {
@@ -579,22 +1551,25 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Lease of two (2) CAT 336 Hydraulic Excavators",
             "Fixed operational term of twenty-four (24) months starting December 1, 2026"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines payment obligations, specifying that the Tenant (Lessee) must pay agreed rent, fees, and financial sums according to strict contractual deadlines. The Tenant (Lessee) is legally obligated to remit payment to the Landlord (Lessor) on or before the designated due date."
+          "what_this_clause_means": "Defines financial payment obligations, invoicing deadlines, and applicable late charges."
         },
         {
           "clause_number": "2",
           "title": "MONTHLY RENTAL AND SECURITY DEPOSIT",
           "gt_category": "Payment",
           "predicted_categories": [
-            "liability"
+            "maintenance"
           ],
           "category_correct": false,
           "gt_severity": "Safe",
@@ -602,61 +1577,70 @@
           "severity_correct": true,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Monthly rent of $14,500 per unit due on the first day of each month",
             "Security deposit of $30,000 required"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Financial Terms: rs. Replacement Value: rs."
+          "what_this_clause_means": "Landlord maintains building structure, foundation, exterior walls, roof, plumbing, and HVAC main lines; Tenant maintains interior premises, minor repairs, and janitorial services."
         },
         {
           "clause_number": "3",
           "title": "EQUIPMENT MAINTENANCE AND REPAIRS",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "insurance"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "Moderate",
           "predicted_severity": "Low",
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Lessee bears full responsibility for preventive maintenance, lubrication, track repairs, and daily inspections",
             "Must adhere to manufacturer operating specifications"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause defines standard operative contractual provisions governing rights, access, or performance obligations between the parties. Both parties are obligated to adhere to the terms, conditions, and provisions set forth in this clause. Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value."
+          "what_this_clause_means": "INSURANCE ANDCASUALTY INDEMNITY"
         },
         {
           "clause_number": "4",
           "title": "INSURANCE AND CASUALTY INDEMNITY",
           "gt_category": "Liability",
           "predicted_categories": [
-            "liability"
+            "limitation of liability"
           ],
-          "category_correct": true,
+          "category_correct": false,
           "gt_severity": "High",
-          "predicted_severity": "High",
-          "severity_correct": true,
+          "predicted_severity": "Safe",
+          "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Mandatory commercial general liability insurance of at least $2,000,000",
             "Lessee must indemnify Lessor against property loss and bodily injury claims"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause places a strict financial ceiling on the maximum damages recoverable in legal claims and excludes liability for indirect, incidental, or consequential damages. Neither party can recover damages exceeding the designated financial cap, and both parties waive claims for lost profits, business interruption, or indirect losses arising from agreement breaches. Casualty & Loss: Total destruction or theft requires settlement based on asset replacement value. In the event of a breach, financial recovery is strictly capped at the agreed ceiling, preventing recovery beyond the designated limit."
+          "what_this_clause_means": "Limits aggregate financial liability recoverable under the contract."
         },
         {
           "clause_number": "5",
@@ -671,16 +1655,19 @@
           "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Agreed replacement valuation is $380,000 per excavator",
             "Triggered upon total destruction or theft",
             "Payment must be made within thirty (30) days"
           ],
+          "has_substance": true,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": false,
           "exceptions_preserved": true,
-          "what_this_clause_means": "This clause designates the substantive governing law and specifies the exclusive forum and venue for resolving legal disputes. Both parties agree to submit legal disputes to the designated jurisdiction and have the agreement construed according to the designated governing law. Governing Law & Venue: Exclusive jurisdiction and designated governing law in the specified forum. Geographic Scope / Jurisdiction: Ohio."
+          "what_this_clause_means": "The Parties consent to exclusive jurisdiction of state and federal courts located in New York County, New York, for resolving all disputes."
         },
         {
           "clause_number": "6",
@@ -689,23 +1676,26 @@
           "predicted_categories": [],
           "category_correct": false,
           "gt_severity": "Safe",
-          "predicted_severity": "Safe",
-          "severity_correct": true,
+          "predicted_severity": "Low",
+          "severity_correct": false,
           "has_invention": false,
           "invented_items": [],
+          "fact_retention": 1.0,
           "omission_rate": 1.0,
           "omitted_claims": [
             "Governed by the laws of the State of Ohio",
             "Exclusive venue in Franklin County, Ohio state courts"
           ],
+          "has_substance": false,
+          "is_filler": false,
           "directionality_correct": true,
           "conditions_preserved": true,
           "exceptions_preserved": true,
           "what_this_clause_means": ""
         }
       ],
-      "category_accuracy": 0.3333333333333333,
-      "severity_accuracy": 0.6666666666666666
+      "category_accuracy": 0.0,
+      "severity_accuracy": 0.3333333333333333
     }
   ]
 }

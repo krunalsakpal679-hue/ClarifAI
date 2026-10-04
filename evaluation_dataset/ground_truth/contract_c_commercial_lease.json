@@ -1,0 +1,71 @@
+{
+  "document_name": "contract_c_commercial_lease.pdf",
+  "document_title": "Commercial Lease Agreement",
+  "document_type": "Lease Agreement",
+  "total_clauses": 7,
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "LEASED PREMISES",
+      "category": "Property / Premises",
+      "severity": "Low",
+      "directionality": "Landlord to Tenant",
+      "must_contain": ["2,500 square feet", "450 Artisan Way, Suite 210", "Boston, Massachusetts"],
+      "must_not_contain": ["land parcel", "rights of easement", "reserved rent", "fixed long-term duration"]
+    },
+    {
+      "clause_number": "2",
+      "title": "LEASE TERM",
+      "category": "Term",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["three (3) years", "November 1, 2026", "October 31, 2029"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "3",
+      "title": "BASE RENT AND SECURITY DEPOSIT",
+      "category": "Payment",
+      "severity": "Moderate",
+      "directionality": "Tenant to Landlord",
+      "must_contain": ["$5,000.00 USD", "first day of each calendar month", "$10,000.00 USD", "5% of the overdue balance"],
+      "must_not_contain": ["rs.", "RS", "Late Interest Rate"]
+    },
+    {
+      "clause_number": "4",
+      "title": "USE OF PREMISES",
+      "category": "Property Use",
+      "severity": "Low",
+      "directionality": "Tenant only",
+      "must_contain": ["general corporate offices", "professional services", "software development", "zoning laws"],
+      "must_not_contain": ["Intellectual Property"]
+    },
+    {
+      "clause_number": "5",
+      "title": "MAINTENANCE AND REPAIRS",
+      "category": "Maintenance",
+      "severity": "Moderate",
+      "directionality": "Landlord and Tenant",
+      "must_contain": ["foundation, exterior walls, roof", "interior", "minor repairs"],
+      "must_not_contain": ["Replacement Value", "municipal rates and taxes", "tenantable repair"]
+    },
+    {
+      "clause_number": "6",
+      "title": "ALTERATIONS AND IMPROVEMENTS",
+      "category": "Alterations",
+      "severity": "Moderate",
+      "directionality": "Tenant to Landlord",
+      "must_contain": ["without the prior written consent of Landlord", "property of Landlord upon expiration"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "7",
+      "title": "GOVERNING LAW",
+      "category": "Governing Law",
+      "severity": "Low",
+      "directionality": "Mutual",
+      "must_contain": ["Commonwealth of Massachusetts", "without regard to its conflict of law principles"],
+      "must_not_contain": ["Dispute Resolution category"]
+    }
+  ]
+}

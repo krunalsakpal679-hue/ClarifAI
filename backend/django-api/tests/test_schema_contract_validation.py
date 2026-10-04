@@ -90,7 +90,12 @@ class DatabaseSchemaContractTestCase(TestCase):
         self.assertTrue(cat_field.db_index)
         expected_categories = {
             'Payment', 'Termination', 'Renewal', 'Confidentiality',
-            'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution'
+            'Liability', 'Intellectual Property', 'Privacy', 'Dispute Resolution',
+            'Scope of Services', 'Term', 'Indemnification', 'Limitation of Liability',
+            'Governing Law', 'Restrictive Covenants', 'Property / Premises',
+            'Property Use', 'Maintenance', 'Alterations', 'Insurance',
+            'Warranty', 'Force Majeure', 'Assignment', 'Notices',
+            'General / Boilerplate'
         }
         self.assertEqual(set(ClauseCategory.values), expected_categories)
 

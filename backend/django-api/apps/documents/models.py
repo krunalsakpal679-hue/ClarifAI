@@ -27,14 +27,25 @@ class ClauseSeverity(models.TextChoices):
 
 
 class ClauseCategory(models.TextChoices):
+    SCOPE_OF_SERVICES = 'Scope of Services', 'Scope of Services'
     PAYMENT = 'Payment', 'Payment'
+    CONFIDENTIALITY = 'Confidentiality', 'Confidentiality'
+    INTELLECTUAL_PROPERTY = 'Intellectual Property', 'Intellectual Property'
+    INDEMNIFICATION = 'Indemnification', 'Indemnification'
+    LIMITATION_OF_LIABILITY = 'Limitation of Liability', 'Limitation of Liability'
+    TERM = 'Term', 'Term'
     TERMINATION = 'Termination', 'Termination'
     RENEWAL = 'Renewal', 'Renewal'
-    CONFIDENTIALITY = 'Confidentiality', 'Confidentiality'
-    LIABILITY = 'Liability', 'Liability'
-    INTELLECTUAL_PROPERTY = 'Intellectual Property', 'Intellectual Property'
-    PRIVACY = 'Privacy', 'Privacy'
     DISPUTE_RESOLUTION = 'Dispute Resolution', 'Dispute Resolution'
+    GOVERNING_LAW = 'Governing Law', 'Governing Law'
+    RESTRICTIVE_COVENANTS = 'Restrictive Covenants', 'Restrictive Covenants'
+    PROPERTY_PREMISES = 'Property / Premises', 'Property / Premises'
+    PROPERTY_USE = 'Property Use', 'Property Use'
+    MAINTENANCE = 'Maintenance', 'Maintenance'
+    ALTERATIONS = 'Alterations', 'Alterations'
+    GENERAL_BOILERPLATE = 'General / Boilerplate', 'General / Boilerplate'
+    PRIVACY = 'Privacy', 'Privacy'
+    LIABILITY = 'Liability', 'Liability'
 
 
 class ClauseStatus(models.TextChoices):

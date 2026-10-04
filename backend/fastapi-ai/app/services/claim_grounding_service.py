@@ -26,6 +26,37 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
+# Banned Strings List per Spec CI Gate 5 & Part 1B
+BANNED_STRINGS: List[str] = [
+    "RISK_CLASSIFICATION_UNAVAILABLE",
+    "standard operative contractual provisions",
+    "Obligated Party",
+    "Counterparty",
+    "designated contracting parties",
+    "rs.",
+    "RS",
+    "billing cadence",
+    "subscriber",
+    "ordering party",
+    "land parcel",
+    "termination for convenience of contractual confidentiality",
+    "material breach of contractual confidentiality covenants"
+]
+
+
+def check_banned_strings(text: str) -> List[str]:
+    """
+    Checks for the presence of any forbidden banned strings in the generated narrative text.
+    Returns list of detected banned strings.
+    """
+    if not text:
+        return []
+    found = []
+    for bs in BANNED_STRINGS:
+        if bs in text:
+            found.append(bs)
+    return found
+
 # Directionality Role Matchers
 PARTY_ROLES = {
     "provider": ["provider", "vendor", "contractor", "licensor", "service provider"],

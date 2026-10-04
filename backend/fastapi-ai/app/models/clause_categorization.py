@@ -11,14 +11,25 @@ from app.models.clause_segmentation import ClauseItem
 
 
 class ClauseCategoryEnum(str, Enum):
+    SCOPE_OF_SERVICES = "Scope of Services"
     PAYMENT = "Payment"
+    CONFIDENTIALITY = "Confidentiality"
+    INTELLECTUAL_PROPERTY = "Intellectual Property"
+    INDEMNIFICATION = "Indemnification"
+    LIMITATION_OF_LIABILITY = "Limitation of Liability"
+    TERM = "Term"
     TERMINATION = "Termination"
     RENEWAL = "Renewal"
-    CONFIDENTIALITY = "Confidentiality"
-    LIABILITY = "Liability"
-    INTELLECTUAL_PROPERTY = "Intellectual Property"
-    PRIVACY = "Privacy"
     DISPUTE_RESOLUTION = "Dispute Resolution"
+    GOVERNING_LAW = "Governing Law"
+    RESTRICTIVE_COVENANTS = "Restrictive Covenants"
+    PROPERTY_PREMISES = "Property / Premises"
+    PROPERTY_USE = "Property Use"
+    MAINTENANCE = "Maintenance"
+    ALTERATIONS = "Alterations"
+    GENERAL_BOILERPLATE = "General / Boilerplate"
+    PRIVACY = "Privacy"
+    LIABILITY = "Limitation of Liability"
 
 
 APPROVED_CATEGORIES_SET = {category.value for category in ClauseCategoryEnum}

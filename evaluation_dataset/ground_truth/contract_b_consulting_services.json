@@ -1,0 +1,71 @@
+{
+  "document_name": "contract_b_consulting_services.pdf",
+  "document_title": "Strategic Consulting Services Agreement",
+  "document_type": "Consulting Agreement",
+  "total_clauses": 7,
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "ENGAGEMENT AND DELIVERABLES",
+      "category": "Scope of Services",
+      "severity": "Low",
+      "directionality": "Consultant to Client",
+      "must_contain": ["strategic supply-chain advisory", "quarterly efficiency assessments", "project schedules"],
+      "must_not_contain": ["strategic management", "statements of work"]
+    },
+    {
+      "clause_number": "2",
+      "title": "INVOICING AND FINANCE CHARGES",
+      "category": "Payment",
+      "severity": "Moderate",
+      "directionality": "Client to Consultant",
+      "must_contain": ["due upon receipt", "thirty days", "2.0% per month compounding monthly"],
+      "must_not_contain": ["thirty days from invoice receipt as the payment term", "billing cadence"]
+    },
+    {
+      "clause_number": "3",
+      "title": "WORK PRODUCT OWNERSHIP",
+      "category": "Intellectual Property",
+      "severity": "Moderate",
+      "directionality": "Consultant to Client",
+      "must_contain": ["analysis reports, spreadsheets, and custom models", "work made for hire", "exclusive intellectual property"],
+      "must_not_contain": ["custom modules"]
+    },
+    {
+      "clause_number": "4",
+      "title": "INDEMNITY OBLIGATIONS",
+      "category": "Indemnification",
+      "severity": "Moderate",
+      "directionality": "Consultant to Client",
+      "must_contain": ["defend and indemnify", "gross negligence"],
+      "must_not_contain": ["breach as a trigger", "hold harmless"]
+    },
+    {
+      "clause_number": "5",
+      "title": "AGGREGATE LIABILITY CAP",
+      "category": "Limitation of Liability",
+      "severity": "High",
+      "directionality": "Mutual",
+      "must_contain": ["$50,000", "gross negligence", "breach of confidentiality"],
+      "must_not_contain": ["indemnification and willful misconduct as exceptions", "consequential damages waiver"]
+    },
+    {
+      "clause_number": "6",
+      "title": "GOVERNING FORUM",
+      "category": "Dispute Resolution",
+      "severity": "Low",
+      "directionality": "Mutual",
+      "must_contain": ["exclusive jurisdiction", "Travis County, Texas"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "7",
+      "title": "CONFIDENTIALITY COVENANT",
+      "category": "Confidentiality",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["non-public commercial and technical information", "three years following expiration"],
+      "must_not_contain": ["termination", "reasonable care", "authorized personnel"]
+    }
+  ]
+}

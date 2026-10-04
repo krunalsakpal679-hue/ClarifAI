@@ -1,6 +1,6 @@
 """
 ClarifAI Legal Clause Categorization Pydantic Schemas & Enum
-Enforces the fixed, PRD-approved 8-category set per Chapter 56.9.
+(W3 Expanded Taxonomy)
 """
 
 from enum import Enum
@@ -27,6 +27,11 @@ class ClauseCategoryEnum(str, Enum):
     PROPERTY_USE = "Property Use"
     MAINTENANCE = "Maintenance"
     ALTERATIONS = "Alterations"
+    WARRANTY = "Warranty"
+    INSURANCE = "Insurance"
+    FORCE_MAJEURE = "Force Majeure"
+    ASSIGNMENT = "Assignment"
+    NOTICES = "Notices"
     GENERAL_BOILERPLATE = "General / Boilerplate"
     PRIVACY = "Privacy"
     LIABILITY = "Limitation of Liability"
@@ -38,7 +43,7 @@ APPROVED_CATEGORIES_SET = {category.value for category in ClauseCategoryEnum}
 class CategorizedClauseItem(ClauseItem):
     categories: List[ClauseCategoryEnum] = Field(
         default_factory=list,
-        description="List of validated categories from the fixed 8-value PRD set"
+        description="List of validated categories from the approved taxonomy"
     )
 
     @field_validator("categories")
@@ -47,7 +52,7 @@ class CategorizedClauseItem(ClauseItem):
         for cat in categories:
             val = cat.value if isinstance(cat, ClauseCategoryEnum) else str(cat)
             if val not in APPROVED_CATEGORIES_SET:
-                raise ValueError(f"Category '{val}' is outside the fixed PRD-approved 8-category set.")
+                raise ValueError(f"Category '{val}' is outside the approved category set.")
         return categories
 
 

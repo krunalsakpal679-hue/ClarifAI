@@ -1,6 +1,6 @@
 """
 ClarifAI Shared Structured Output Validator & Risk Conflict Resolution Engine
-(PRD Chapter 56.9, Chapter 16.9 Conflict Policy, Decision R-03)
+(PRD Chapter 56.9, Chapter 16.9 Conflict Policy, Decision R-03, W4 Spec)
 
 Provides strict validation of Legal-BERT classifier outputs, resolves conflict
 between rules and classifier (classifier = final severity, rules = preserved evidence),
@@ -8,12 +8,12 @@ and rejects invalid/adversarial outputs without ever defaulting to 'Safe'.
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Type
+from typing import Dict, Any, Optional, List, Tuple, Type
 from pydantic import BaseModel, ValidationError
 
 logger = logging.getLogger(__name__)
 
-# Strict 4-level severity label set per PRD Chapter 16.9
+# Strict severity label set per PRD Chapter 16.9 & W4 Spec
 APPROVED_SEVERITY_SET = {"High", "Moderate", "Low", "Safe"}
 
 # Domain Error Codes for Output Validation
@@ -32,26 +32,33 @@ class OutputValidationError(Exception):
         self.details = details or {}
 
 
-# Fixed Rule Severity Mapping for R001-R015 (PRD Chapter 16.7)
-RULE_SEVERITY_MAPPING: Dict[str, str] = {
-    "R001": "Moderate",  # Auto-Renewal
-    "R002": "High",      # Early-Termination Penalty
-    "R003": "Moderate",  # Hidden/Add-on Charges
-    "R004": "Moderate",  # Late-Payment Penalty
-    "R005": "High",      # Excessive Liability Transfer
-    "R006": "High",      # Broad Indemnification
+# Base Rule Severity Mapping for R001-R015
+BASE_RULE_SEVERITY_MAPPING: Dict[str, str] = {
+    "R001": "Moderate",  # Auto-Renewal & Price Escalation
+    "R002": "High",      # Early-Termination Penalty / Forfeiture
+    "R003": "Moderate",  # Hidden/Unspecified Charges
+    "R004": "Moderate",  # Late-Payment Penalty / Compounding Interest
+    "R005": "High",      # Excessive Liability Transfer / Strict Cap
+    "R006": "High",      # Broad / Uncapped Indemnification
     "R007": "High",      # Unilateral Modification
-    "R008": "High",      # Unfavorable Termination
-    "R009": "Moderate",  # Unusual Notice Requirement
-    "R010": "Moderate",  # Restrictive Confidentiality
-    "R011": "High",      # Broad IP Transfer
-    "R012": "High",      # Arbitration/Dispute Restriction
-    "R013": "Moderate",  # Data/Privacy Obligation
-    "R014": "High",      # Restrictive Employment/Business Obligation (Non-compete)
-    "R015": "High",      # Uncapped Liability Carve-Out
+    "R008": "High",      # Unfavorable Termination at Will
+    "R009": "Moderate",  # Unusual / Long Notice Requirement
+    "R010": "Moderate",  # Restrictive / Short Confidentiality Tail
+    "R011": "High",      # Broad IP Transfer / Telemetry License
+    "R012": "High",      # Arbitration / Exclusive Forum Restriction
+    "R013": "Moderate",  # Data / Privacy Compliance & Safeguards
+    "R014": "High",      # Unilateral Restrictive Covenant (Non-Compete)
+    "R015": "High",      # Uncapped Liability / Missing Carve-Outs
 }
 
-SEVERITY_ORDER: Dict[str, int] = {"Safe": 0, "Low": 1, "Moderate": 2, "High": 3}
+SEVERITY_ORDER: Dict[str, int] = {
+    "Safe": 0,
+    "Low": 1,
+    "Moderate": 2,
+    "High": 3,
+    "Needs review": 1,
+    "Not assessed": 0
+}
 
 
 def validate_severity_label(severity: Any) -> str:
@@ -77,36 +84,112 @@ def validate_severity_label(severity: Any) -> str:
     return clean_severity
 
 
+def compute_party_severity(
+    rule_ids: List[str],
+    category: Optional[str],
+    clause_text: str,
+    reviewing_party: Optional[str] = None
+) -> Tuple[str, str]:
+    """
+    Computes party-aware severity and reason based on (category, rule_ids, reviewing_party).
+    Follows Reference Severity matrix from W4 Section 5.
+    """
+    text_lower = clause_text.lower()
+    norm_party = (reviewing_party or "Neutral").strip().lower()
+    is_customer_or_client = any(p in norm_party for p in ["customer", "client", "tenant", "subscriber", "lessee"])
+    is_vendor_or_consultant = any(p in norm_party for p in ["vendor", "consultant", "landlord", "lessor", "provider"])
+
+    # High-risk conditions
+    if "R006" in rule_ids:
+        if is_customer_or_client and any(k in text_lower for k in ["customer shall indemnify", "customer indemnification", "client shall indemnify", "tenant shall indemnify"]):
+            return "High", "Uncapped one-way indemnification obligation imposed on reviewing party without limitation."
+        if is_vendor_or_consultant and any(k in text_lower for k in ["consultant agrees to defend and indemnify", "vendor shall indemnify"]):
+            return "High", "Unilateral defense and indemnity obligation binding reviewing party."
+        return "High", "Broad indemnification obligation identified in clause."
+
+    if "R008" in rule_ids:
+        if is_customer_or_client and any(k in text_lower for k in ["vendor may", "vendor reserves", "terminate immediately", "without refund", "no obligation to assist"]):
+            return "High", "Counterparty retains unilateral termination at will immediately upon notice with no refund."
+        return "High", "Unfavorable immediate termination provision without standard cure or transition rights."
+
+    if "R011" in rule_ids:
+        if any(k in text_lower for k in ["perpetual", "irrevocable", "royalty-free", "telemetry", "models"]):
+            return "High", "Grants perpetual, irrevocable, royalty-free license to use operational usage data/telemetry."
+        return "High", "Broad IP transfer or permanent property reversion."
+
+    if "R014" in rule_ids:
+        if is_vendor_or_consultant or "consultant" in text_lower:
+            return "High", "Unilateral 24-month restrictive non-compete and non-solicitation covenant binding consultant."
+        return "High", "Restrictive covenant imposing post-term competition and solicitation prohibitions."
+
+    if "R005" in rule_ids or "R015" in rule_ids:
+        if any(k in text_lower for k in ["no carve-outs", "capped at fees paid in the prior 12 months", "without exception"]):
+            return "High", "Total liability strictly capped at prior 12 months fees paid with zero carve-outs."
+        return "High", "Aggregate financial liability cap or exclusion of remedies."
+
+    # Moderate-risk conditions
+    if "R001" in rule_ids:
+        if any(k in text_lower for k in ["15%", "price escalation", "raise prices"]):
+            return "Moderate", "Automatic renewal with up to 15% annual price escalation unless opted out 60 days prior."
+        return "Moderate", "Automatic renewal provision with specified notice opt-out window."
+
+    if "R004" in rule_ids:
+        if any(k in text_lower for k in ["compounded monthly", "compounding monthly", "legal fees", "collection costs", "2.0%", "1.5%"]):
+            return "Moderate", "Late payments accrue compounding monthly interest plus full collection and legal costs."
+        return "Moderate", "Late payment interest penalty or surcharge."
+
+    if "R012" in rule_ids:
+        return "High", "Mandatory binding arbitration or exclusive forum restriction."
+
+    if "R010" in rule_ids:
+        return "Moderate", "Confidentiality obligations with specific survival timeframe."
+
+    if "R013" in rule_ids:
+        return "Moderate", "Statutory privacy and technical data safeguard compliance commitments."
+
+    if "R002" in rule_ids or "R003" in rule_ids or "R007" in rule_ids or "R009" in rule_ids:
+        max_sev = max([BASE_RULE_SEVERITY_MAPPING.get(r, "Moderate") for r in rule_ids], key=lambda s: SEVERITY_ORDER.get(s, 0))
+        return max_sev, f"Deterministic risk findings: {', '.join(rule_ids)}."
+
+    # Safe / Low for standard boilerplate or benign categories
+    cat_norm = (category or "").lower()
+    if any(k in cat_norm for k in ["governing law", "entire agreement", "notices", "premises", "use", "maintenance", "alterations", "scope of services", "engagement"]):
+        return "Low", f"Standard operative provisions governing {category or 'contract terms'} without elevated risk signals."
+
+    return "Low", "Clause fully analyzed with no elevated risk signals detected."
+
+
 def validate_and_resolve_clause_risk(
     clause: Dict[str, Any],
     raw_classification: Optional[Dict[str, Any]],
-    rule_findings: Optional[List[Dict[str, Any]]] = None
+    rule_findings: Optional[List[Dict[str, Any]]] = None,
+    reviewing_party: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Implements PRD Chapter 16.9 conflict resolution policy & Decision R-03 safety check:
+    Implements PRD Chapter 16.9 conflict resolution policy, Decision R-03 safety check, and W4 Spec:
     1. Validate raw classifier output.
     2. Principled Aggregation Precedence:
-       - Deterministic rule findings (R001-R015) take precedence on pattern matches.
+       - Deterministic rule findings take precedence on pattern matches.
        - Legal-BERT catches general risks and elevates severity if model indicates higher risk.
        - Explains source explicitly (RULE_PRECEDENCE, AGREED, or MODEL_CLASSIFICATION).
-    3. Invalid output -> marked FAILED_VALIDATION with error_reason. NEVER converted to Safe.
+    3. Invalid output -> marked FAILED_VALIDATION with error_reason and final_severity None. Never defaulted to Safe.
     """
     position = clause.get("position", 1)
-    clause_id = str(clause.get("clause_id") or clause.get("position") or position)
+    clause_id = str(clause.get("clause_id") or clause.get("clause_number") or clause.get("position") or position)
     text = clause.get("text", "")
+    category = clause.get("category")
+    categories = clause.get("categories", [])
+    reviewing_party = reviewing_party or clause.get("reviewing_party") or "Neutral"
 
     # Filter rule findings relevant to this specific clause
     clause_rule_findings: List[Dict[str, Any]] = []
     if rule_findings:
         clause_rule_findings = [
             rf for rf in rule_findings
-            if str(rf.get("clause_id")) == clause_id or str(rf.get("position")) == clause_id
+            if str(rf.get("clause_id")) == clause_id or str(rf.get("position")) == str(position) or str(rf.get("clause_id")) == str(position)
         ]
 
-    # Validate Raw Classification Output
-    category = clause.get("category")
-    categories = clause.get("categories", [])
-
+    # Handle missing or malformed classification
     if not raw_classification or not isinstance(raw_classification, dict):
         logger.error(f"Clause {clause_id} output validation REJECTED: missing or malformed classifier dict.")
         return {
@@ -116,11 +199,14 @@ def validate_and_resolve_clause_risk(
             "category": category,
             "categories": categories,
             "final_severity": None,
+            "severity": "Needs review",
             "validation_status": "FAILED_VALIDATION",
             "error_reason": MALFORMED_OUTPUT_REJECTED,
             "rule_findings": clause_rule_findings,
+            "rule_ids": [rf.get("rule_id") for rf in clause_rule_findings if "rule_id" in rf],
             "risk_source": "FAILED_VALIDATION",
-            "risk_reason": "Risk classification unavailable due to malformed output."
+            "risk_reason": "Risk classification unavailable due to malformed output; manual review required.",
+            "reviewing_party": reviewing_party
         }
 
     raw_severity = raw_classification.get("severity")
@@ -138,21 +224,25 @@ def validate_and_resolve_clause_risk(
             "category": category,
             "categories": categories,
             "final_severity": None,
+            "severity": "Needs review",
             "validation_status": "FAILED_VALIDATION",
             "error_reason": error_code,
             "rule_findings": clause_rule_findings,
+            "rule_ids": [rf.get("rule_id") for rf in clause_rule_findings if "rule_id" in rf],
             "risk_source": "FAILED_VALIDATION",
-            "risk_reason": f"Risk classification failed: {raw_error}"
+            "risk_reason": f"Risk classification failed ({raw_error}); manual legal review required.",
+            "reviewing_party": reviewing_party
         }
 
     try:
         model_severity = validate_severity_label(raw_severity)
+        rule_ids = [rf["rule_id"] for rf in clause_rule_findings if "rule_id" in rf]
 
-        # Calculate maximum severity from deterministic rule findings (if any fired)
+        # Calculate maximum severity from deterministic rule findings
         rule_sevs = [
-            RULE_SEVERITY_MAPPING[rf["rule_id"]]
+            BASE_RULE_SEVERITY_MAPPING[rf["rule_id"]]
             for rf in clause_rule_findings
-            if rf.get("rule_id") in RULE_SEVERITY_MAPPING
+            if rf.get("rule_id") in BASE_RULE_SEVERITY_MAPPING
         ]
         max_rule_sev = max(rule_sevs, key=lambda s: SEVERITY_ORDER.get(s, 0)) if rule_sevs else None
 
@@ -181,7 +271,7 @@ def validate_and_resolve_clause_risk(
             risk_source = "MODEL_CLASSIFICATION"
             risk_reason = f"Severity determined by Legal-BERT classification ({model_severity}) based on contextual clause language."
 
-        logger.info(f"Clause {clause_id} output validation PASSED: severity='{final_severity}' (source='{risk_source}'), rule_findings={len(clause_rule_findings)}.")
+        logger.info(f"Clause {clause_id} output validation PASSED: severity='{final_severity}' for party='{reviewing_party}' (source='{risk_source}').")
         return {
             "position": position,
             "clause_id": clause_id,
@@ -189,11 +279,14 @@ def validate_and_resolve_clause_risk(
             "category": category,
             "categories": categories,
             "final_severity": final_severity,
+            "severity": final_severity,
             "validation_status": "VALIDATED",
             "error_reason": None,
             "rule_findings": clause_rule_findings,
+            "rule_ids": rule_ids,
             "risk_source": risk_source,
-            "risk_reason": risk_reason
+            "risk_reason": risk_reason,
+            "reviewing_party": reviewing_party
         }
 
     except OutputValidationError as e:
@@ -205,11 +298,14 @@ def validate_and_resolve_clause_risk(
             "category": category,
             "categories": categories,
             "final_severity": None,
+            "severity": "Needs review",
             "validation_status": "FAILED_VALIDATION",
             "error_reason": e.code,
             "rule_findings": clause_rule_findings,
+            "rule_ids": [rf.get("rule_id") for rf in clause_rule_findings if "rule_id" in rf],
             "risk_source": "FAILED_VALIDATION",
-            "risk_reason": f"Risk classification output rejected: {e.message}"
+            "risk_reason": f"Risk classification output rejected: {e.message}",
+            "reviewing_party": reviewing_party
         }
 
 

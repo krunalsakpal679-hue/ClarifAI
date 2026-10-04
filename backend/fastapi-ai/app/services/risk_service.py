@@ -246,15 +246,17 @@ def classify_clause_risk(
 
 def classify_document_clauses_risk(
     clauses: List[Dict[str, Any]],
-    rule_findings: Optional[List[Dict[str, Any]]] = None
+    rule_findings: Optional[List[Dict[str, Any]]] = None,
+    reviewing_party: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Performs multi-clause risk classification with per-clause failure isolation (Chapter 16.5)
-    and strict output validation / conflict resolution (Chapter 16.9, Decision R-03).
+    and strict output validation / conflict resolution (Chapter 16.9, Decision R-03, W4 Spec).
 
     Args:
         clauses: List of clause dict items from clause processing stage.
         rule_findings: Optional list of rule findings from Stage 1 rule engine.
+        reviewing_party: Optional target reviewing party role.
 
     Returns:
         Dict containing classified clauses list, total_clauses, and schema_version.
@@ -271,15 +273,16 @@ def classify_document_clauses_risk(
     classified_items: List[Dict[str, Any]] = []
 
     for idx, clause in enumerate(clauses, start=1):
-        c_id = str(clause.get("clause_id") or clause.get("position") or idx)
+        c_id = str(clause.get("clause_id") or clause.get("clause_number") or clause.get("position") or idx)
         c_text = clause.get("text", "")
+        clause_party = reviewing_party or clause.get("reviewing_party") or "Neutral"
 
         # Filter rule findings relevant ONLY to this specific clause
         clause_rule_findings: List[Dict[str, Any]] = []
         if rule_findings:
             clause_rule_findings = [
                 rf for rf in rule_findings
-                if str(rf.get("clause_id")) == c_id or str(rf.get("position")) == c_id
+                if str(rf.get("clause_id")) == c_id or str(rf.get("position")) == str(idx) or str(rf.get("clause_id")) == str(idx)
             ]
 
         # Per-Clause Failure Isolation (Chapter 16.5)
@@ -294,10 +297,11 @@ def classify_document_clauses_risk(
         validated_item = validate_and_resolve_clause_risk(
             clause=clause,
             raw_classification=raw_res,
-            rule_findings=clause_rule_findings
+            rule_findings=clause_rule_findings,
+            reviewing_party=clause_party
         )
-        # Explicitly preserve validated final severity without silent Safe fallback (RISK_CLASSIFICATION_UNAVAILABLE on failure)
-        validated_item["severity"] = validated_item["final_severity"] or "RISK_CLASSIFICATION_UNAVAILABLE"
+        # Explicitly preserve validated final severity (Never fallback to RISK_CLASSIFICATION_UNAVAILABLE)
+        validated_item["severity"] = validated_item.get("final_severity") or "Needs review"
 
         classified_items.append(validated_item)
 

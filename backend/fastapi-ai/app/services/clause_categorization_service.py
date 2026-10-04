@@ -36,9 +36,10 @@ HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     # Renewal
     (re.compile(r"^(?:RENEWAL|TERM\s+AND\s+RENEWAL|EXTENSION|AUTOMATIC\s+RENEWAL)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL),
     # Dispute Resolution
-    (re.compile(r"^(?:DISPUTE\s+RESOLUTION|GOVERNING\s+FORUM(?:\s+AND\s+VENUE)?|GOVERNING\s+FORUM|ARBITRATION|BINDING\s+ARBITRATION|JURISDICTION|VENUE|COURT\s+VENUE)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION),
+    (re.compile(r"\b(?:DISPUTE\s+RESOLUTION|BINDING\s+ARBITRATION|ARBITRATION|GOVERNING\s+FORUM|COURT\s+VENUE)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION),
     # Governing Law
-    (re.compile(r"^(?:GOVER?N(?:ING|ERNG)?\s+LAW(?:\s+(?:AND|&)\s*(?:JURISDICTION|VENUE))?|APPLICABLE\s+LAW|CHOICE\s+OF\s+LAW)\b", re.IGNORECASE), ClauseCategoryEnum.GOVERNING_LAW),
+    (re.compile(r"\b(?:GOVER?N(?:ING|ERNG)?\s+(?:LAW|JURISDICTION)|APPLICABLE\s+LAW|CHOICE\s+OF\s+LAW)\b", re.IGNORECASE), ClauseCategoryEnum.GOVERNING_LAW),
+
     # Restrictive Covenants
     (re.compile(r"^(?:NON-COMPETE\s+AND\s+NON-SOLICITATION|RESTRICTIVE\s+COVENANTS|POST-EMPLOYMENT\s+NON-COMPETE|NON-COMPETE|NON-SOLICITATION)\b", re.IGNORECASE), ClauseCategoryEnum.RESTRICTIVE_COVENANTS),
     # Property / Premises
@@ -49,13 +50,24 @@ HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     (re.compile(r"^(?:MAINTENANCE\s+AND\s+REPAIRS?|MAINTENANCE|REPAIRS|EQUIPMENT\s+MAINTENANCE|PREVENTIVE\s+MAINTENANCE)\b", re.IGNORECASE), ClauseCategoryEnum.MAINTENANCE),
     # Alterations
     (re.compile(r"^(?:ALTERATIONS\s+AND\s+IMPROVEMENTS|ALTERATIONS|IMPROVEMENTS|MODIFICATIONS\s+TO\s+PREMISES)\b", re.IGNORECASE), ClauseCategoryEnum.ALTERATIONS),
+    # Warranty
+    (re.compile(r"^(?:PRODUCT\s+WARRANTY(?:\s+AND\s+DEFECT\s+REMEDIES)?|WARRANTY\s+AND\s+REMEDIES|WARRANTIES|REPRESENTATIONS\s+AND\s+WARRANTIES|LIMITED\s+WARRANTY|DISCLAIMER\s+OF\s+WARRANTIES)\b", re.IGNORECASE), ClauseCategoryEnum.WARRANTY),
+    # Insurance
+    (re.compile(r"^(?:INSURANCE(?:\s+AND\s+CASUALTY)?|INSURANCE\s+REQUIREMENTS|CASUALTY\s+INSURANCE)\b", re.IGNORECASE), ClauseCategoryEnum.INSURANCE),
+    # Force Majeure
+    (re.compile(r"^(?:FORCE\s+MAJEURE|ACTS\s+OF\s+GOD|EXCUSABLE\s+DELAYS)\b", re.IGNORECASE), ClauseCategoryEnum.FORCE_MAJEURE),
+    # Assignment
+    (re.compile(r"^(?:ASSIGNMENT(?:\s+AND\s+DELEGATION)?|SUCCESSORS\s+AND\s+ASSIGNS|TRANSFER\s+AND\s+ASSIGNMENT)\b", re.IGNORECASE), ClauseCategoryEnum.ASSIGNMENT),
+    # Notices
+    (re.compile(r"^(?:NOTICES(?:\s+AND\s+FORMAL\s+COMMUNICATIONS)?|FORMAL\s+NOTICES)\b", re.IGNORECASE), ClauseCategoryEnum.NOTICES),
     # General / Boilerplate
-    (re.compile(r"^(?:ENTIRE\s+AGREEMENT|INTEGRATION|SEVERABILITY|NOTICES|AMENDMENTS|FORCE\s+MAJEURE|ASSIGNMENT|MISCELLANEOUS|GENERAL\s+PROVISIONS|GENERAL)\b", re.IGNORECASE), ClauseCategoryEnum.GENERAL_BOILERPLATE),
+    (re.compile(r"^(?:ENTIRE\s+AGREEMENT|INTEGRATION|SEVERABILITY|AMENDMENTS|MISCELLANEOUS|GENERAL\s+PROVISIONS|GENERAL)\b", re.IGNORECASE), ClauseCategoryEnum.GENERAL_BOILERPLATE),
     # Privacy
-    (re.compile(r"^(?:PRIVACY|DATA\s+PROTECTION(?:\s+AND\s+PRIVACY)?|DATA\s+PROCESSING|SECURITY|INFORMATION\s+SECURITY)\b", re.IGNORECASE), ClauseCategoryEnum.PRIVACY),
+    (re.compile(r"^(?:DATA\s+PRIVACY|PRIVACY|DATA\s+PROTECTION(?:\s+AND\s+PRIVACY)?|DATA\s+PROCESSING|SECURITY|INFORMATION\s+SECURITY)\b", re.IGNORECASE), ClauseCategoryEnum.PRIVACY),
     # Liability (General/Catch-all)
-    (re.compile(r"^(?:LIABILITY|INSURANCE\s+AND\s+CASUALTY|TOTAL\s+CASUALTY\s+LOSS|PRODUCT\s+WARRANTY)\b", re.IGNORECASE), ClauseCategoryEnum.LIABILITY),
+    (re.compile(r"^(?:LIABILITY|TOTAL\s+CASUALTY\s+LOSS)\b", re.IGNORECASE), ClauseCategoryEnum.LIABILITY),
 ]
+
 
 # Dominant Consequence Patterns
 DOMINANT_CONSEQUENCE_PATTERNS = [
@@ -252,12 +264,15 @@ def score_clause_categories(
 
     # 1. HEADING-FIRST DIRECT MATCH (Highest Priority, Spec Root Cause #4 / P0 1D)
     clean_title = title.strip() if title else ""
+    matched_heading_cats = set()
     if clean_title:
         for heading_pat, target_cat in HEADING_CATEGORY_PATTERNS:
-            if heading_pat.search(clean_title):
-                scores[target_cat] += 100
-                logger.info(f"Heading-First Categorization: Title '{clean_title}' matched {target_cat.value}")
-                break
+            if heading_pat.search(clean_title) and target_cat not in matched_heading_cats:
+                score_boost = 100 if not matched_heading_cats else 50
+                scores[target_cat] += score_boost
+                matched_heading_cats.add(target_cat)
+                logger.info(f"Heading-First Categorization: Title '{clean_title}' matched {target_cat.value} (+{score_boost})")
+
 
     combined_content = f"{title} {text}".strip()
     clean_content = re.sub(r'\blimited\s+liability\s+(?:company|partnership|llc|llp)\b', '', combined_content, flags=re.IGNORECASE)

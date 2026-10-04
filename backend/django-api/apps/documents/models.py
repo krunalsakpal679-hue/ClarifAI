@@ -43,9 +43,15 @@ class ClauseCategory(models.TextChoices):
     PROPERTY_USE = 'Property Use', 'Property Use'
     MAINTENANCE = 'Maintenance', 'Maintenance'
     ALTERATIONS = 'Alterations', 'Alterations'
+    WARRANTY = 'Warranty', 'Warranty'
+    INSURANCE = 'Insurance', 'Insurance'
+    FORCE_MAJEURE = 'Force Majeure', 'Force Majeure'
+    ASSIGNMENT = 'Assignment', 'Assignment'
+    NOTICES = 'Notices', 'Notices'
     GENERAL_BOILERPLATE = 'General / Boilerplate', 'General / Boilerplate'
     PRIVACY = 'Privacy', 'Privacy'
     LIABILITY = 'Liability', 'Liability'
+
 
 
 class ClauseStatus(models.TextChoices):

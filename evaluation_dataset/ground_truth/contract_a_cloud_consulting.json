@@ -1,0 +1,116 @@
+{
+  "document_name": "contract_a_cloud_consulting.pdf",
+  "document_title": "Cloud Infrastructure Consulting Agreement",
+  "document_type": "Consulting Agreement",
+  "total_clauses": 12,
+  "clauses": [
+    {
+      "clause_number": "1",
+      "title": "SERVICES AND STATEMENTS OF WORK",
+      "category": "Scope of Services",
+      "severity": "Low",
+      "directionality": "Consultant to Client",
+      "must_contain": ["cloud infrastructure design", "DevOps automation", "Statements of Work"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "2",
+      "title": "FEES, INVOICING, AND PAYMENT TERMS",
+      "category": "Payment",
+      "severity": "Moderate",
+      "directionality": "Client to Consultant",
+      "must_contain": ["45 days", "undisputed invoices", "2.0% per month"],
+      "must_not_contain": ["billing cadence", "Net 30"]
+    },
+    {
+      "clause_number": "3",
+      "title": "CONFIDENTIALITY AND NON-DISCLOSURE",
+      "category": "Confidentiality",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["protect", "prior written consent", "3 years"],
+      "must_not_contain": ["reasonable care", "strict secrecy", "material breach of contractual confidentiality covenants"]
+    },
+    {
+      "clause_number": "4",
+      "title": "INTELLECTUAL PROPERTY AND DELIVERABLES",
+      "category": "Intellectual Property",
+      "severity": "Low",
+      "directionality": "Consultant to Client",
+      "must_contain": ["assigns", "deliverables, source code", "full payment of all applicable fees", "pre-existing tools"],
+      "must_not_contain": ["work made for hire", "subscriber", "analysis reports", "ordering party"]
+    },
+    {
+      "clause_number": "5",
+      "title": "INDEMNIFICATION AND THIRD-PARTY CLAIMS",
+      "category": "Indemnification",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["indemnify and hold harmless", "gross negligence or willful misconduct", "officers, directors, and employees"],
+      "must_not_contain": ["defend and hold harmless", "Employer and Employee", "Employer"]
+    },
+    {
+      "clause_number": "6",
+      "title": "LIMITATION OF LIABILITY AND DAMAGES CAP",
+      "category": "Limitation of Liability",
+      "severity": "High",
+      "directionality": "Mutual",
+      "must_contain": ["total fees paid by Client in the twelve (12) months preceding", "contract, tort, or otherwise"],
+      "must_not_contain": ["consequential damages waiver", "lost profits waiver"]
+    },
+    {
+      "clause_number": "7",
+      "title": "TERM AND DURATION",
+      "category": "Term",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["two (2) years", "Effective Date", "unless the Parties execute a new written agreement"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "8",
+      "title": "TERMINATION FOR CAUSE AND CONVENIENCE",
+      "category": "Termination",
+      "severity": "Moderate",
+      "directionality": "Mutual",
+      "must_contain": ["immediately upon written notice", "materially breaches", "thirty (30) days"],
+      "must_not_contain": ["vendor convenience only"]
+    },
+    {
+      "clause_number": "9",
+      "title": "DISPUTE RESOLUTION AND EXCLUSIVE JURISDICTION",
+      "category": "Dispute Resolution",
+      "severity": "Low",
+      "directionality": "Mutual",
+      "must_contain": ["exclusive jurisdiction", "New York County, New York"],
+      "must_not_contain": []
+    },
+    {
+      "clause_number": "10",
+      "title": "RESTRICTIVE COVENANTS AND NON-SOLICITATION",
+      "category": "Restrictive Covenants",
+      "severity": "High",
+      "directionality": "Consultant only",
+      "must_contain": ["twenty-four (24) months", "client introduced by Client", "materially involved"],
+      "must_not_contain": ["mutual", "designated territories"]
+    },
+    {
+      "clause_number": "11",
+      "title": "GOVERNING LAW AND JURISDICTION",
+      "category": "Governing Law",
+      "severity": "Low",
+      "directionality": "Mutual",
+      "must_contain": ["laws of the State of New York", "without regard to its conflict of laws principles"],
+      "must_not_contain": ["designated jurisdiction"]
+    },
+    {
+      "clause_number": "12",
+      "title": "ENTIRE AGREEMENT AND INTEGRATION",
+      "category": "General / Boilerplate",
+      "severity": "Low",
+      "directionality": "Mutual",
+      "must_contain": ["entire agreement", "supersedes all prior or contemporaneous understandings"],
+      "must_not_contain": []
+    }
+  ]
+}

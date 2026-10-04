@@ -14,19 +14,19 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
-# Regex for explicit legal section markers (e.g. "Section 1.", "Section A.", "Clause 4.2", "Article III", "1.1 ", "1) ", "1. ", "1 LEASED", "{3}", "6 TOTAL")
+# Regex for explicit legal section markers (e.g. "Section 1.", "Section A.", "Clause 4.2", "Article III", "1.1 ", "1) ", "1. ", "3, ", "1 LEASED", "{3}", "6 TOTAL")
 REGEX_SECTION_MARKER = re.compile(
     r"^(?:[^\w\(\[\{]*)(?:"
     r"(?:Section|Clause|Article|Paragraph)\s+([0-9]+(?:\.[0-9]+)*|[A-Za-z]+|\b[IVXLCDM]+\b)"
     r"|([0-9]+(?:\.[0-9]+){1,3}(?!\d))"
-    r"|([0-9]{1,3}\.(?!\d))"
+    r"|([0-9]{1,3}[\.\,](?!\d))"
     r"|([0-9]{1,3}(?=\s+[A-Za-z]{3,}))"
     r"|([0-9]{1,3}(?=[A-Z]{3,}))"
     r"|(\b[IVXLCDM]+\b\.)"
     r"|([A-Z]\.\s+)"
     r"|(\([0-9]{1,2}\)|\([a-zA-Z]\))"
     r"|(\{[0-9]{1,2}\})"
-    r")(?:\s*[\:\.\-\–\—\)]\s*|\s+|$)(.*)$",
+    r")(?:\s*[\:\.\,\-\–\—\)]\s*|\s+|$)(.*)$",
     re.IGNORECASE
 )
 

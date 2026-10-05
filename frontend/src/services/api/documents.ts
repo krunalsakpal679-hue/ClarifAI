@@ -65,7 +65,7 @@ export const realDocumentService: IDocumentService = {
     severity?: string
   ): Promise<PaginatedClauseResponse> => {
     // Section 8.3 Document Clauses endpoint with optional severity filter (PRD Ch. 16 & Ch. 30.3)
-    const params: Record<string, string> = { lang };
+    const params: Record<string, string> = { lang, page_size: '100' };
     if (severity) {
       params.severity = severity.toLowerCase();
     }

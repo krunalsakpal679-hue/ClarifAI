@@ -8,14 +8,31 @@ from services.ai_client.exceptions import AIServiceValidationError
 
 ALLOWED_SEVERITIES = {'high', 'moderate', 'low', 'safe'}
 ALLOWED_CATEGORIES = {
+    'Scope of Services',
     'Payment',
+    'Confidentiality',
+    'Intellectual Property',
+    'Indemnification',
+    'Limitation of Liability',
+    'Term',
     'Termination',
     'Renewal',
-    'Confidentiality',
-    'Liability',
-    'Intellectual Property',
-    'Privacy',
     'Dispute Resolution',
+    'Governing Law',
+    'Restrictive Covenants',
+    'Property / Premises',
+    'Property Use',
+    'Maintenance',
+    'Alterations',
+    'Warranty',
+    'Insurance',
+    'Force Majeure',
+    'Assignment',
+    'Notices',
+    'General / Boilerplate',
+    'General',
+    'Privacy',
+    'Liability',
 }
 
 

@@ -23,7 +23,7 @@ from apps.documents.serializers import (
     DocumentSummarySerializer,
     DocumentUploadSerializer,
 )
-from core.pagination import StandardPageNumberPagination
+from core.pagination import StandardPageNumberPagination, DocumentClausePagination
 from core.permissions import IsOwner
 from services import ai_client
 from tasks.document_tasks import process_document
@@ -235,7 +235,7 @@ class ClauseListView(generics.ListAPIView):
     """
     permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = ClauseSerializer
-    pagination_class = StandardPageNumberPagination
+    pagination_class = DocumentClausePagination
 
     def get_queryset(self):
         document_id = self.kwargs.get('pk')

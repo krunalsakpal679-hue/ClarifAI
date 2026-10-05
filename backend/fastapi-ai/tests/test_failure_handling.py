@@ -24,9 +24,9 @@ def test_standard_user_message_constant():
     assert STANDARD_USER_ERROR_MESSAGE == "AI processing is temporarily unavailable. Please try again later."
 
 
-def test_secret_key_never_logged():
+def test_secret_key_never_logged(monkeypatch):
     fake_secret_key = "gsk_supersecret123456789key"
-    os.environ["GROQ_API_KEY"] = fake_secret_key
+    monkeypatch.setenv("GROQ_API_KEY", fake_secret_key)
     
     raw_error_text = f"Authentication error using key {fake_secret_key} on Groq endpoint"
     clean_text = sanitize_error_message(raw_error_text)

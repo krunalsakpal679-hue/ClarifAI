@@ -278,62 +278,54 @@ INVENTED_REMEDY_PATTERNS = [
     (re.compile(r'\bliquidated\s+damages\b', re.IGNORECASE), "liquidated")
 ]
 
-# Generalized Legal Mechanism Grounding Rules
+# Generalized Legal Mechanism Grounding Rules (Filtered with zero phrase substitution)
 LEGAL_MECHANISM_RULES = [
     {
         "name": "termination_for_cause",
         "narrative_pattern": re.compile(r'\b(?:terminat\w*\s+for\s+cause|default\s+termination)\b', re.IGNORECASE),
         "source_required_terms": ["cause", "material breach", "materially breach", "default", "fails to cure", "breach of any"],
-        "replacement_phrase": "termination for convenience",
         "note": "Stripped ungrounded 'termination for cause' claim (source only specifies termination for convenience / notice)."
     },
     {
         "name": "cure_period",
         "narrative_pattern": re.compile(r'\b(?:(?:provide\s+any\s+required\s+)?cure\s+periods?|remedy\s+window|period\s+to\s+cure|thirty\s+\(30\)\s+days?\s+to\s+cure)\b', re.IGNORECASE),
         "source_required_terms": ["cure", "remedy", "rectify", "grace period"],
-        "replacement_phrase": "",
         "note": "Stripped ungrounded 'cure period' claim (absent from source clause)."
     },
     {
         "name": "fee_acceleration",
         "narrative_pattern": re.compile(r'\b(?:accrued\s+(?:unpaid\s+)?fees\s+become\s+immediately\s+due|acceleration\s+of\s+fees|all\s+fees\s+due\s+immediately)\b', re.IGNORECASE),
         "source_required_terms": ["accelerat", "immediately due", "accrued unpaid", "become due immediately", "payable immediately"],
-        "replacement_phrase": "",
         "note": "Stripped ungrounded 'fee acceleration' consequence (absent from source clause)."
     },
     {
         "name": "arbitration",
         "narrative_pattern": re.compile(r'\b(?:arbitrat\w*|american\s+arbitration\s+association|arbitral\s+\w*)\b', re.IGNORECASE),
         "source_required_terms": ["arbitrat", "aaa", "jams", "tribunal", "arbitral"],
-        "replacement_phrase": "court litigation",
-        "note": "Grounded dispute resolution claim to court litigation (source does not mandate arbitration)."
+        "note": "Stripped ungrounded arbitration claim (source does not mandate arbitration)."
     },
     {
         "name": "security_deposit",
         "narrative_pattern": re.compile(r'\b(?:security\s+deposit\w*|escrow\s+deposit\w*|deposit\s+amount\w*|earnest\s+money)\b', re.IGNORECASE),
         "source_required_terms": ["security deposit", "deposit", "escrow", "earnest"],
-        "replacement_phrase": "advance payment",
         "note": "Stripped ungrounded 'security deposit' claim (absent from source clause)."
     },
     {
         "name": "warranty_disclaimer",
         "narrative_pattern": re.compile(r'\b(?:disclaims?\s+(?:all\s+)?warrant\w*|as-is\s+basis|implied\s+warrant\w*|warranty\s+disclaimer\w*)\b', re.IGNORECASE),
         "source_required_terms": ["warrant", "disclaim", "as-is", "as is", "merchantability"],
-        "replacement_phrase": "service specifications",
         "note": "Stripped ungrounded 'warranty disclaimer' claim (absent from source clause)."
     },
     {
         "name": "assignment_restriction",
         "narrative_pattern": re.compile(r'\b(?:prohibit\w*\s+(?:[a-z\s]+?\s+)?from\s+assigning|restricts?\s+assignment|not\s+assign|sublet\w*|underlet\w*|cannot\s+assign)\b', re.IGNORECASE),
         "source_required_terms": ["assign", "transfer", "underlet", "sublet", "sub-let", "convey"],
-        "replacement_phrase": "transfer restriction",
         "note": "Stripped ungrounded 'assignment restriction' claim (absent from source clause)."
     },
     {
         "name": "force_majeure",
         "narrative_pattern": re.compile(r'\b(?:force\s+majeure|acts?\s+of\s+god|unforeseen\s+emergencies\s+excusing\s+performance)\b', re.IGNORECASE),
         "source_required_terms": ["force majeure", "act of god", "natural disaster", "unforeseen event", "epidemic", "pandemic"],
-        "replacement_phrase": "covenant performance",
         "note": "Stripped ungrounded 'force majeure' claim (absent from source clause)."
     }
 ]

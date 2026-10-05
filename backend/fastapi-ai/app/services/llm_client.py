@@ -173,7 +173,7 @@ def get_groq_client(override_api_key: Optional[str] = None, timeout: Optional[in
         raise ValueError("GROQ_API_KEY environment variable is not configured.")
     
     t_out = timeout if timeout is not None else get_llm_timeout()
-    return Groq(api_key=api_key, timeout=float(t_out))
+    return Groq(api_key=api_key, timeout=float(t_out), max_retries=1)
 
 
 def classify_llm_exception(e: Exception) -> Dict[str, Any]:

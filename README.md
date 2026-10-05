@@ -6,7 +6,8 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![Groq](https://img.shields.io/badge/Groq_LLM-openai/gpt--oss--20b-F55036?style=for-the-badge)](https://groq.com/)
 [![Legal-BERT](https://img.shields.io/badge/Legal--BERT-v2.0_Fine--Tuned-FF6F00?style=for-the-badge)](https://huggingface.co/nlpaueb/legal-bert-base-uncased)
-[![Test Suite](https://img.shields.io/badge/Tests-307%20Passed%20(100%25)-44CC11?style=for-the-badge)](file:///c:/ClarifAI-%20AIPipeline/backend/fastapi-ai/tests/)
+[![FastAPI Tests](https://img.shields.io/badge/FastAPI%20Tests-310%20Passed%20(100%25)-44CC11?style=for-the-badge)](file:///c:/ClarifAI-%20AIPipeline/backend/fastapi-ai/tests/)
+[![Django Tests](https://img.shields.io/badge/Django%20Tests-228%20Passed%20(100%25)-44CC11?style=for-the-badge)](file:///c:/ClarifAI-%20AIPipeline/backend/django-api/tests/)
 
 ClarifAI is an enterprise-grade AI contract analysis and risk mitigation platform. It transforms complex, dense, and opaque legal documents into plain-language summaries, audits clause-level risks, detects predatory terms, identifies missing standard protections, enables double-gated evidence-grounded RAG chatbot inquiries, computes semantic contract diffs, and provides bilingual English/Hindi translations with **zero hallucination tolerance**.
 
@@ -157,7 +158,7 @@ ClarifAI/
 │   │   │   ├── models/                 # Pydantic Schemas (Risk, RAG, Summary, Translation)
 │   │   │   ├── routers/                # FastAPI Routers (pdf, clean, segment, risk, chat, etc.)
 │   │   │   └── services/               # Core Logic (Legal-BERT, Groq LLM, Qdrant, Rule Engine)
-│   │   ├── tests/                      # Pytest Unit & Integration Suite (307 passing tests)
+│   │   ├── tests/                      # Pytest Unit & Integration Suite (310 passing tests)
 │   │   ├── training/                   # Model Training Scripts & Legal-BERT v2.0 Checkpoint
 │   │   ├── Dockerfile                  # Container Definition
 │   │   └── requirements.txt            # Python Dependencies
@@ -330,7 +331,7 @@ npm run dev
 
 ## Running Tests & Benchmark Verification
 
-### 1. Run the FastAPI Test Suite (307 Tests)
+### 1. Run the FastAPI Test Suite (310 Tests)
 ```bash
 cd backend/fastapi-ai
 python -m pytest tests/ -v

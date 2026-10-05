@@ -24,6 +24,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 
+from django.test import override_settings
+
 from apps.documents.models import Document, DocumentStatus
 from tasks.comparison_tasks import process_comparison
 from tasks.document_tasks import process_document
@@ -32,6 +34,11 @@ from tests.test_documents import create_sample_pdf
 User = get_user_model()
 
 
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=False,
+    CELERY_RESULT_BACKEND=None,
+    CELERY_BROKER_URL='memory://'
+)
 class EndToEndUserJourneyTestCase(APITestCase):
 
     def setUp(self):
@@ -39,8 +46,33 @@ class EndToEndUserJourneyTestCase(APITestCase):
         self.user_email = 'e2e_user@example.com'
         self.user_password = 'Password123!'
 
-    def test_full_user_journey_e2e(self):
+    @patch("tasks.document_tasks.ai_client.process_document")
+    @patch("services.ai_client.chat")
+    @patch("services.ai_client.compare")
+    def test_full_user_journey_e2e(self, mock_compare, mock_chat, mock_process):
         """Executes full end-to-end user lifecycle from signup to logout."""
+        mock_process.return_value = {
+            "summary": {
+                "purpose_text": "Sample master agreement purpose.",
+                "obligations_text": "Both parties shall perform duties.",
+                "key_terms_text": "Net 30 payment.",
+                "key_risks_text": "No high risk."
+            },
+            "clauses": [
+                {
+                    "position": 1,
+                    "clause_number": "1",
+                    "title": "Payment Terms",
+                    "text": "Payment is due within 30 days.",
+                    "category": "Payment",
+                    "severity": "Low",
+                    "simplified_text": "Invoices are due in 30 days.",
+                    "why_flagged": "Standard commercial payment terms."
+                }
+            ]
+        }
+        mock_chat.return_value = {"answer": "The governing law is Delaware.", "citations": []}
+        mock_compare.return_value = {"differences": [], "summary": "No material differences."}
         
         # 1. SIGNUP
         signup_url = reverse('auth_signup')

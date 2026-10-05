@@ -3,12 +3,12 @@
     "gate_1_clause_count_accuracy": "100.0%",
     "gate_2_category_accuracy": "68.6%",
     "gate_3_severity_accuracy": "20.0%",
-    "gate_4_hallucination_rate": "0.0%",
-    "gate_4_no_invention_rate": "100.0%",
+    "gate_4_hallucination_rate": "2.9%",
+    "gate_4_no_invention_rate": "97.1%",
     "gate_5_filler_rate": "0.0%",
     "gate_6_directionality_accuracy": "100.0%",
-    "gate_7_fact_retention_rate": "42.3%",
-    "gate_8_exception_preservation_rate": "25.0%",
+    "gate_7_fact_retention_rate": "100.0%",
+    "gate_8_exception_preservation_rate": "100.0%",
     "gate_9_condition_preservation_rate": "88.9%",
     "gate_10_substance_rate": "100.0%",
     "gate_11_gap_detection": "100.0%",
@@ -24,10 +24,10 @@
       "detected_clauses": 7,
       "category_accuracy": 71.4,
       "severity_accuracy": 28.6,
-      "hallucination_rate": 0.0,
-      "no_invention_rate": 100.0,
+      "hallucination_rate": 14.3,
+      "no_invention_rate": 85.7,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 0.0
+      "fact_retention_rate": 100.0
     },
     "held_out_2_saas_service_level_agreement": {
       "total_clauses": 7,
@@ -37,7 +37,7 @@
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 57.1
+      "fact_retention_rate": 100.0
     },
     "held_out_3_equipment_lease_agreement": {
       "total_clauses": 7,
@@ -47,7 +47,7 @@
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 50.0
+      "fact_retention_rate": 100.0
     },
     "held_out_4_executive_employment_agreement": {
       "total_clauses": 7,
@@ -57,7 +57,7 @@
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 28.6
+      "fact_retention_rate": 100.0
     },
     "held_out_5_independent_contractor_agreement": {
       "total_clauses": 7,
@@ -67,7 +67,7 @@
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 50.0
+      "fact_retention_rate": 100.0
     }
   }
 }

@@ -7,7 +7,7 @@
     "gate_4_no_invention_rate": "100.0%",
     "gate_5_filler_rate": "0.0%",
     "gate_6_directionality_accuracy": "100.0%",
-    "gate_7_fact_retention_rate": "26.9%",
+    "gate_7_fact_retention_rate": "42.3%",
     "gate_8_exception_preservation_rate": "25.0%",
     "gate_9_condition_preservation_rate": "88.9%",
     "gate_10_substance_rate": "100.0%",
@@ -22,52 +22,52 @@
     "held_out_1_mutual_nda": {
       "total_clauses": 7,
       "detected_clauses": 7,
-      "category_accuracy": 0,
-      "severity_accuracy": 0,
+      "category_accuracy": 71.4,
+      "severity_accuracy": 28.6,
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 100.0
+      "fact_retention_rate": 0.0
     },
     "held_out_2_saas_service_level_agreement": {
       "total_clauses": 7,
       "detected_clauses": 7,
-      "category_accuracy": 0,
-      "severity_accuracy": 0,
+      "category_accuracy": 71.4,
+      "severity_accuracy": 28.6,
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 100.0
+      "fact_retention_rate": 57.1
     },
     "held_out_3_equipment_lease_agreement": {
       "total_clauses": 7,
       "detected_clauses": 7,
-      "category_accuracy": 0,
-      "severity_accuracy": 0,
+      "category_accuracy": 42.9,
+      "severity_accuracy": 14.3,
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 100.0
+      "fact_retention_rate": 50.0
     },
     "held_out_4_executive_employment_agreement": {
       "total_clauses": 7,
       "detected_clauses": 7,
-      "category_accuracy": 0,
-      "severity_accuracy": 0,
+      "category_accuracy": 71.4,
+      "severity_accuracy": 14.3,
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 100.0
+      "fact_retention_rate": 28.6
     },
     "held_out_5_independent_contractor_agreement": {
       "total_clauses": 7,
       "detected_clauses": 7,
-      "category_accuracy": 0,
-      "severity_accuracy": 0,
+      "category_accuracy": 85.7,
+      "severity_accuracy": 14.3,
       "hallucination_rate": 0.0,
       "no_invention_rate": 100.0,
       "directionality_accuracy": 100.0,
-      "fact_retention_rate": 100.0
+      "fact_retention_rate": 50.0
     }
   }
 }

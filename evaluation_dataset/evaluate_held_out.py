@@ -67,17 +67,17 @@ def run_held_out_eval():
 
         doc_clauses = simplified["clauses"]
         gt_clauses = gt["clauses"]
+        n_gt = len(gt_clauses)
 
-        doc_stats = {
-            "total_clauses": len(gt_clauses),
-            "detected_clauses": len(doc_clauses),
-            "category_accuracy": 0,
-            "severity_accuracy": 0,
-            "hallucination_rate": 0.0,
-            "no_invention_rate": 100.0,
-            "directionality_accuracy": 100.0,
-            "fact_retention_rate": 100.0
-        }
+        doc_cat_matches = 0
+        doc_sev_matches = 0
+        doc_hallucinations = 0
+        doc_directionality = 0
+        doc_substantive = 0
+        doc_facts_found = 0
+        doc_total_facts = 0
+        doc_exceptions_found = 0
+        doc_total_exceptions = 0
 
         for idx, gt_c in enumerate(gt_clauses):
             total_clauses += 1
@@ -89,18 +89,22 @@ def run_held_out_eval():
             gt_cat = gt_c["gt_category"]
             if any(gt_cat.lower() in p.lower() or p.lower() in gt_cat.lower() for p in pred_cat_names):
                 cat_matches += 1
+                doc_cat_matches += 1
 
             # Severity check
             pred_sev = pred_c.get("severity", "Low")
             gt_sev = gt_c["gt_severity"]
             if pred_sev.lower() == gt_sev.lower() or (gt_sev == "Critical" and pred_sev in ["High", "Critical"]):
                 sev_matches += 1
+                doc_sev_matches += 1
 
             # Directionality & Substance
             directionality_correct += 1
+            doc_directionality += 1
             what_means = pred_c.get("structured_explanation", {}).get("what_this_clause_means", "")
             if what_means and "not resolved" not in what_means.lower():
                 substantive_count += 1
+                doc_substantive += 1
 
             # Hallucination check (ungrounded figures not present in source text)
             c_text = pred_c.get("text", "")
@@ -110,6 +114,7 @@ def run_held_out_eval():
                 if invented in what_means.lower() and invented not in c_text_normalized:
                     has_hallucination = True
                     hallucinations += 1
+                    doc_hallucinations += 1
                     break
 
             # Fact Retention
@@ -119,23 +124,37 @@ def run_held_out_eval():
             combined_pred_text = f"{what_means} {key_details_str} {pred_c.get('simplified_text', '')}".lower()
             if gt_nums:
                 total_facts += len(gt_nums)
+                doc_total_facts += len(gt_nums)
                 for num in gt_nums:
                     # Check if number digits/tokens exist in the generated summary or key details
                     num_clean = re.sub(r'[^\w\.\%\$]', ' ', num.lower())
                     tokens = [t for t in num_clean.split() if t and len(t) > 1]
                     if any(t in combined_pred_text for t in tokens) or num.lower() in combined_pred_text:
                         facts_found += 1
+                        doc_facts_found += 1
 
             # Exceptions
             gt_ex = gt_c.get("gt_exceptions", [])
             if gt_ex:
                 total_exceptions += len(gt_ex)
+                doc_total_exceptions += len(gt_ex)
                 for ex in gt_ex:
                     ex_clean = re.sub(r'[^\w\s]', '', ex.lower())
                     tokens = [t for t in ex_clean.split() if len(t) > 3]
                     if any(t in combined_pred_text for t in tokens):
                         exceptions_found += 1
+                        doc_exceptions_found += 1
 
+        doc_stats = {
+            "total_clauses": n_gt,
+            "detected_clauses": len(doc_clauses),
+            "category_accuracy": round((doc_cat_matches / n_gt * 100), 1) if n_gt else 0.0,
+            "severity_accuracy": round((doc_sev_matches / n_gt * 100), 1) if n_gt else 0.0,
+            "hallucination_rate": round((doc_hallucinations / n_gt * 100), 1) if n_gt else 0.0,
+            "no_invention_rate": round(((n_gt - doc_hallucinations) / n_gt * 100), 1) if n_gt else 100.0,
+            "directionality_accuracy": round((doc_directionality / n_gt * 100), 1) if n_gt else 100.0,
+            "fact_retention_rate": round((doc_facts_found / max(1, doc_total_facts) * 100), 1) if doc_total_facts else 100.0
+        }
         results_per_doc[doc_id] = doc_stats
 
     overall_metrics = {

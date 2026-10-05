@@ -37,14 +37,19 @@ BANNED_STRINGS: List[str] = [
 def check_banned_strings(text: str) -> List[str]:
     """
     Checks for the presence of any forbidden banned strings in the generated narrative text.
-    Returns list of detected banned strings.
+    Uses token boundary matching for short acronyms like 'RS' or 'rs.' to avoid false positives on words like 'REPORTS'.
     """
     if not text:
         return []
     found = []
     for bs in BANNED_STRINGS:
-        if bs in text:
-            found.append(bs)
+        if len(bs) <= 3:
+            pattern = r'\b' + re.escape(bs) + r'\b'
+            if re.search(pattern, text, re.IGNORECASE):
+                found.append(bs)
+        else:
+            if bs in text:
+                found.append(bs)
     return found
 
 
@@ -474,41 +479,41 @@ def verify_and_ground_clause_narrative(
                 cleaned_details.append(d)
         details_list = cleaned_details
 
-    # 3. GENERALIZED INVENTED LEGAL MECHANISMS CHECK
+    # 3. GENERALIZED INVENTED LEGAL MECHANISMS CHECK (Clean filtering, zero phrase substitution)
     for rule in LEGAL_MECHANISM_RULES:
         pat = rule["narrative_pattern"]
         req_terms = rule["source_required_terms"]
         has_source_basis = any(t in s_lower for t in req_terms)
         if not has_source_basis:
+            matched_ungrounded = False
             if pat.search(what_this_clause_means):
-                if rule["name"] == "termination_for_cause":
-                    what_this_clause_means = re.sub(r'cure\s+periods?,?\s*', '', what_this_clause_means, flags=re.IGNORECASE)
-                    what_this_clause_means = re.sub(r'for\s+cause\s+or\s+convenience', 'for convenience', what_this_clause_means, flags=re.IGNORECASE)
-                else:
-                    what_this_clause_means = pat.sub(rule["replacement_phrase"], what_this_clause_means).strip()
+                what_this_clause_means = pat.sub('', what_this_clause_means).strip()
+                what_this_clause_means = re.sub(r'\s{2,}', ' ', what_this_clause_means).strip()
                 grounding_notes.append(rule["note"])
+                matched_ungrounded = True
             if pat.search(obligations):
-                if rule["name"] == "termination_for_cause":
-                    obligations = re.sub(r'A\s+party\s+terminating\s+for\s+cause[^\.]*\.\s*', '', obligations, flags=re.IGNORECASE).strip()
-                else:
-                    obligations = pat.sub(rule["replacement_phrase"], obligations).strip()
+                obligations = pat.sub('', obligations).strip()
                 obligations = re.sub(r'\s{2,}', ' ', obligations).strip()
                 grounding_notes.append(rule["note"])
+                matched_ungrounded = True
 
             cleaned_details = []
             for d in details_list:
-                if pat.search(d) and rule["name"] in ["cure_period", "fee_acceleration", "arbitration", "security_deposit", "warranty_disclaimer", "assignment_restriction", "force_majeure"]:
-                    grounding_notes.append(f"Filtered invented mechanism detail: '{d}'")
+                if pat.search(d):
+                    grounding_notes.append(f"Filtered ungrounded detail: '{d}'")
+                    matched_ungrounded = True
                 else:
                     cleaned_details.append(d)
             details_list = cleaned_details
 
             if consequences and pat.search(consequences):
-                if rule["name"] == "fee_acceleration":
-                    consequences = re.sub(r'accrued\s+unpaid\s+fees\s+become\s+immediately\s+due,?\s*', '', consequences, flags=re.IGNORECASE).strip()
-                else:
-                    consequences = pat.sub(rule["replacement_phrase"], consequences).strip()
+                consequences = pat.sub('', consequences).strip()
+                consequences = re.sub(r'\s{2,}', ' ', consequences).strip()
                 grounding_notes.append(rule["note"])
+                matched_ungrounded = True
+
+            if matched_ungrounded:
+                warnings.append(rule["note"])
 
     # 4. CATEGORY CONFLATION CHECK: GOVERNING LAW VS JURISDICTION
     has_substantive_law = bool(re.search(

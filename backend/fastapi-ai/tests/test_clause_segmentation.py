@@ -153,3 +153,59 @@ def test_segment_clauses_api_endpoint():
     assert data["clauses"][0]["position"] == 1
     assert data["clauses"][1]["position"] == 2
 
+
+def test_contract_e_sample_shuttle_24_sections_segmentation():
+    """
+    Regression test ensuring Contract E (SampleContract-Shuttle.pdf) segments
+    into exactly 24 numbered sections with sub-items (A., B., 1., 2.) nested.
+    """
+    from pathlib import Path
+    from app.services.pdf_service import extract_pdf_text_service
+    from app.services.text_cleaning_service import clean_legal_text
+
+    pdf_path = Path("evaluation_dataset/documents/SampleContract-Shuttle.pdf")
+    if not pdf_path.exists():
+        pdf_path = Path("evaluation_dataset/documents/contract_e_professional_services.pdf")
+
+    if pdf_path.exists():
+        pdf_bytes = pdf_path.read_bytes()
+        extracted = extract_pdf_text_service(pdf_bytes, enable_ocr=False)
+        cleaned = clean_legal_text(extracted.get("full_text", ""))
+        result = segment_document_clauses(cleaned.get("cleaned_text", ""))
+
+        assert result["success"] is True
+        assert result["total_clauses"] == 24
+        clauses = result["clauses"]
+
+        # Verify section titles
+        expected_titles = [
+            "DUTIES",
+            "COMPENSATION",
+            "TERM",
+            "EARLY TERMINATION",
+            "INDEMNIFICATION FOR DAMAGES, TAXES AND CONTRIBUTIONS",
+            "INSURANCE",
+            "FEDERAL, STATE AND LOCAL LAWS",
+            "EQUAL EMPLOYMENT OPPORTUNITY",
+            "HARASSMENT",
+            "LICENSES",
+            "INDEPENDENT CONSULTANT STATUS",
+            "RETENTION AND AUDIT OF RECORDS",
+            "INSPECTION OF WORK",
+            "ACKNOWLEDGMENT",
+            "WORK PRODUCTS",
+            "SAFETY",
+            "MODIFICATION OF AGREEMENT",
+            "DISPUTES",
+            "AUDIT REVIEW PROCEDURES",
+            "SUBCONTRACTING",
+            "NONASSIGNMENT",
+            "REBATES, KICKBACKS OR OTHER UNLAWFUL CONSIDERATION",
+            "NOTIFICATION",
+            "COMPLETE AGREEMENT"
+        ]
+        for idx, expected_title in enumerate(expected_titles):
+            assert clauses[idx]["clause_number"] == str(idx + 1)
+            assert expected_title in clauses[idx]["title"].upper()
+
+

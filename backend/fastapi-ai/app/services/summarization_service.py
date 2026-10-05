@@ -130,7 +130,7 @@ def generate_document_executive_summary(
         for c in clauses_list:
             c_num = c.get("clause_number") or c.get("position")
             c_title = c.get("title", "")
-            c_text = c.get("text", "")
+            c_text = c.get("original_text") or c.get("text", "")
             c_text_lower = c_text.lower()
             c_cat = c.get("category", "")
             c_sev = c.get("severity", "Low")
@@ -139,16 +139,16 @@ def generate_document_executive_summary(
             # Extract Key Figures
             if c_details:
                 for kd in c_details:
-                    lbl = kd.get("label", "")
-                    val = kd.get("value", "")
-                    if any(k in lbl.lower() for k in ["payment", "rent", "fee", "deposit", "interest", "cap", "term", "duration", "window", "governing law", "forum", "non-compete"]):
+                    lbl = kd.get("label", "") if isinstance(kd, dict) else str(kd)
+                    val = kd.get("value", "") if isinstance(kd, dict) else str(kd)
+                    if any(k in lbl.lower() for k in ["payment", "rent", "fee", "deposit", "interest", "cap", "term", "duration", "window", "governing law", "forum", "non-compete", "fact"]):
                         key_figures.append({
                             "item": lbl,
                             "value": val,
                             "clause": c_num
                         })
-            else:
-                currencies = re.findall(r'(?:Rs\.?|\$|₹|EUR|USD|GBP)\s*[\d,]+(?:\.\d+)?', c_text, re.IGNORECASE)
+            if not c_details or len(key_figures) == 0:
+                currencies = re.findall(r'(?:\bRs\.?|\$|₹|\bEUR\b|\bUSD\b|\bGBP\b)\s*\d+[\d,]*(?:\.\d+)?', c_text)
                 for curr in currencies:
                     key_figures.append({"item": f"Financial Term ({c_title or 'Clause'})", "value": curr, "clause": c_num})
                 terms = re.findall(r'\b\d+\s*(?:years?|months?|days?)\b', c_text, re.IGNORECASE)
@@ -161,8 +161,12 @@ def generate_document_executive_summary(
                 takeaway = c.get("plain_language") or c.get("what_this_clause_means") or c.get("structured_explanation", {}).get("what_this_clause_means", "")
                 if "indemnif" in c_title.lower() or "indemnif" in str(c_cat).lower() or "indemnif" in c_text.lower():
                     who_bound = c.get("who_is_bound", "")
-                    if "consultant" in who_bound.lower() or "consultant agrees to defend" in c_text.lower() or "consultant" in c_text.lower() and "client" in c_text.lower():
+                    if "consultant" in who_bound.lower() or "consultant" in c_text.lower():
                         why_text = "Unilateral consultant indemnification: Consultant indemnifies Client against third-party claims."
+                    elif who_bound and who_bound != "Not stated":
+                        why_text = f"Unilateral {who_bound.lower()} indemnification: {who_bound} indemnifies against third-party claims."
+                    elif not why_text:
+                        why_text = "Indemnification obligation imposes liability for third-party losses."
                 if not why_text:
                     why_text = f"Assigned {c_sev} risk profile based on contractual terms."
                 top_risks.append({

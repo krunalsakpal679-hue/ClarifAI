@@ -32,9 +32,9 @@ def test_llm_timeout_default():
     assert timeout > 0
 
 
-def test_sanitize_error_message_redacts_api_key():
+def test_sanitize_error_message_redacts_api_key(monkeypatch):
     fake_key = "gsk_test123456789secretkey"
-    os.environ["GROQ_API_KEY"] = fake_key
+    monkeypatch.setenv("GROQ_API_KEY", fake_key)
     
     raw_error = f"APIError: Failed with key {fake_key} on model openai/gpt-oss-20b"
     sanitized = sanitize_error_message(raw_error)

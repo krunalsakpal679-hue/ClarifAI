@@ -67,27 +67,33 @@ def verify_fact_grounding(
     norm_clause = normalize_text_for_matching(clause_text)
     norm_quote = normalize_text_for_matching(quote)
 
-    # 1. source_quote must appear in clause text
+    # 1. Full source_quote must appear verbatim in clause text after whitespace/punctuation normalization
     if norm_quote not in norm_clause:
-        # Fuzzy fallback: check if at least 80% of quote words exist in sequence
-        quote_words = norm_quote.split()
-        if len(quote_words) >= 4:
-            sub_phrase = " ".join(quote_words[:4])
-            if sub_phrase not in norm_clause:
-                return False, f"source_quote '{quote[:40]}...' does not appear in clause text."
-        else:
-            return False, f"source_quote '{quote}' does not appear in clause text."
+        return False, f"source_quote '{quote[:50]}...' does not appear in clause text."
 
-    # 2. Token-bounded number check: numbers in value must appear in source_quote or clause
-    val_tokens = extract_tokens_and_numbers(value)
-    norm_quote_and_clause = f"{norm_quote} {norm_clause}"
-    for tok in val_tokens:
-        tok_low = tok.lower()
-        if any(char.isdigit() for char in tok_low) or tok_low.endswith("%") or tok_low.startswith("$"):
-            # Check token boundary
-            pattern = r'\b' + re.escape(tok_low) + r'\b'
-            if not re.search(pattern, norm_quote_and_clause):
-                return False, f"Number/figure '{tok}' in value was not found in source text."
+    # 2. Digit-aware number check: every number in value must appear in source_quote
+    # Strip commas for standard numeric representation
+    norm_val_digits = value.replace(',', '').lower()
+    norm_quote_digits = norm_quote.replace(',', '')
+
+    val_numbers = re.findall(r'\d+(?:\.\d+)?', norm_val_digits)
+    for n in val_numbers:
+        # Check digit-aware boundary: not preceded or followed by another digit or dot
+        pat = rf'(?<![\d.]){re.escape(n)}(?![\d.])'
+        if not re.search(pat, norm_quote_digits):
+            # Check with/without trailing .00
+            if n.endswith('.00') and re.search(rf'(?<![\d.]){re.escape(n[:-3])}(?![\d.])', norm_quote_digits):
+                continue
+            if '.' not in n and re.search(rf'(?<![\d.]){re.escape(n)}\.00?(?![\d.])', norm_quote_digits):
+                continue
+            return False, f"Number/figure '{n}' in value was not found in source_quote."
+
+    # Currency and percentage symbols check
+    if any(c in value for c in ['$', '€', '£', '₹']) and not any(c in quote for c in ['$', '€', '£', '₹', 'dollar', 'euro', 'pound', 'rupee', 'usd']):
+        return False, "Currency in value does not appear in source_quote."
+
+    if ('%' in value or 'percent' in value.lower()) and ('%' not in quote and 'percent' not in quote.lower()):
+        return False, "Percentage in value does not appear in source_quote."
 
     # 3. Party name presence check
     bound_party = str(fact.get("bound_party") or fact.get("who_is_bound") or "").strip()

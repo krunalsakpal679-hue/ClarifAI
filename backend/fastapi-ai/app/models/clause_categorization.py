@@ -11,33 +11,55 @@ from app.models.clause_segmentation import ClauseItem
 
 
 class ClauseCategoryEnum(str, Enum):
+    # 24 Canonical Taxonomy Categories (Master Prompt Section 4.4)
     SCOPE_OF_SERVICES = "Scope of Services"
     PAYMENT = "Payment"
+    TERM = "Term"
+    RENEWAL = "Renewal"
+    TERMINATION = "Termination"
     CONFIDENTIALITY = "Confidentiality"
-    INTELLECTUAL_PROPERTY = "Intellectual Property"
+    IP_WORK_PRODUCT = "IP/Work Product"
     INDEMNIFICATION = "Indemnification"
     LIMITATION_OF_LIABILITY = "Limitation of Liability"
-    TERM = "Term"
-    TERMINATION = "Termination"
-    RENEWAL = "Renewal"
+    INSURANCE = "Insurance"
+    PRIVACY = "Privacy"
     DISPUTE_RESOLUTION = "Dispute Resolution"
     GOVERNING_LAW = "Governing Law"
     RESTRICTIVE_COVENANTS = "Restrictive Covenants"
-    PROPERTY_PREMISES = "Property / Premises"
-    PROPERTY_USE = "Property Use"
+    PREMISES = "Premises"
+    USE = "Use"
     MAINTENANCE = "Maintenance"
     ALTERATIONS = "Alterations"
-    WARRANTY = "Warranty"
-    INSURANCE = "Insurance"
-    FORCE_MAJEURE = "Force Majeure"
+    COMPLIANCE_LEGAL = "Compliance/Legal"
+    AUDIT_AND_RECORDS = "Audit and Records"
+    SUBCONTRACTING = "Subcontracting"
     ASSIGNMENT = "Assignment"
     NOTICES = "Notices"
-    GENERAL_BOILERPLATE = "General / Boilerplate"
-    PRIVACY = "Privacy"
+    ENTIRE_AGREEMENT_GENERAL = "Entire Agreement/General"
+
+    # Backward-compatible Taxonomy Aliases (Mapped to Canonical 24 Values)
+    INTELLECTUAL_PROPERTY = "IP/Work Product"
+    PROPERTY_PREMISES = "Premises"
+    PROPERTY_USE = "Use"
+    WARRANTY = "Warranty"
+    FORCE_MAJEURE = "Force Majeure"
+    GENERAL_BOILERPLATE = "Entire Agreement/General"
+    GENERAL = "Entire Agreement/General"
     LIABILITY = "Limitation of Liability"
+    AUDIT_INSPECTION = "Audit and Records"
 
 
-APPROVED_CATEGORIES_SET = {category.value for category in ClauseCategoryEnum}
+APPROVED_CATEGORIES_SET = {category.value for category in ClauseCategoryEnum} | {
+    "Intellectual Property",
+    "Property / Premises",
+    "Property Use",
+    "General / Boilerplate",
+    "General",
+    "Liability",
+    "Audit / Inspection",
+    "Force Majeure",
+    "Warranty",
+}
 
 
 class CategorizedClauseItem(ClauseItem):

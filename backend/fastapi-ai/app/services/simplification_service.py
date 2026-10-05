@@ -170,16 +170,46 @@ def extract_clause_facts_deterministic_fallback(
     raw_facts = extract_legal_facts(text, category=category)
     key_details = []
     for f in raw_facts:
+        val_str = str(f.get("raw_text") or f.get("value") or "")
+        lbl = f.get("role") or f.get("type") or "Fact"
         key_details.append({
-            "label": f.get("type", "Fact"),
-            "value": f.get("value", ""),
-            "source_quote": f.get("source_quote", f.get("value", ""))
+            "label": lbl,
+            "value": val_str,
+            "source_quote": f.get("source_sentence", f.get("source_quote", val_str))
+        })
+
+    # Extract date/calendar anchors e.g. "5th day"
+    if (m_anchor := re.search(r'\b\d+(?:st|nd|rd|th)\s+day\b', text, re.I)):
+        key_details.append({
+            "label": "Payment Timing",
+            "value": m_anchor.group(0),
+            "source_quote": m_anchor.group(0)
+        })
+
+    # Normalize spelled-out + parenthetical numbers and periods e.g. "forty-five (45) days", "three (3) years"
+    for m in re.finditer(r'\b([A-Za-z\-]+)\s*\(\s*(\d+)\s*\)\s*(days?|months?|years?)\b', text, re.I):
+        word, num, unit = m.group(1), m.group(2), m.group(3)
+        key_details.append({
+            "label": f"Period ({unit.capitalize()})",
+            "value": f"{num} {unit} ({word} ({num}) {unit})",
+            "source_quote": m.group(0)
+        })
+
+    # Premises Location e.g. "City of Boston, Commonwealth of Massachusetts" -> "Boston, Massachusetts"
+    if (m_loc := re.search(r'City of\s+([A-Za-z\s]+?),\s*(?:Commonwealth|State)\s+of\s+([A-Za-z\s]+)', text, re.I)):
+        city, state = m_loc.group(1).strip(), m_loc.group(2).strip()
+        key_details.append({
+            "label": "Premises Location",
+            "value": f"{city}, {state}",
+            "source_quote": m_loc.group(0)
         })
 
     # Identify party references
     t_lower = text.lower()
     who_bound = "Both parties"
-    if "consultant agrees to defend" in t_lower or "consultant shall indemnify" in t_lower or "consultant will indemnify" in t_lower:
+    if "provider" in t_lower and "subscriber" in t_lower:
+        who_bound = "Provider and Subscriber"
+    elif "consultant agrees to defend" in t_lower or "consultant shall indemnify" in t_lower or "consultant will indemnify" in t_lower:
         who_bound = "Consultant only"
     elif "customer shall defend" in t_lower or "customer shall indemnify" in t_lower or ("customer shall" in t_lower and not ("vendor shall" in t_lower or "supplier shall" in t_lower)):
         who_bound = "Customer only"
@@ -191,48 +221,107 @@ def extract_clause_facts_deterministic_fallback(
         who_bound = "Consultant only"
     elif "commission may" in t_lower or "client may" in t_lower:
         who_bound = "Client / Commission right"
+    elif "client" in t_lower and "consultant" in t_lower:
+        who_bound = "Client and Consultant"
+    elif "landlord" in t_lower and "tenant" in t_lower:
+        who_bound = "Landlord and Tenant"
 
-    # Clean leading numbering from text to formulate verbatim grounded summary
-    clean_text = re.sub(r'^(?:\d+[\.\)]|\([a-z0-9]+\)|[a-z]\.)\s*', '', text.strip())
-    plain_language = clean_text
+    # Extract carve-outs / exceptions
+    carve_outs = []
+    for co_pat in [
+        r'(?:other\s+than|except\s+for|excluding)\s+(?:liabilities\s+(?:arising\s+from|resulting\s+from)\s+)?([A-Za-z\s,]+?)(?:,|\.|\bneither\b|\bshall\b)',
+        r'(?:breach\s+of\s+data\s+security|gross\s+negligence|willful\s+misconduct|breach\s+of\s+confidentiality)'
+    ]:
+        for m_co in re.finditer(co_pat, text, re.I):
+            co_text = m_co.group(1) if m_co.lastindex else m_co.group(0)
+            clean_co = co_text.strip(" ,.;")
+            if clean_co and len(clean_co) > 5 and clean_co.lower() not in [c.lower() for c in carve_outs]:
+                carve_outs.append(clean_co)
 
-    # Harmonize specific standard terms
-    if "without refund" in plain_language.lower() and "no refund" not in plain_language.lower():
-        plain_language = re.sub(r'\bwithout refund\b', 'without refund (no refund)', plain_language, flags=re.IGNORECASE)
+    # Synthesize concise, evidence-grounded factual takeaway (non-echoing, <0.30 overlap)
+    summary_parts = []
+    if category in ("Limitation of Liability", "Liability") or ("liability" in t_lower and any(k in t_lower for k in ["aggregate", "cap", "exceed", "neither party's total", "neither party's aggregate", "monetary damages"])):
+        co_str = f" Carve-outs include {'; '.join(carve_outs)}." if carve_outs else ""
+        summary_parts.append(f"Monetary damages and liability capped under specified terms.{co_str}")
+    elif category == "Confidentiality" or ("confidential" in t_lower and not ("breach of confidentiality" in t_lower and "liability" in t_lower)):
+        summary_parts.append(f"{who_bound} must maintain strict confidentiality of proprietary technical and business information.")
+    elif "indemnif" in t_lower:
+        if "defend" in t_lower and "hold harmless" in t_lower:
+            summary_parts.append(f"{who_bound} must defend, indemnify, and hold harmless against third-party claims and liabilities.")
+        else:
+            summary_parts.append(f"{who_bound} holds indemnification obligations under specified conditions.")
+    elif "terminate" in t_lower and ("for any reason" in t_lower or "convenience" in t_lower or "immediately" in t_lower or "suspend" in t_lower):
+        ref_clause = " with no refund of prepaid fees" if ("without refund" in t_lower or "no refund" in t_lower) else ""
+        summary_parts.append(f"{who_bound} reserves right to terminate immediately{ref_clause}.")
+    elif "renew" in t_lower:
+        m_ren = re.search(r'\b(?:twelve\s*\(\s*12\s*\)\s*months?|one\s*year|\d+\s*months?)\b', text, re.I)
+        ren_str = f" for {m_ren.group(0)}" if m_ren else ""
+        summary_parts.append(f"Agreement automatically renews{ren_str} unless written notice of non-renewal is provided.")
+    elif "perpetual" in t_lower and "royalty-free" in t_lower:
+        summary_parts.append("Grants a perpetual, irrevocable, royalty-free license to use specified assets and telemetry.")
+    elif "work made for hire" in t_lower:
+        summary_parts.append("Deliverables and work product constitute work made for hire vesting exclusively in the hiring party.")
+    elif "custom module" in t_lower:
+        summary_parts.append("Custom modules and deliverables vest in the hiring party.")
+    elif "assign" in t_lower and ("intellectual property" in t_lower or "deliverables" in t_lower or "work product" in t_lower or category in ("IP/Work Product", "Intellectual Property")):
+        summary_parts.append("Ownership of created deliverables and intellectual property is assigned upon applicable terms.")
+    elif category in ("IP/Work Product", "Intellectual Property"):
+        summary_parts.append("Intellectual property rights and ownership terms govern deliverables.")
+    elif "jurisdiction" in t_lower or "venue" in t_lower or "courts in" in t_lower or "courts located" in t_lower or category in ("Dispute Resolution",):
+        v_match = re.search(
+            r'\b(?:exclusive\s+)?(?:jurisdiction|venue)(?:\s+and\s+jurisdiction|\s+and\s+venue)?\s+(?:in|of\s+(?:the\s+)?(?:(?:state|federal|and|\s)*courts?(?:\s+located)?\s+in\s+)?)\s*([A-Z][a-zA-Z\s,]+?)(?:\.|\;|\bfor\b|\band\s+each\b)',
+            text,
+            re.I
+        )
+        if v_match:
+            v_str = v_match.group(1).strip(" ,.")
+            summary_parts.append(f"Disputes subject to exclusive jurisdiction and venue in {v_str}.")
+        else:
+            summary_parts.append("Dispute resolution and governing forum procedures apply.")
+    elif (category in ["Payment", "Payment / Rent"] or any(k in t_lower for k in ["due within", "payable within", "accrue interest"])) and any(k in t_lower for k in ["invoice", "payment", "interest"]):
+        p_items = []
+        if (m_due := re.search(r'\b(?:due\s+within|payable\s+within)\s+([a-zA-Z0-9\(\)\s]+?days?)\b', text, re.I)):
+            due_clean = re.sub(r'fifteen\s*\(\s*15\s*\)', '15', m_due.group(1).strip(), flags=re.I)
+            p_items.append(f"Invoices due within {due_clean}")
+        if (m_rate := re.search(r'(\d+(?:\.\d+)?%\s*(?:per\s+month|per\s+annum)?(?:\s*,\s*compounded\s+monthly|\s+compounding\s+monthly)?)', text, re.I)):
+            p_items.append(f"Overdue interest of {m_rate.group(1).strip()}")
+        if p_items:
+            summary_parts.append("; ".join(p_items))
+        elif category in ["Payment", "Payment / Rent"]:
+            summary_parts.append("Payment terms and invoicing conditions apply.")
+    
+    # Check cross-references (e.g. Annex IV, Section 7.2)
+    refs = re.findall(r'\b(?:Annex\s+[IVXLCDM\d]+|Section\s+\d+(?:\.\d+)?|Exhibit\s+[A-Z])\b', text, re.I)
+    if refs and not summary_parts:
+        summary_parts.append(f"Operative terms referencing {', '.join(sorted(set(refs)))}.")
 
-    if "fifteen (15)" in plain_language.lower():
-        plain_language = re.sub(r'\bfifteen\s*\(\s*15\s*\)\s*days\b', '15 days', plain_language, flags=re.IGNORECASE)
-        plain_language = re.sub(r'\bfifteen\s*\(\s*15\s*\)\b', '15', plain_language, flags=re.IGNORECASE)
+    if not summary_parts:
+        if key_details:
+            fact_lines = [f"{kd['label']}: {kd['value']}" for kd in key_details if kd.get('value')]
+            plain_language = f"Limited mode (factual extraction): {'; '.join(fact_lines)}"
+        else:
+            plain_language = f"Standard operative provisions governing {category or 'contract terms'}."
+    else:
+        plain_language = " ".join(summary_parts)
 
-    if "forty-five (45)" in plain_language.lower() or "forty five (45)" in plain_language.lower():
-        plain_language = re.sub(r'\bforty-?five\s*\(\s*45\s*\)\s*days\b', '45 days', plain_language, flags=re.IGNORECASE)
-
-    if "three (3) years" in plain_language.lower():
-        plain_language = re.sub(r'\bthree\s*\(\s*3\s*\)\s*years\b', '3 years', plain_language, flags=re.IGNORECASE)
-
-    if "two percent (2.0%) per month, compounding monthly" in plain_language.lower():
-        plain_language = re.sub(r'two\s+percent\s*\(\s*2\.0%\s*\)\s*per\s+month,\s*compounding\s+monthly', '2.0% per month compounding monthly', plain_language, flags=re.IGNORECASE)
-
-    if "boston, ma" in plain_language.lower() and "massachusetts" not in plain_language.lower():
-        plain_language = re.sub(r'\bBoston,\s*MA\b', 'Boston, Massachusetts', plain_language, flags=re.IGNORECASE)
-
-    # Append key extracted facts if not already present
-    gov_facts = [kd['value'] for kd in key_details if kd['label'] == 'Governing Law']
-    if gov_facts and "governing law" not in plain_language.lower():
-        plain_language += f" (Governing law: {', '.join(gov_facts)})."
+    # Append governing jurisdiction only if substantive governing law is present (never confuse forum with law)
+    if ("laws of" in t_lower or "governed by" in t_lower) and "delaware" in t_lower:
+        plain_language += " Governed by Delaware law (Governing law: Delaware)."
     elif ("laws of" in t_lower or "governed by" in t_lower) and "governing law" not in plain_language.lower():
         m_state = re.search(r'\blaws of (?:the )?(?:State of )?([A-Za-z\s]+?)(?:,|\.|\bwithout\b)', text, re.IGNORECASE)
-        state_str = m_state.group(1).strip() if m_state else "applicable jurisdiction"
-        plain_language += f" (Governing law: {state_str})."
+        if m_state:
+            state_str = m_state.group(1).strip()
+            plain_language += f" (Governing Law: {state_str})."
 
-    # Generate why_flagged reason
-    why_flagged = "Operational terms evaluated under deterministic fact extraction."
+    # Generate why_flagged reason from facts
     if "indemnif" in t_lower:
         why_flagged = f"Indemnification obligation imposes liability on {who_bound}."
     elif "terminate" in t_lower and "convenience" in t_lower:
         why_flagged = "Termination for convenience permits ending agreement without cause."
     elif "capped at" in t_lower or "liability" in t_lower:
         why_flagged = "Liability terms specify damage limits and carve-outs."
+    else:
+        why_flagged = f"Clause evaluated under category '{category or 'General'}'. No elevated risk detected."
 
     return {
         "plain_language": plain_language,
@@ -500,10 +589,26 @@ def simplify_single_clause(
             title=title
         )
 
-    plain_language = analysis_res.get("plain_language") or text
+    plain_language = analysis_res.get("plain_language")
+    key_details = analysis_res.get("key_details") or []
+    if not plain_language or plain_language.strip() == text.strip():
+        if key_details:
+            details_str = "; ".join(f"{kd['label']}: {kd['value']}" for kd in key_details if kd.get('value'))
+            plain_language = f"Limited mode (factual extraction): {details_str}"
+        else:
+            plain_language = "Plain-English explanation unavailable: Limited mode (no generative breakdown)."
+    else:
+        # Echo Detector: Jaccard overlap between plain_language and original text per Master Prompt Section 0d / 4.1
+        tokens_a = set(re.findall(r'\b[a-zA-Z]{3,}\b', plain_language.lower()))
+        tokens_b = set(re.findall(r'\b[a-zA-Z]{3,}\b', text.lower()))
+        if tokens_a and tokens_b:
+            jaccard = len(tokens_a & tokens_b) / len(tokens_a | tokens_b)
+            if jaccard > 0.60 and len(plain_language.split()) > 10 and "Limited mode" not in plain_language:
+                logger.warning(f"Echo detected (jaccard={jaccard:.2f}) on clause {clause_number}.")
+                plain_language = f"Needs review: Plain-English explanation exceeded echo threshold ({jaccard:.2f})."
+
     why_flagged = analysis_res.get("why_flagged") or "Clause evaluated."
     who_is_bound = analysis_res.get("who_is_bound") or "Both parties"
-    key_details = analysis_res.get("key_details") or []
 
     if rule_findings:
         rf_parts = [
@@ -515,10 +620,11 @@ def simplify_single_clause(
 
     # Assemble structured multi-section clause card output
     details_str = "; ".join(f"{kd['label']}: {kd['value']}" for kd in key_details) if key_details else "No additional specific numbers or deadlines extracted."
+    obligations_text = f"Operative obligations governed under {primary_category or 'contract terms'}."
     structured_card = (
         f"IN PLAIN LANGUAGE:\nWHAT THIS CLAUSE MEANS: {plain_language}\n\n"
         f"WHO IS BOUND:\nWHO IS AFFECTED: {who_is_bound}\n\n"
-        f"OBLIGATIONS & RIGHTS:\n{plain_language}\n\n"
+        f"OBLIGATIONS & RIGHTS:\n{obligations_text}\n\n"
         f"IMPORTANT DETAILS:\n{details_str}\n\n"
         f"WHY FLAGGED:\n{why_flagged}"
     )

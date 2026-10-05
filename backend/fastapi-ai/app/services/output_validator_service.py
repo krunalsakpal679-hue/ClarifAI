@@ -123,19 +123,13 @@ def compute_party_severity(
         return "High", "Restrictive covenant imposing post-term competition and solicitation prohibitions."
 
     if "R005" in rule_ids or "R015" in rule_ids:
-        if any(k in text_lower for k in ["no carve-outs", "capped at fees paid in the prior 12 months", "without exception"]):
-            return "High", "Total liability strictly capped at prior 12 months fees paid with zero carve-outs."
         return "High", "Aggregate financial liability cap or exclusion of remedies."
 
     # Moderate-risk conditions
     if "R001" in rule_ids:
-        if any(k in text_lower for k in ["15%", "price escalation", "raise prices"]):
-            return "Moderate", "Automatic renewal with up to 15% annual price escalation unless opted out 60 days prior."
         return "Moderate", "Automatic renewal provision with specified notice opt-out window."
 
     if "R004" in rule_ids:
-        if any(k in text_lower for k in ["compounded monthly", "compounding monthly", "legal fees", "collection costs", "2.0%", "1.5%"]):
-            return "Moderate", "Late payments accrue compounding monthly interest plus full collection and legal costs."
         return "Moderate", "Late payment interest penalty or surcharge."
 
     if "R012" in rule_ids:

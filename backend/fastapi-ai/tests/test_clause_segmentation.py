@@ -175,6 +175,11 @@ def test_contract_e_sample_shuttle_24_sections_segmentation():
 
         assert result["success"] is True
         assert result["total_clauses"] == 24
+        assert result.get("coverage_percentage", 0.0) >= 98.0
+        assert result.get("is_continuous") is True
+        assert result.get("highest_section") == 24
+        assert result.get("missing_sections") == []
+        assert result.get("status") == "ok"
         clauses = result["clauses"]
 
         # Verify section titles

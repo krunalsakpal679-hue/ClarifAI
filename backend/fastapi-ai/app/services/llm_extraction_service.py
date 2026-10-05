@@ -21,14 +21,15 @@ logger = logging.getLogger(__name__)
 # Allowed 24 taxonomy categories per PRD Step 3.3
 ALLOWED_CATEGORIES: List[str] = [
     "Scope of Services",
-    "Payment / Rent",
+    "Payment",
     "Term",
     "Renewal",
     "Termination",
     "Confidentiality",
-    "Intellectual Property",
+    "IP/Work Product",
     "Indemnification",
     "Limitation of Liability",
+    "Insurance",
     "Privacy",
     "Dispute Resolution",
     "Governing Law",
@@ -37,13 +38,12 @@ ALLOWED_CATEGORIES: List[str] = [
     "Use",
     "Maintenance",
     "Alterations",
-    "Insurance",
-    "Warranty",
-    "Force Majeure",
+    "Compliance/Legal",
+    "Audit and Records",
+    "Subcontracting",
     "Assignment",
     "Notices",
-    "General / Boilerplate",
-    "Audit / Inspection"
+    "Entire Agreement/General"
 ]
 
 

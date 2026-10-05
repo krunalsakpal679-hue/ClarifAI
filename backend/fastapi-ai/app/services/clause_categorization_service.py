@@ -18,50 +18,55 @@ SCHEMA_VERSION: str = "1.0.0"
 # Explicit Heading-to-Category Direct Mappings (Heading-First Priority per Spec P0/1D)
 HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     # Scope of Services
-    (re.compile(r"^(?:SERVICES|SCOPE\s+OF\s+SERVICES|SCOPE\s+OF\s+WORK|ENGAGEMENT\s+AND\s+DELIVERABLES|STATEMENT\s+OF\s+WORK|DELIVERABLES|DUTIES\s+AND\s+POSITION|DUTIES\s+AND\s+RESPONSIBILITIES|POSITION\s+AND\s+OPERATIONAL\s+DUTIES|EMPLOYMENT\s+DUTIES)\b", re.IGNORECASE), ClauseCategoryEnum.SCOPE_OF_SERVICES),
+    (re.compile(r"^(?:SERVICES|SCOPE\s+OF\s+SERVICES|SCOPE\s+OF\s+WORK|ENGAGEMENT\s+AND\s+DELIVERABLES|STATEMENT\s+OF\s+WORK|DELIVERABLES|DUTIES(?:\s+AND\s+POSITION|\s+AND\s+RESPONSIBILITIES)?|POSITION\s+AND\s+OPERATIONAL\s+DUTIES|EMPLOYMENT\s+DUTIES)\b", re.IGNORECASE), ClauseCategoryEnum.SCOPE_OF_SERVICES),
     # Payment
     (re.compile(r"^(?:FEES\s+AND\s+PAYMENT|FEES\s+AND\s+EXPENSES|FEES|PAYMENT\s+TERMS|PAYMENT|INVOICING\s+AND\s+FINANCE\s+CHARGES|INVOICING|RENT\s+(?:AND|&)\s+FINANCIAL\s+TERMS|MONTHLY\s+RENT(?:AL)?|COMPENSATION|BASE\s+SALARY|PRINCIPAL\s+LOAN\s+COMMITMENT|PRINCIPAL\s+LOAN|INTEREST\s+RATE|FINANCIAL\s+COVENANTS|PREPAYMENT\s+PREMIUMS?|PURCHASE\s+ORDERS?|PRICE\s+ADJUSTMENTS?)\b", re.IGNORECASE), ClauseCategoryEnum.PAYMENT),
     # Confidentiality
     (re.compile(r"^(?:CONFIDENTIALITY(?:\s+COVENANT)?|NON-DISCLOSURE|CONFIDENTIAL\s+INFORMATION|PROPRIETARY\s+INFORMATION|SECRECY)\b", re.IGNORECASE), ClauseCategoryEnum.CONFIDENTIALITY),
-    # Intellectual Property
-    (re.compile(r"^(?:INTELLECTUAL\s+PROPERTY(?:\s+RIGHTS|\s+ASSIGNMENT)?|WORK\s+PRODUCT\s+OWNERSHIP|IP\s+RIGHTS|OWNERSHIP\s+OF\s+DELIVERABLES|OWNERSHIP\s+OF\s+INVENTIONS|SUBSCRIPTION\s+GRANT|LICENSE\s+GRANT|ACCESS\s+RIGHTS)\b", re.IGNORECASE), ClauseCategoryEnum.INTELLECTUAL_PROPERTY),
+    # IP/Work Product
+    (re.compile(r"^(?:WORK\s+PRODUCTS?|WORK\s+PRODUCT\s+OWNERSHIP|INTELLECTUAL\s+PROPERTY(?:\s+RIGHTS|\s+ASSIGNMENT)?|IP\s+RIGHTS|OWNERSHIP\s+OF\s+DELIVERABLES|OWNERSHIP\s+OF\s+INVENTIONS|SUBSCRIPTION\s+GRANT|LICENSE\s+GRANT|ACCESS\s+RIGHTS)\b", re.IGNORECASE), ClauseCategoryEnum.IP_WORK_PRODUCT),
     # Indemnification
-    (re.compile(r"^(?:INDEMNIFICATION|INDEMNITY\s+OBLIGATIONS|INDEMNITY|DEFENSE\s+AND\s+INDEMNIFICATION|HOLD\s+HARMLESS|PATENT\s+INFRINGEMENT\s+AND\s+PRODUCT\s+INDEMNIFICATION)\b", re.IGNORECASE), ClauseCategoryEnum.INDEMNIFICATION),
+    (re.compile(r"^(?:INDEMNIFICATION(?:\s+FOR\s+DAMAGES,\s*TAXES\s+AND\s+CONTRIBUTIONS)?|INDEMNITY\s+OBLIGATIONS|INDEMNITY|DEFENSE\s+AND\s+INDEMNIFICATION|HOLD\s+HARMLESS|PATENT\s+INFRINGEMENT\s+AND\s+PRODUCT\s+INDEMNIFICATION)\b", re.IGNORECASE), ClauseCategoryEnum.INDEMNIFICATION),
     # Limitation of Liability
     (re.compile(r"^(?:LIMITATION\s+OF\s+LIABILITY|AGGREGATE\s+LIABILITY\s+CAP|AGGREGATE\s+(?:MONETARY\s+)?LIABILITY|DAMAGES\s+CAP|DISCLAIMER\s+OF\s+CONSEQUENTIAL\s+DAMAGES|LIABILITY\s+CAP|MONETARY\s+DAMAGES\s+LIMITATION|DAMAGES\s+LIMITATION)\b", re.IGNORECASE), ClauseCategoryEnum.LIMITATION_OF_LIABILITY),
     # Term
     (re.compile(r"^(?:TERM\s+DURATION|LEASE\s+TERM|LEASED\s+EQUIPMENT\s+AND\s+TERM|TERM)$", re.IGNORECASE), ClauseCategoryEnum.TERM),
     # Termination
-    (re.compile(r"^(?:TERMINATION(?:\s+AND\s+SEVERANCE)?|TERMINATION\s+RIGHTS|CANCELLATION|ACCELERATION\s+AND\s+REMEDIES|EVENTS?\s+OF\s+DEFAULT)\b", re.IGNORECASE), ClauseCategoryEnum.TERMINATION),
+    (re.compile(r"^(?:EARLY\s+TERMINATION|TERMINATION(?:\s+AND\s+SEVERANCE)?|TERMINATION\s+RIGHTS|CANCELLATION|ACCELERATION\s+AND\s+REMEDIES|EVENTS?\s+OF\s+DEFAULT)\b", re.IGNORECASE), ClauseCategoryEnum.TERMINATION),
     # Renewal
     (re.compile(r"^(?:RENEWAL|TERM\s+AND\s+RENEWAL|EXTENSION|AUTOMATIC\s+RENEWAL)\b", re.IGNORECASE), ClauseCategoryEnum.RENEWAL),
     # Dispute Resolution
-    (re.compile(r"\b(?:DISPUTE\s+RESOLUTION|BINDING\s+ARBITRATION|ARBITRATION|GOVERNING\s+FORUM|COURT\s+VENUE|EXCLUSIVE\s+JURISDICTION|VENUE\s+AND\s+JURISDICTION)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION),
+    (re.compile(r"\b(?:DISPUTES?|DISPUTE\s+RESOLUTION|BINDING\s+ARBITRATION|ARBITRATION|GOVERNING\s+FORUM|COURT\s+VENUE|EXCLUSIVE\s+JURISDICTION|VENUE\s+AND\s+JURISDICTION|CLAIMS\s+AND\s+DISPUTES)\b", re.IGNORECASE), ClauseCategoryEnum.DISPUTE_RESOLUTION),
     # Governing Law
     (re.compile(r"\b(?:GOVER?N(?:ING|ERNG)?\s+(?:LAW|JURISDICTION)|APPLICABLE\s+LAW|CHOICE\s+OF\s+LAW)\b", re.IGNORECASE), ClauseCategoryEnum.GOVERNING_LAW),
-
     # Restrictive Covenants
     (re.compile(r"^(?:NON-COMPETE\s+AND\s+NON-SOLICITATION|RESTRICTIVE\s+COVENANTS|POST-EMPLOYMENT\s+NON-COMPETE|NON-COMPETE|NON-SOLICITATION)\b", re.IGNORECASE), ClauseCategoryEnum.RESTRICTIVE_COVENANTS),
-    # Property / Premises
-    (re.compile(r"^(?:LEASED\s+PREMISES|DEMISED\s+PREMISES|PREMISES|PROPERTY\s+DESCRIPTION)\b", re.IGNORECASE), ClauseCategoryEnum.PROPERTY_PREMISES),
-    # Property Use
-    (re.compile(r"^(?:USE\s+OF\s+PREMISES|PERMITTED\s+USE|USE\s+AND\s+OCCUPANCY|OCCUPANCY)\b", re.IGNORECASE), ClauseCategoryEnum.PROPERTY_USE),
+    # Premises
+    (re.compile(r"^(?:LEASED\s+PREMISES|DEMISED\s+PREMISES|PREMISES|PROPERTY\s+DESCRIPTION)\b", re.IGNORECASE), ClauseCategoryEnum.PREMISES),
+    # Use
+    (re.compile(r"^(?:USE\s+OF\s+PREMISES|PERMITTED\s+USE|USE\s+AND\s+OCCUPANCY|OCCUPANCY)\b", re.IGNORECASE), ClauseCategoryEnum.USE),
     # Maintenance
     (re.compile(r"^(?:MAINTENANCE\s+AND\s+REPAIRS?|MAINTENANCE|REPAIRS|EQUIPMENT\s+MAINTENANCE|PREVENTIVE\s+MAINTENANCE)\b", re.IGNORECASE), ClauseCategoryEnum.MAINTENANCE),
     # Alterations
     (re.compile(r"^(?:ALTERATIONS\s+AND\s+IMPROVEMENTS|ALTERATIONS|IMPROVEMENTS|MODIFICATIONS\s+TO\s+PREMISES)\b", re.IGNORECASE), ClauseCategoryEnum.ALTERATIONS),
     # Warranty
-    (re.compile(r"^(?:PRODUCT\s+WARRANTY(?:\s+AND\s+DEFECT\s+REMEDIES)?|WARRANTY\s+AND\s+REMEDIES|WARRANTIES|REPRESENTATIONS\s+AND\s+WARRANTIES|LIMITED\s+WARRANTY|DISCLAIMER\s+OF\s+WARRANTIES)\b", re.IGNORECASE), ClauseCategoryEnum.WARRANTY),
+    (re.compile(r"^(?:PRODUCT\s+WARRANTY(?:\s+AND\s+DEFECT\s+REMEDIES)?|WARRANTY(?:\s+AND\s+REMEDIES)?|WARRANTIES|REPRESENTATIONS\s+AND\s+WARRANTIES|LIMITED\s+WARRANTY|DISCLAIMER\s+OF\s+WARRANTIES)\b", re.IGNORECASE), ClauseCategoryEnum.WARRANTY),
+    # Compliance/Legal
+    (re.compile(r"^(?:FEDERAL,\s*STATE\s+AND\s+LOCAL\s+LAWS|EQUAL\s+EMPLOYMENT\s+OPPORTUNITY|HARASSMENT|LICENSES?|SAFETY|REBATES,\s*KICKBACKS(?:\s+OR\s+OTHER\s+UNLAWFUL\s+CONSIDERATION)?|COMPLIANCE(?:\s+WITH\s+LAWS)?|REGULATORY\s+COMPLIANCE|LEGAL\s+COMPLIANCE)\b", re.IGNORECASE), ClauseCategoryEnum.COMPLIANCE_LEGAL),
+    # Audit and Records
+    (re.compile(r"^(?:RETENTION\s+AND\s+AUDIT(?:\s+OF\s+RECORDS)?|AUDIT\s+REVIEW(?:\s+PROCEDURES)?|AUDIT(?:\s+AND\s+INSPECTION|\s+OF\s+RECORDS|\s+PROCEDURES?)?|INSPECTION(?:\s+OF\s+WORK)?|RIGHT\s+TO\s+INSPECT|BOOKS\s+AND\s+RECORDS|RECORD\s+RETENTION)\b", re.IGNORECASE), ClauseCategoryEnum.AUDIT_AND_RECORDS),
+    # Subcontracting
+    (re.compile(r"^(?:SUBCONTRACTING|SUBCONTRACTORS?|SUBCONSULTANTS?)\b", re.IGNORECASE), ClauseCategoryEnum.SUBCONTRACTING),
     # Insurance
     (re.compile(r"^(?:INSURANCE(?:\s+AND\s+CASUALTY)?|INSURANCE\s+REQUIREMENTS|CASUALTY\s+INSURANCE)\b", re.IGNORECASE), ClauseCategoryEnum.INSURANCE),
+    # Assignment
+    (re.compile(r"^(?:NONASSIGNMENT|NON-ASSIGNMENT|ASSIGNMENT(?:\s+AND\s+DELEGATION)?|SUCCESSORS\s+AND\s+ASSIGNS|TRANSFER\s+AND\s+ASSIGNMENT)\b", re.IGNORECASE), ClauseCategoryEnum.ASSIGNMENT),
+    # Notices
+    (re.compile(r"^(?:NOTIFICATION|NOTICES(?:\s+AND\s+FORMAL\s+COMMUNICATIONS)?|FORMAL\s+NOTICES)\b", re.IGNORECASE), ClauseCategoryEnum.NOTICES),
+    # Entire Agreement/General
+    (re.compile(r"^(?:COMPLETE\s+AGREEMENT|ENTIRE\s+AGREEMENT|INTEGRATION|SEVERABILITY|AMENDMENTS?|MODIFICATION(?:\s+OF\s+AGREEMENT)?|MISCELLANEOUS|GENERAL\s+PROVISIONS|GENERAL|ACKNOWLEDGMENT|INDEPENDENT\s+(?:CONSULTANT|CONTRACTOR)\s+STATUS|RELATIONSHIP\s+OF\s+(?:THE\s+)?PARTIES|CROSS-BORDER\s+TARIFFS|TARIFFS)\b", re.IGNORECASE), ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL),
     # Force Majeure
     (re.compile(r"^(?:FORCE\s+MAJEURE|ACTS\s+OF\s+GOD|EXCUSABLE\s+DELAYS)\b", re.IGNORECASE), ClauseCategoryEnum.FORCE_MAJEURE),
-    # Assignment
-    (re.compile(r"^(?:ASSIGNMENT(?:\s+AND\s+DELEGATION)?|SUCCESSORS\s+AND\s+ASSIGNS|TRANSFER\s+AND\s+ASSIGNMENT)\b", re.IGNORECASE), ClauseCategoryEnum.ASSIGNMENT),
-    # Notices
-    (re.compile(r"^(?:NOTICES(?:\s+AND\s+FORMAL\s+COMMUNICATIONS)?|FORMAL\s+NOTICES)\b", re.IGNORECASE), ClauseCategoryEnum.NOTICES),
-    # General / Boilerplate
-    (re.compile(r"^(?:ENTIRE\s+AGREEMENT|INTEGRATION|SEVERABILITY|AMENDMENTS|MISCELLANEOUS|GENERAL\s+PROVISIONS|GENERAL|CROSS-BORDER\s+TARIFFS|TARIFFS)\b", re.IGNORECASE), ClauseCategoryEnum.GENERAL_BOILERPLATE),
     # Privacy
     (re.compile(r"^(?:DATA\s+PRIVACY|PRIVACY|DATA\s+PROTECTION(?:\s+AND\s+PRIVACY)?|DATA\s+PROCESSING|SECURITY|INFORMATION\s+SECURITY)\b", re.IGNORECASE), ClauseCategoryEnum.PRIVACY),
     # Liability (General/Catch-all)
@@ -227,6 +232,72 @@ CATEGORY_SCORING_RULES = {
         ],
         "negative": []
     },
+    ClauseCategoryEnum.SUBCONTRACTING: {
+        "positive": [
+            (re.compile(r"\b(?:subcontract(?:ing|ors?|s)?|subconsultant(?:s)?|flow-down|subcontract\s+over\s+\$[\d,]+)\b", re.IGNORECASE), 9),
+            (re.compile(r"\b(?:consultant\s+shall\s+perform\s+the\s+work\s+with\s+its\s+own\s+resources|prior\s+written\s+authorization\s+of\s+the\s+contract\s+manager)\b", re.IGNORECASE), 8),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.AUDIT_AND_RECORDS: {
+        "positive": [
+            (re.compile(r"\b(?:retention\s+and\s+audit|audit(?:\s+procedures?|\s+review)?|inspection\s+of\s+work|inspect\s+activities|accounting\s+records|books\s+and\s+records|retain\s+records|fhwa|auditors?)\b", re.IGNORECASE), 9),
+            (re.compile(r"\b(?:access\s+to\s+records|examination\s+of\s+records|audit\s+trail|inspect\s+work)\b", re.IGNORECASE), 6),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.COMPLIANCE_LEGAL: {
+        "positive": [
+            (re.compile(r"\b(?:equal\s+employment\s+opportunity|harassment|unlawful\s+consideration|rebates|kickbacks|licenses?|safety|osha|comply\s+with\s+(?:all\s+)?laws|applicable\s+laws|statutory\s+compliance)\b", re.IGNORECASE), 9),
+            (re.compile(r"\b(?:nondiscrimination|title\s+2\s+cac|california\s+labor\s+code|vehicle\s+code)\b", re.IGNORECASE), 6),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.INSURANCE: {
+        "positive": [
+            (re.compile(r"\b(?:commercial\s+general\s+liability|automobile\s+liability|workers'\s+compensation|professional\s+liability|additional\s+insured|certificate\s+of\s+insurance|csl\s+per\s+occurrence)\b", re.IGNORECASE), 9),
+            (re.compile(r"\b(?:insurance|coverage|policy|deductible|self-insured\s+retention|tail\s+coverage)\b", re.IGNORECASE), 5),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.IP_WORK_PRODUCT: {
+        "positive": [
+            (re.compile(r"\b(?:work\s+made\s+for\s+hire|ownership\s+of\s+deliverables|ownership\s+of\s+inventions|assigns\s+all\s+right,\s+title\s+and\s+interest|intellectual\s+property|copyrights?|trademarks?|patents?|work\s+products?|perpetual,\s*royalty-free)\b", re.IGNORECASE), 9),
+            (re.compile(r"\b(?:deliverables|royalties|license\s+grant)\b", re.IGNORECASE), 4),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.PREMISES: {
+        "positive": [
+            (re.compile(r"\b(?:leased\s+premises|demised\s+premises|suite\s+\d+|square\s+feet|premises|property\s+description)\b", re.IGNORECASE), 9),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.USE: {
+        "positive": [
+            (re.compile(r"\b(?:general\s+corporate\s+offices|use\s+of\s+premises|permitted\s+use|use\s+and\s+occupancy|occupancy)\b", re.IGNORECASE), 9),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL: {
+        "positive": [
+            (re.compile(r"\b(?:entire\s+agreement|complete\s+agreement|supersedes\s+all\s+prior|written\s+or\s+oral\s+understandings|severability|counterparts|amendments?\s+in\s+writing|independent\s+consultant\s+status|relationship\s+of\s+parties)\b", re.IGNORECASE), 9),
+            (re.compile(r"\b(?:general\s+provisions|miscellaneous|modification\s+of\s+agreement|acknowledgment)\b", re.IGNORECASE), 5),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.ASSIGNMENT: {
+        "positive": [
+            (re.compile(r"\b(?:assignment\s+and\s+delegation|nonassignment|non-assignment|assign\s+this\s+agreement|successors\s+and\s+assigns|transfer\s+and\s+assignment)\b", re.IGNORECASE), 9),
+        ],
+        "negative": []
+    },
+    ClauseCategoryEnum.NOTICES: {
+        "positive": [
+            (re.compile(r"\b(?:formal\s+notices|notification|notices\s+under\s+this\s+agreement|registered\s+or\s+certified\s+mail|return\s+receipt\s+requested|written\s+notice\s+shall\s+be\s+sent)\b", re.IGNORECASE), 9),
+        ],
+        "negative": []
+    },
 }
 
 CONFIDENCE_FLOOR: int = 3
@@ -241,6 +312,24 @@ def validate_category_value(val: str) -> ClauseCategoryEnum:
         for member in ClauseCategoryEnum:
             if member.value.lower() == str(val).lower():
                 return member
+        # Check aliases
+        alias_map = {
+            "intellectual property": ClauseCategoryEnum.IP_WORK_PRODUCT,
+            "ip / work product": ClauseCategoryEnum.IP_WORK_PRODUCT,
+            "property / premises": ClauseCategoryEnum.PREMISES,
+            "property use": ClauseCategoryEnum.USE,
+            "general / boilerplate": ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL,
+            "entire agreement / general": ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL,
+            "general": ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL,
+            "compliance / legal": ClauseCategoryEnum.COMPLIANCE_LEGAL,
+            "audit / inspection": ClauseCategoryEnum.AUDIT_AND_RECORDS,
+            "audit and records": ClauseCategoryEnum.AUDIT_AND_RECORDS,
+            "payment / rent": ClauseCategoryEnum.PAYMENT,
+        }
+        val_lower = str(val).lower().strip()
+        if val_lower in alias_map:
+            return alias_map[val_lower]
+
         logger.error(f"Structured output validation failed: Rejected out-of-set category '{val}'.")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -264,6 +353,9 @@ def score_clause_categories(
 
     # 1. HEADING-FIRST DIRECT MATCH (Highest Priority, Spec Root Cause #4 / P0 1D)
     clean_title = title.strip() if title else ""
+    # Strip any leading section prefix like "Section 1. ", "Section 20 - ", "Article 5: ", "1. ", etc.
+    clean_title = re.sub(r'^(?:SECTION|ARTICLE|CLAUSE|\u00a7)\s*[\d\w\.-]+\s*[:\.-]?\s*', '', clean_title, flags=re.IGNORECASE).strip()
+    clean_title = re.sub(r'^\d+[\.:\- ]+\s*', '', clean_title).strip()
     matched_heading_cats = set()
     if clean_title:
         for heading_pat, target_cat in HEADING_CATEGORY_PATTERNS:

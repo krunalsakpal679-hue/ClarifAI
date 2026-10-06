@@ -101,7 +101,11 @@ export const UploadPage: React.FC = () => {
       setUploadProgress(0);
 
       const message =
-        err instanceof Error ? err.message : 'Upload failed. Please check your connection and try again.';
+        err instanceof Error
+          ? err.message
+          : (err as any)?.message ||
+            (err as any)?.error?.message ||
+            'Upload failed. Please check your connection and try again.';
       setErrorMessage(message);
     } finally {
       abortControllerRef.current = null;

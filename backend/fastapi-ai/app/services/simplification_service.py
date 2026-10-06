@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION: str = "1.0.0"
 
+# Rate-limit cooldown timestamp to prevent sequential stalling across document clauses
+_groq_rate_limited_until: float = 0.0
+
 CANONICAL_24_CATEGORIES = [
     "Scope of Services",
     "Payment",
@@ -482,6 +485,10 @@ def simplify_single_clause_via_groq(
         "}"
     )
 
+    global _groq_rate_limited_until
+    if override_client is None and time.time() < _groq_rate_limited_until:
+        raise ValueError("Groq rate limit cooldown active; falling back to deterministic extraction.")
+
     client = override_client
     if client is None:
         api_key = get_groq_api_key()
@@ -491,10 +498,10 @@ def simplify_single_clause_via_groq(
 
     target_model = get_groq_model_name()
     
-    # Retry loop with 429 backoff handling
+    # Fast retry loop with rate-limit circuit breaking (max 2 attempts, no stalling)
     resp = None
     content = ""
-    for attempt in range(4):
+    for attempt in range(2):
         try:
             resp = client.chat.completions.create(
                 model=target_model,
@@ -518,16 +525,22 @@ def simplify_single_clause_via_groq(
         except Exception as e:
             err_str = str(e)
             if "429" in err_str or "rate limit" in err_str.lower():
-                wait_time = 3.0
-                m_wait = re.search(r"try again in ([0-9\.]+)s", err_str)
-                if m_wait:
-                    wait_time = float(m_wait.group(1)) + 0.6
-                logger.warning(f"Groq 429 rate limit hit for clause {clause_num}. Waiting {wait_time:.1f}s (attempt {attempt+1}/4)...")
-                time.sleep(wait_time)
-                continue
+                m_wait_m = re.search(r"try again in (?:(\d+)m)?([0-9\.]+)s", err_str)
+                if m_wait_m:
+                    mins = float(m_wait_m.group(1)) if m_wait_m.group(1) else 0.0
+                    secs = float(m_wait_m.group(2))
+                    wait_time = mins * 60.0 + secs
+                else:
+                    wait_time = 60.0
+                _groq_rate_limited_until = time.time() + min(max(wait_time, 30.0), 600.0)
+                logger.warning(f"Groq 429 rate limit hit for clause {clause_num}. Activating cooldown ({wait_time:.1f}s)...")
+                if wait_time <= 2.0 and attempt == 0:
+                    time.sleep(wait_time + 0.5)
+                    continue
+                raise ValueError(f"Groq rate limit reached: {err_str}")
             else:
-                if attempt < 3:
-                    time.sleep(1.5)
+                if attempt == 0:
+                    time.sleep(0.5)
                     continue
                 raise e
 

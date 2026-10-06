@@ -364,10 +364,16 @@ def segment_document_clauses(
                     break
 
         char_count = len("".join(verbatim_text.split()))
+        if char_count < 20:
+            logger.error(f"Clause {src_clause_num} ({final_title}) text is empty or near-empty ({char_count} chars).")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "EMPTY_CLAUSE_DETECTED",
+                    "message": f"Clause {src_clause_num} ({final_title}) has empty or near-empty text ({char_count} chars). Segmentation failed."
+                }
+            )
         status_val = "ok"
-        if char_count < 15:
-            status_val = "too_short"
-            warnings.append(f"Clause {src_clause_num} ({final_title}) character count ({char_count}) is below minimum threshold.")
 
         clauses.append({
             "position": idx,

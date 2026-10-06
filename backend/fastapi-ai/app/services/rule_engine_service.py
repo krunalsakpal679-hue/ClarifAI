@@ -240,3 +240,6 @@ def evaluate_rules(
         "rule_set_version": RULE_SET_VERSION,
         "schema_version": SCHEMA_VERSION
     }
+
+
+evaluate_document_rules = evaluate_rules

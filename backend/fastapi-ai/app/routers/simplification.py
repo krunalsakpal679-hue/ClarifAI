@@ -24,6 +24,7 @@ async def simplify_clauses_endpoint(request: SimplificationRequest):
 
     result = simplify_document_clauses(
         clauses=request.clauses,
-        rule_findings=request.rule_findings
+        rule_findings=request.rule_findings,
+        document_header=request.document_header
     )
     return SimplificationResponse(**result)

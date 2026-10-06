@@ -52,9 +52,9 @@ HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     # Warranty
     (re.compile(r"^(?:PRODUCT\s+WARRANTY(?:\s+AND\s+DEFECT\s+REMEDIES)?|WARRANTY(?:\s+AND\s+REMEDIES)?|WARRANTIES|REPRESENTATIONS\s+AND\s+WARRANTIES|LIMITED\s+WARRANTY|DISCLAIMER\s+OF\s+WARRANTIES)\b", re.IGNORECASE), ClauseCategoryEnum.WARRANTY),
     # Compliance/Legal
-    (re.compile(r"^(?:FEDERAL,\s*STATE\s+AND\s+LOCAL\s+LAWS|EQUAL\s+EMPLOYMENT\s+OPPORTUNITY|HARASSMENT|LICENSES?|SAFETY|REBATES,\s*KICKBACKS(?:\s+OR\s+OTHER\s+UNLAWFUL\s+CONSIDERATION)?|COMPLIANCE(?:\s+WITH\s+LAWS)?|REGULATORY\s+COMPLIANCE|LEGAL\s+COMPLIANCE)\b", re.IGNORECASE), ClauseCategoryEnum.COMPLIANCE_LEGAL),
+    (re.compile(r"^(?:FEDERAL,\s*STATE\s+AND\s+LOCAL\s+LAWS|EQUAL\s+EMPLOYMENT\s+OPPORTUNITY|HARASSMENT|LICENSES?|SAFETY|REBATES,\s*KICKBACKS(?:\s+OR\s+OTHER\s+UNLAWFUL\s+CONSIDERATION)?|COMPLIANCE(?:\s+WITH\s+LAWS)?|REGULATORY\s+COMPLIANCE|LEGAL\s+COMPLIANCE|INDEPENDENT\s+(?:CONSULTANT|CONTRACTOR)\s+STATUS|INSPECTION(?:\s+OF\s+WORK)?|ACKNOWLEDGMENT)\b", re.IGNORECASE), ClauseCategoryEnum.COMPLIANCE_LEGAL),
     # Audit and Records
-    (re.compile(r"^(?:RETENTION\s+AND\s+AUDIT(?:\s+OF\s+RECORDS)?|AUDIT\s+REVIEW(?:\s+PROCEDURES)?|AUDIT(?:\s+AND\s+INSPECTION|\s+OF\s+RECORDS|\s+PROCEDURES?)?|INSPECTION(?:\s+OF\s+WORK)?|RIGHT\s+TO\s+INSPECT|BOOKS\s+AND\s+RECORDS|RECORD\s+RETENTION)\b", re.IGNORECASE), ClauseCategoryEnum.AUDIT_AND_RECORDS),
+    (re.compile(r"^(?:RETENTION\s+AND\s+AUDIT(?:\s+OF\s+RECORDS)?|AUDIT\s+REVIEW(?:\s+PROCEDURES)?|AUDIT(?:\s+AND\s+INSPECTION|\s+OF\s+RECORDS|\s+PROCEDURES?)?|RIGHT\s+TO\s+INSPECT|BOOKS\s+AND\s+RECORDS|RECORD\s+RETENTION)\b", re.IGNORECASE), ClauseCategoryEnum.AUDIT_AND_RECORDS),
     # Subcontracting
     (re.compile(r"^(?:SUBCONTRACTING|SUBCONTRACTORS?|SUBCONSULTANTS?)\b", re.IGNORECASE), ClauseCategoryEnum.SUBCONTRACTING),
     # Insurance
@@ -64,7 +64,7 @@ HEADING_CATEGORY_PATTERNS: List[Tuple[re.Pattern, ClauseCategoryEnum]] = [
     # Notices
     (re.compile(r"^(?:NOTIFICATION|NOTICES(?:\s+AND\s+FORMAL\s+COMMUNICATIONS)?|FORMAL\s+NOTICES)\b", re.IGNORECASE), ClauseCategoryEnum.NOTICES),
     # Entire Agreement/General
-    (re.compile(r"^(?:COMPLETE\s+AGREEMENT|ENTIRE\s+AGREEMENT|INTEGRATION|SEVERABILITY|AMENDMENTS?|MODIFICATION(?:\s+OF\s+AGREEMENT)?|MISCELLANEOUS|GENERAL\s+PROVISIONS|GENERAL|ACKNOWLEDGMENT|INDEPENDENT\s+(?:CONSULTANT|CONTRACTOR)\s+STATUS|RELATIONSHIP\s+OF\s+(?:THE\s+)?PARTIES|CROSS-BORDER\s+TARIFFS|TARIFFS)\b", re.IGNORECASE), ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL),
+    (re.compile(r"^(?:COMPLETE\s+AGREEMENT|ENTIRE\s+AGREEMENT|INTEGRATION|SEVERABILITY|AMENDMENTS?|MODIFICATION(?:\s+OF\s+AGREEMENT)?|MISCELLANEOUS|GENERAL\s+PROVISIONS|GENERAL|RELATIONSHIP\s+OF\s+(?:THE\s+)?PARTIES|CROSS-BORDER\s+TARIFFS|TARIFFS)\b", re.IGNORECASE), ClauseCategoryEnum.ENTIRE_AGREEMENT_GENERAL),
     # Force Majeure
     (re.compile(r"^(?:FORCE\s+MAJEURE|ACTS\s+OF\s+GOD|EXCUSABLE\s+DELAYS)\b", re.IGNORECASE), ClauseCategoryEnum.FORCE_MAJEURE),
     # Privacy
@@ -476,10 +476,13 @@ def categorize_clause(text: str, title: str = "") -> Dict[str, Any]:
     primary_cat = ranked[0][0] if ranked else ClauseCategoryEnum.GENERAL_BOILERPLATE
     conf = ranked[0][1] if ranked else 0
     return {
-        "primary_category": primary_cat,
-        "category": primary_cat,
+        "primary_category": primary_cat.value if hasattr(primary_cat, "value") else str(primary_cat),
+        "category": primary_cat.value if hasattr(primary_cat, "value") else str(primary_cat),
         "ranked_categories": ranked,
         "confidence": conf
     }
 
+
+# Backward-compatible alias
+categorize_document_clauses = categorize_clause_records
 

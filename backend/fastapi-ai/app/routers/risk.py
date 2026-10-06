@@ -52,7 +52,8 @@ async def classify_document_risk_endpoint(request: DocumentRiskRequest):
 
     result = classify_document_clauses_risk(
         clauses=request.clauses,
-        rule_findings=request.rule_findings
+        rule_findings=request.rule_findings,
+        reviewing_party=request.reviewing_party
     )
     return DocumentRiskResponse(**result)
 

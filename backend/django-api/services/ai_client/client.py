@@ -509,6 +509,18 @@ class RealAIClient:
         risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings, reviewing_party="Consultant")
         classified_clauses = risk_res.get('clauses') or risk_res.get('classified_clauses', categorized_clauses)
 
+        # Ensure title and category are retained from categorized_clauses
+        cat_pos_map = {cc.get('position', i): cc for i, cc in enumerate(categorized_clauses, start=1)}
+        for i, cl in enumerate(classified_clauses, start=1):
+            pos_key = cl.get('position', i)
+            source_cat = cat_pos_map.get(pos_key, {})
+            if not cl.get('title') and source_cat.get('title'):
+                cl['title'] = source_cat['title']
+            if not cl.get('category') and source_cat.get('category'):
+                cl['category'] = source_cat['category']
+            if not cl.get('categories') and source_cat.get('categories'):
+                cl['categories'] = source_cat['categories']
+
         doc_header = clean_res.get('document_header') or segment_res.get('header') or {}
 
         # Step 7: Simplify Clauses
@@ -559,10 +571,10 @@ class RealAIClient:
 
         for idx, cl in enumerate(classified_clauses, start=1):
             pos = cl.get('position', idx)
-            c_num = cl.get('clause_number') or str(pos)
-            c_title = cl.get('title') or f"Section {c_num}"
             simp = simp_map.get(pos, {})
             cat_info = cat_map.get(pos, {})
+            c_num = cl.get('clause_number') or str(pos)
+            c_title = cl.get('title') or cat_info.get('title') or f"Section {c_num}"
             
             raw_sev_val = cl.get('severity') or cl.get('final_severity')
             if raw_sev_val is None or str(raw_sev_val).strip() == "" or str(raw_sev_val).lower() in ("none", "risk_classification_unavailable"):

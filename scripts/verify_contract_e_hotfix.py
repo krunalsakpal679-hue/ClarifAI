@@ -59,6 +59,7 @@ banned_found = 0
 high_clauses = []
 mod_clauses = []
 low_clauses = []
+safe_clauses = []
 
 for c in clauses:
     pos = c.get("position")
@@ -82,7 +83,9 @@ for c in clauses:
         high_clauses.append((pos, title))
     elif sev == "Moderate":
         mod_clauses.append((pos, title))
-    elif sev in ("Low", "Safe"):
+    elif sev == "Safe":
+        safe_clauses.append((pos, title))
+    elif sev == "Low":
         low_clauses.append((pos, title))
 
     has_banned = any(b in plain.lower() for b in banned_templates)
@@ -105,4 +108,5 @@ print(f"Banned template phrases found: {banned_found} (Expected: 0)")
 print(f"High risk clauses ({len(high_clauses)}): {[f'Section {p}' for p, _ in high_clauses]}")
 print(f"Moderate risk clauses ({len(mod_clauses)}): {[f'Section {p}' for p, _ in mod_clauses]}")
 print(f"Low risk clauses ({len(low_clauses)}): {[f'Section {p}' for p, _ in low_clauses]}")
+print(f"Safe clauses ({len(safe_clauses)}): {[f'Section {p}' for p, _ in safe_clauses]}")
 print("=" * 80)

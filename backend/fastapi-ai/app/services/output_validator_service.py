@@ -171,9 +171,22 @@ def compute_party_severity(
     if "R013" in rule_ids:
         return "Moderate", "Statutory privacy and technical data safeguard compliance commitments."
 
-    # 3. Low / Safe conditions for standard clauses
+    # 3. Safe conditions for standard administrative boilerplate (zero liability / neutral procedural)
     cat_lower = cat_str.lower()
-    if any(k in cat_lower for k in ["scope of services", "compliance", "legal", "audit review", "subcontracting", "assignment", "notices", "general", "entire agreement"]):
+    if any(k in cat_lower for k in ["notices", "assignment", "nonassignment"]) or any(k in text_lower for k in [
+        "all notices shall be in writing",
+        "shall not assign this agreement without prior written consent",
+        "neither this agreement nor any rights or obligations",
+        "has read this agreement",
+        "acknowledges having read",
+        "acknowledgment",
+        "counterparts",
+        "headings are for convenience only"
+    ]):
+        return "Safe", f"Standard administrative provision governing {cat_str}; neutral procedural terms with zero risk or elevated liability."
+
+    # 4. Low conditions for standard operational clauses
+    if any(k in cat_lower for k in ["scope of services", "compliance", "legal", "audit review", "subcontracting", "general", "entire agreement", "severability", "waiver"]):
         return "Low", f"Standard operative provisions governing {cat_str}; no elevated liability or asymmetric financial burden."
 
     return "Low", "Standard notice or operational requirement; no cost or liability."
@@ -330,13 +343,21 @@ def validate_and_resolve_clause_risk(
             final_severity = "Moderate"
             risk_source = "CALIBRATED_PARTY_EVALUATION"
             risk_reason = party_reason
+        elif party_sev == "Safe":
+            final_severity = "Safe"
+            risk_source = "CALIBRATED_PARTY_EVALUATION"
+            risk_reason = party_reason
         else:
             # For Low party evaluation, prevent false-positive High on boilerplate
-            if model_severity == "High" and any(k in str(category).lower() for k in ["entire agreement", "general", "scope of services", "notices", "duties"]):
+            if model_severity == "High" and any(k in str(category).lower() for k in ["entire agreement", "general", "scope of services", "duties"]):
                 final_severity = "Low"
                 risk_source = "CALIBRATED_PARTY_EVALUATION"
                 risk_reason = party_reason
-            elif model_severity in ("Low", "Safe"):
+            elif model_severity == "Safe":
+                final_severity = "Safe"
+                risk_source = "AGREED"
+                risk_reason = party_reason
+            elif model_severity == "Low":
                 final_severity = "Low"
                 risk_source = "AGREED"
                 risk_reason = party_reason

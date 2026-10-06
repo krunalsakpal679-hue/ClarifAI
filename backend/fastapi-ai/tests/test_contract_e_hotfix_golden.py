@@ -133,7 +133,7 @@ def test_contract_e_category_alignment(contract_e_pipeline):
 
 
 def test_contract_e_severity_calibration(contract_e_pipeline):
-    """H5: Consultant view calibration (High recall on 4, 5, 15; 0 High-to-Safe/Low)."""
+    """H5: Consultant view calibration (High recall on 4, 5, 15; Safe clauses exist; 0 High-to-Safe/Low)."""
     clauses = contract_e_pipeline["clauses"]
     sev_map = {c.get("position"): str(c.get("severity")).capitalize() for c in clauses}
 
@@ -141,6 +141,12 @@ def test_contract_e_severity_calibration(contract_e_pipeline):
     assert sev_map[4] == "High", f"Section 4 (Early Termination) must be High, got {sev_map[4]}"
     assert sev_map[5] == "High", f"Section 5 (Indemnification) must be High, got {sev_map[5]}"
     assert sev_map[15] == "High", f"Section 15 (Work Products) must be High, got {sev_map[15]}"
+
+    # Safe administrative clauses
+    assert sev_map[21] == "Safe", f"Section 21 (Nonassignment) must be Safe, got {sev_map[21]}"
+    assert sev_map[23] == "Safe", f"Section 23 (Notices) must be Safe, got {sev_map[23]}"
+    safe_clauses = [pos for pos, s in sev_map.items() if s == "Safe"]
+    assert len(safe_clauses) > 0, "Clause categorization must include Safe clauses"
 
     # No High-to-Low or High-to-Safe errors
     for pos in [4, 5, 15]:
@@ -162,7 +168,9 @@ def test_contract_e_executive_overview(contract_e_pipeline):
     assert "HIGH" in counts
     assert "MODERATE" in counts
     assert "LOW" in counts
+    assert "SAFE" in counts
     assert counts["HIGH"] >= 3
+    assert counts["SAFE"] > 0, f"Expected SAFE clauses in overview, got {counts['SAFE']}"
 
 
 def test_contract_e_no_banned_templates(contract_e_pipeline):

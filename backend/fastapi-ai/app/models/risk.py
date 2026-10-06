@@ -29,12 +29,23 @@ class ClauseRiskResponse(BaseModel):
 class ClassifiedClauseItem(BaseModel):
     position: int = Field(..., description="1-indexed clause position")
     clause_id: Optional[str] = Field(None, description="Clause ID or position index")
+    clause_number: Optional[str] = Field(None, description="Clause number string")
+    title: Optional[str] = Field(None, description="Clause heading or title")
     text: str = Field(..., description="Verbatim clause text")
+    category: Optional[str] = Field(None, description="Primary category string")
+    categories: List[Any] = Field(default_factory=list, description="Assigned category labels")
     severity: Optional[str] = Field(None, description="Strict severity label: High, Moderate, Low, or Safe")
     final_severity: Optional[str] = Field(None, description="Validated final severity label")
     validation_status: str = Field("VALIDATED", description="Status tag: VALIDATED or FAILED_VALIDATION")
     error_reason: Optional[str] = Field(None, description="Error reason if validation failed")
     rule_findings: List[Dict[str, Any]] = Field(default_factory=list, description="Associated Stage 1 rule findings preserved unaltered")
+    rule_ids: List[str] = Field(default_factory=list, description="Matched rule IDs")
+    risk_source: Optional[str] = Field(None, description="Source of risk classification")
+    risk_reason: Optional[str] = Field(None, description="Explanatory rationale for risk assignment")
+    reviewing_party: Optional[str] = Field(None, description="Reviewing party perspective")
+
+    class Config:
+        extra = "allow"
 
 
 class DocumentRiskRequest(BaseModel):

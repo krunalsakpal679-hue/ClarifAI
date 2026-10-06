@@ -37,8 +37,8 @@ class RealAIClient:
 
     def __init__(self, base_url: str = None, secret: str = None, timeout: int = None):
         self.base_url = (base_url or getattr(settings, 'AI_SERVICE_BASE_URL', 'http://localhost:8001')).rstrip('/')
-        self.secret = secret or getattr(settings, 'AI_SERVICE_SECRET', '')
-        self.timeout = timeout or getattr(settings, 'AI_SERVICE_TIMEOUT', 300)
+        self.secret = secret or getattr(settings, 'AI_SERVICE_SECRET', '') or os.getenv('AI_SERVICE_SECRET', 'clarifai_internal_secret_token_2026')
+        self.timeout = timeout or getattr(settings, 'AI_SERVICE_TIMEOUT', 600)
 
     def _get_headers(self) -> dict:
         headers = {'Content-Type': 'application/json'}
@@ -187,11 +187,12 @@ class RealAIClient:
         }
         return self._send_request("POST", "/api/v1/classify-risk", json_data=payload)
 
-    def classify_document_risk(self, clauses: list, rule_findings: list = None) -> dict:
+    def classify_document_risk(self, clauses: list, rule_findings: list = None, reviewing_party: str = "Consultant") -> dict:
         """Invokes POST /api/v1/classify-document-risk on FastAPI."""
         payload = {
             "clauses": clauses,
-            "rule_findings": rule_findings or []
+            "rule_findings": rule_findings or [],
+            "reviewing_party": reviewing_party
         }
         return self._send_request("POST", "/api/v1/classify-document-risk", json_data=payload)
 
@@ -204,11 +205,12 @@ class RealAIClient:
         }
         return self._send_request("POST", "/api/v1/validate-risk-output", json_data=payload)
 
-    def simplify_clauses(self, clauses: list, rule_findings: list = None) -> dict:
+    def simplify_clauses(self, clauses: list, rule_findings: list = None, document_header: dict = None) -> dict:
         """Invokes POST /api/v1/simplify-clauses on FastAPI."""
         payload = {
             "clauses": clauses,
-            "rule_findings": rule_findings or []
+            "rule_findings": rule_findings or [],
+            "document_header": document_header
         }
         return self._send_request("POST", "/api/v1/simplify-clauses", json_data=payload)
 
@@ -221,11 +223,12 @@ class RealAIClient:
         }
         return self._send_request("POST", "/api/v1/summarize", json_data=payload)
 
-    def summarize_document(self, clauses: list, rule_findings: list = None) -> dict:
+    def summarize_document(self, clauses: list, rule_findings: list = None, document_header: dict = None) -> dict:
         """Invokes POST /api/v1/summarize-document on FastAPI."""
         payload = {
             "clauses": clauses,
-            "rule_findings": rule_findings or []
+            "rule_findings": rule_findings or [],
+            "document_header": document_header
         }
         return self._send_request("POST", "/api/v1/summarize-document", json_data=payload)
 
@@ -502,15 +505,18 @@ class RealAIClient:
         categorized_clauses = categorize_res.get('clauses') or categorize_res.get('categorized_clauses', segmented_clauses)
 
         # Step 6: Classify Risk
-        risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings)
+        # Step 6: Classify Risk with explicit Consultant reviewing perspective
+        risk_res = self.classify_document_risk(categorized_clauses, rule_findings=rule_findings, reviewing_party="Consultant")
         classified_clauses = risk_res.get('clauses') or risk_res.get('classified_clauses', categorized_clauses)
 
+        doc_header = clean_res.get('document_header') or segment_res.get('header') or {}
+
         # Step 7: Simplify Clauses
-        simplify_res = self.simplify_clauses(classified_clauses, rule_findings=rule_findings)
+        simplify_res = self.simplify_clauses(classified_clauses, rule_findings=rule_findings, document_header=doc_header)
         simplified_clauses = simplify_res.get('clauses') or simplify_res.get('simplified_clauses', classified_clauses)
 
         # Step 8: Summarize Document
-        summary_res = self.summarize_document(classified_clauses, rule_findings=rule_findings)
+        summary_res = self.summarize_document(classified_clauses, rule_findings=rule_findings, document_header=doc_header)
         summary_payload = summary_res.get('summary') or summary_res
 
         # Step 9: Generate Embeddings & Index in Qdrant Vector DB
@@ -547,7 +553,8 @@ class RealAIClient:
             'Governing Law', 'Restrictive Covenants', 'Property / Premises',
             'Property Use', 'Maintenance', 'Alterations', 'Insurance',
             'Warranty', 'Force Majeure', 'Assignment', 'Notices',
-            'General / Boilerplate', 'General'
+            'Entire Agreement/General', 'General', 'Compliance/Legal',
+            'Audit and Records', 'Subcontracting', 'IP/Work Product'
         }
 
         for idx, cl in enumerate(classified_clauses, start=1):
@@ -585,7 +592,7 @@ class RealAIClient:
                 raw_cat = matched_approved or str(raw_cat)
 
             simp_text = simp.get('simplified_text') or cl.get('simplified_text') or orig_text
-            explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('explanation') or 'Standard clause analysis.'
+            explanation = simp.get('why_flagged') or simp.get('explanation') or cl.get('severity_reason') or cl.get('explanation') or 'Standard clause analysis.'
             structured_exp = simp.get('structured_explanation') or cl.get('structured_explanation')
             risk_src = cl.get('risk_source') or simp.get('risk_source')
 
@@ -597,17 +604,20 @@ class RealAIClient:
 
                 if clause_status == "failed" or not raw_sev:
                     risk_dict['severity'] = None
-                    if "balanced commercial terms" in str(risk_dict.get('reason', '')):
-                        risk_dict['reason'] = "Risk classification unavailable for this clause."
+                    risk_dict['reason'] = "Risk classification unavailable for this clause."
                 else:
                     risk_dict['severity'] = raw_sev.capitalize()
+                    risk_dict['reason'] = explanation
 
                 if clause_status == "failed" or not raw_cat:
                     cat_dict['label'] = None
-                    if "Standard contractual provision" in str(cat_dict.get('reason', '')):
-                        cat_dict['reason'] = "Category unclassified: provision does not map to standard commercial categories."
+                    cat_dict['reason'] = "Category unclassified: provision does not map to standard commercial categories."
                 else:
                     cat_dict['label'] = raw_cat
+                    clean_heading = re.sub(r'^(?:SECTION|ARTICLE|CLAUSE|\u00a7)\s*[\d\w\.-]+\s*[:\.-]?\s*', '', c_title, flags=re.IGNORECASE).strip()
+                    clean_heading = re.sub(r'^\d+[\.:\- ]+\s*', '', clean_heading).strip()
+                    cat_dict['reason'] = f"Matches the section heading '{clean_heading.upper() or raw_cat}'"
+                    cat_dict['evidence'] = clean_heading or raw_cat
 
                 structured_exp['risk'] = risk_dict
                 structured_exp['category'] = cat_dict
@@ -622,8 +632,10 @@ class RealAIClient:
                 "explanation": explanation,
                 "plain_language": simp.get('plain_language', ''),
                 "who_is_bound": simp.get('who_is_bound', ''),
+                "who_benefits": simp.get('who_benefits', ''),
                 "key_details": simp.get('key_details', []),
-                "severity_reason": simp.get('severity_reason', ''),
+                "severity_reason": explanation,
+                "mode": simp.get('mode', 'LLM'),
                 "verified": simp.get('status') == 'ok',
                 "structured_explanation": structured_exp,
                 "severity": raw_sev,

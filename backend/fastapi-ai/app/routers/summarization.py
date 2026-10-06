@@ -49,6 +49,7 @@ async def summarize_document_endpoint(request: DocumentSummaryRequest):
 
     result = generate_document_summary(
         clauses=request.clauses,
-        rule_findings=request.rule_findings
+        rule_findings=request.rule_findings,
+        document_header=request.document_header
     )
     return DocumentSummaryResponse(**result)

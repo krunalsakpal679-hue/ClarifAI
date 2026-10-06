@@ -5,8 +5,13 @@ Loads environment-driven settings using pydantic-settings.
 
 import os
 from typing import Optional
+from dotenv import load_dotenv
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load .env into os.environ
+load_dotenv(".env")
+load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.env")))
 
 
 class Settings(BaseSettings):

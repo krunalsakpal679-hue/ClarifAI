@@ -71,10 +71,16 @@ HALLUCINATION_UNGROUNDED_CLAIM_PATTERNS: List[str] = [
 
 def get_groq_api_key() -> Optional[str]:
     """
-    Retrieves GROQ_API_KEY from environment variables.
+    Retrieves GROQ_API_KEY from environment variables or settings.
     Never hardcoded, never logged.
     """
     key = (os.getenv("GROQ_API_KEY") or "").strip()
+    if not key:
+        try:
+            from app.core.config import settings
+            key = (settings.GROQ_API_KEY or "").strip()
+        except Exception:
+            key = ""
     if not key or key.lower() in ["none", "placeholder", "gsk_placeholder", "undefined"] or "your_groq_api_key" in key.lower() or key == "":
         return None
     return key

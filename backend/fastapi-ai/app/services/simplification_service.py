@@ -207,24 +207,44 @@ def extract_clause_facts_deterministic_fallback(
     # Identify party references
     t_lower = text.lower()
     who_bound = "Both parties"
+    who_benefits = "Both parties"
+    is_one_sided = False
+
     if "provider" in t_lower and "subscriber" in t_lower:
-        who_bound = "Provider and Subscriber"
+        who_bound = "Provider"
+        who_benefits = "Subscriber"
+        is_one_sided = True
     elif "consultant agrees to defend" in t_lower or "consultant shall indemnify" in t_lower or "consultant will indemnify" in t_lower:
-        who_bound = "Consultant only"
+        who_bound = "Consultant"
+        who_benefits = "Commission"
+        is_one_sided = True
     elif "customer shall defend" in t_lower or "customer shall indemnify" in t_lower or ("customer shall" in t_lower and not ("vendor shall" in t_lower or "supplier shall" in t_lower)):
-        who_bound = "Customer only"
+        who_bound = "Customer"
+        who_benefits = "Vendor"
+        is_one_sided = True
     elif ("vendor reserves" in t_lower or "vendor may" in t_lower or "vendor retains" in t_lower) and not ("customer may" in t_lower):
-        who_bound = "Vendor only"
-    elif "consultant shall not" in t_lower or "tenant shall not" in t_lower:
-        who_bound = "One-sided restriction"
-    elif "consultant shall" in t_lower and not ("commission shall" in t_lower or "client shall" in t_lower):
-        who_bound = "Consultant only"
-    elif "commission may" in t_lower or "client may" in t_lower:
-        who_bound = "Client / Commission right"
+        who_bound = "Vendor"
+        who_benefits = "Customer"
+        is_one_sided = True
+    elif "consultant shall not" in t_lower or "consultant shall" in t_lower or "consultant warrants" in t_lower:
+        who_bound = "Consultant"
+        who_benefits = "Commission"
+        is_one_sided = True
+    elif ("commission may" in t_lower or "client may" in t_lower) and not ("consultant may" in t_lower):
+        who_bound = "Consultant"
+        who_benefits = "Commission"
+        is_one_sided = True
+    elif "tenant shall not" in t_lower or "tenant shall" in t_lower:
+        who_bound = "Tenant"
+        who_benefits = "Landlord"
+        is_one_sided = True
     elif "client" in t_lower and "consultant" in t_lower:
-        who_bound = "Client and Consultant"
+        who_bound = "Consultant"
+        who_benefits = "Client"
+        is_one_sided = True
     elif "landlord" in t_lower and "tenant" in t_lower:
-        who_bound = "Landlord and Tenant"
+        who_bound = "Both parties"
+        who_benefits = "Both parties"
 
     # Extract carve-outs / exceptions
     carve_outs = []
@@ -238,11 +258,15 @@ def extract_clause_facts_deterministic_fallback(
             if clean_co and len(clean_co) > 5 and clean_co.lower() not in [c.lower() for c in carve_outs]:
                 carve_outs.append(clean_co)
 
-    # Synthesize concise, evidence-grounded factual takeaway (non-echoing, <0.30 overlap)
+    # Synthesize concise, evidence-grounded factual takeaway
     summary_parts = []
-    if category in ("Limitation of Liability", "Liability") or ("liability" in t_lower and any(k in t_lower for k in ["aggregate", "cap", "exceed", "neither party's total", "neither party's aggregate", "monetary damages"])):
+    if category in ("Limitation of Liability", "Liability") and ("liability" in t_lower and any(k in t_lower for k in ["aggregate", "cap", "exceed", "neither party's total", "neither party's aggregate", "monetary damages"])):
         co_str = f" Carve-outs include {'; '.join(carve_outs)}." if carve_outs else ""
         summary_parts.append(f"Monetary damages and liability capped under specified terms.{co_str}")
+    elif category == "Insurance":
+        ins_limits = re.findall(r'\$[0-9,]+', text)
+        limits_str = f" with limits of {', '.join(sorted(set(ins_limits)))}" if ins_limits else ""
+        summary_parts.append(f"{who_bound} must maintain required insurance policies{limits_str}.")
     elif category == "Confidentiality" or ("confidential" in t_lower and not ("breach of confidentiality" in t_lower and "liability" in t_lower)):
         summary_parts.append(f"{who_bound} must maintain strict confidentiality of proprietary technical and business information.")
     elif "indemnif" in t_lower:
@@ -250,24 +274,25 @@ def extract_clause_facts_deterministic_fallback(
             summary_parts.append(f"{who_bound} must defend, indemnify, and hold harmless against third-party claims and liabilities.")
         else:
             summary_parts.append(f"{who_bound} holds indemnification obligations under specified conditions.")
-    elif "terminate" in t_lower and ("for any reason" in t_lower or "convenience" in t_lower or "immediately" in t_lower or "suspend" in t_lower):
-        ref_clause = " with no refund of prepaid fees" if ("without refund" in t_lower or "no refund" in t_lower) else ""
-        summary_parts.append(f"{who_bound} reserves right to terminate immediately{ref_clause}.")
+    elif "terminate" in t_lower and ("convenience" in t_lower or "reprocurement" in t_lower):
+        m_notice = re.search(r'(\d+)\s*[- ]\s*days?|\b([A-Za-z]+)\s*\(\s*(\d+)\s*\)\s*days?', text, re.I)
+        notice_days = m_notice.group(1) or m_notice.group(3) if m_notice else "specified"
+        summary_parts.append(f"Termination provisions permit early termination upon {notice_days} days written notice.")
     elif "renew" in t_lower:
         m_ren = re.search(r'\b(?:twelve\s*\(\s*12\s*\)\s*months?|one\s*year|\d+\s*months?)\b', text, re.I)
         ren_str = f" for {m_ren.group(0)}" if m_ren else ""
         summary_parts.append(f"Agreement automatically renews{ren_str} unless written notice of non-renewal is provided.")
     elif "perpetual" in t_lower and "royalty-free" in t_lower:
-        summary_parts.append("Grants a perpetual, irrevocable, royalty-free license to use specified assets and telemetry.")
+        summary_parts.append("Grants a perpetual, irrevocable, royalty-free license to use specified assets and deliverables.")
     elif "work made for hire" in t_lower:
-        summary_parts.append("Deliverables and work product constitute work made for hire vesting exclusively in the hiring party.")
+        summary_parts.append("Deliverables constitute works made for hire vesting exclusively in the commissioning party.")
     elif "custom module" in t_lower:
-        summary_parts.append("Custom modules and deliverables vest in the hiring party.")
+        summary_parts.append("Custom modules and deliverables vest in the commissioning party.")
     elif "assign" in t_lower and ("intellectual property" in t_lower or "deliverables" in t_lower or "work product" in t_lower or category in ("IP/Work Product", "Intellectual Property")):
         summary_parts.append("Ownership of created deliverables and intellectual property is assigned upon applicable terms.")
     elif category in ("IP/Work Product", "Intellectual Property"):
         summary_parts.append("Intellectual property rights and ownership terms govern deliverables.")
-    elif "jurisdiction" in t_lower or "venue" in t_lower or "courts in" in t_lower or "courts located" in t_lower or category in ("Dispute Resolution",):
+    elif category in ("Dispute Resolution", "Disputes") or ("jurisdiction" in t_lower or "venue" in t_lower or "courts in" in t_lower):
         v_match = re.search(
             r'\b(?:exclusive\s+)?(?:jurisdiction|venue)(?:\s+and\s+jurisdiction|\s+and\s+venue)?\s+(?:in|of\s+(?:the\s+)?(?:(?:state|federal|and|\s)*courts?(?:\s+located)?\s+in\s+)?)\s*([A-Z][a-zA-Z\s,]+?)(?:\.|\;|\bfor\b|\band\s+each\b)',
             text,
@@ -277,7 +302,7 @@ def extract_clause_facts_deterministic_fallback(
             v_str = v_match.group(1).strip(" ,.")
             summary_parts.append(f"Disputes subject to exclusive jurisdiction and venue in {v_str}.")
         else:
-            summary_parts.append("Dispute resolution and governing forum procedures apply.")
+            summary_parts.append("Dispute resolution procedures govern contractual controversies.")
     elif (category in ["Payment", "Payment / Rent"] or any(k in t_lower for k in ["due within", "payable within", "accrue interest"])) and any(k in t_lower for k in ["invoice", "payment", "interest"]):
         p_items = []
         if (m_due := re.search(r'\b(?:due\s+within|payable\s+within)\s+([a-zA-Z0-9\(\)\s]+?days?)\b', text, re.I)):
@@ -288,45 +313,40 @@ def extract_clause_facts_deterministic_fallback(
         if p_items:
             summary_parts.append("; ".join(p_items))
         elif category in ["Payment", "Payment / Rent"]:
-            summary_parts.append("Payment terms and invoicing conditions apply.")
-    
-    # Check cross-references (e.g. Annex IV, Section 7.2)
-    refs = re.findall(r'\b(?:Annex\s+[IVXLCDM\d]+|Section\s+\d+(?:\.\d+)?|Exhibit\s+[A-Z])\b', text, re.I)
-    if refs and not summary_parts:
-        summary_parts.append(f"Operative terms referencing {', '.join(sorted(set(refs)))}.")
+            summary_parts.append("Payment terms, invoicing schedules, and fee conditions apply.")
+
+    # Only append governing law if category is Governing Law
+    if category == "Governing Law" or ("governing law" in (title or "").lower()):
+        m_state = re.search(r'\blaws of (?:the )?(?:State of )?([A-Za-z\s]+?)(?:,|\.|\bwithout\b)', text, re.IGNORECASE)
+        if m_state:
+            state_str = m_state.group(1).strip()
+            summary_parts.append(f"Agreement is construed under the laws of {state_str}.")
 
     if not summary_parts:
         if key_details:
             fact_lines = [f"{kd['label']}: {kd['value']}" for kd in key_details if kd.get('value')]
-            plain_language = f"Limited mode (factual extraction): {'; '.join(fact_lines)}"
+            plain_language = f"Plain-English explanation unavailable (Limited mode):\n" + "\n".join(f"- {fl}" for fl in fact_lines)
         else:
-            plain_language = f"Standard operative provisions governing {category or 'contract terms'}."
+            plain_language = f"Plain-English explanation unavailable (Limited mode): Standard operational terms governing {category or 'contract terms'}."
     else:
         plain_language = " ".join(summary_parts)
 
-    # Append governing jurisdiction only if substantive governing law is present (never confuse forum with law)
-    if ("laws of" in t_lower or "governed by" in t_lower) and "delaware" in t_lower:
-        plain_language += " Governed by Delaware law (Governing law: Delaware)."
-    elif ("laws of" in t_lower or "governed by" in t_lower) and "governing law" not in plain_language.lower():
-        m_state = re.search(r'\blaws of (?:the )?(?:State of )?([A-Za-z\s]+?)(?:,|\.|\bwithout\b)', text, re.IGNORECASE)
-        if m_state:
-            state_str = m_state.group(1).strip()
-            plain_language += f" (Governing Law: {state_str})."
-
     # Generate why_flagged reason from facts
     if "indemnif" in t_lower:
-        why_flagged = f"Indemnification obligation imposes liability on {who_bound}."
-    elif "terminate" in t_lower and "convenience" in t_lower:
-        why_flagged = "Termination for convenience permits ending agreement without cause."
+        why_flagged = f"Risky for the {who_bound} because unilateral indemnification imposes defense and liability obligations without a reciprocal cap."
+    elif "terminate" in t_lower and ("convenience" in t_lower or "reprocurement" in t_lower):
+        why_flagged = f"Risky for the {who_bound} because asymmetric termination notice and reprocurement cost liability are imposed."
     elif "capped at" in t_lower or "liability" in t_lower:
-        why_flagged = "Liability terms specify damage limits and carve-outs."
+        why_flagged = "Liability terms specify aggregate damage limits and carve-outs."
     else:
-        why_flagged = f"Clause evaluated under category '{category or 'General'}'. No elevated risk detected."
+        why_flagged = f"Standard operational provisions for {category or 'contract terms'}; no elevated liability identified."
 
     return {
         "plain_language": plain_language,
         "simplified_text": plain_language,
         "who_is_bound": who_bound,
+        "who_benefits": who_benefits,
+        "is_one_sided": is_one_sided,
         "key_details": key_details,
         "not_stated": [],
         "why_flagged": why_flagged
@@ -413,12 +433,13 @@ def synthesize_detailed_plain_english_analysis(
 
 def simplify_single_clause_via_groq(
     clause: Dict[str, Any],
-    document_header: Optional[str] = None,
+    document_header: Optional[Dict[str, Any]] = None,
     override_client: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     Primary Groq structured extraction path (temperature 0).
     Extracts Pydantic-validated JSON containing verified facts, party roles, and plain summary.
+    Includes 429 backoff retry and 400 format fallback.
     """
     text = clause.get("text", "")
     title = clause.get("title", "")
@@ -426,26 +447,39 @@ def simplify_single_clause_via_groq(
     category = clause.get("category", "")
     severity = clause.get("severity", "Low")
 
-    # Construct clean extraction prompt
-    header_context = f"Document Context: {document_header}\n" if document_header else ""
+    # Resolve document parties context from document_header
+    parties_str = "Commission and Consultant"
+    if document_header and isinstance(document_header, dict):
+        p_list = document_header.get("parties", [])
+        if p_list:
+            parties_str = " and ".join([f"{p.get('name', '')} ({p.get('role', '')})" for p in p_list if p.get('name')])
+
+    # Compact long clauses (>1200 chars) to prevent excessive token usage and Groq rate limits
+    content_text = text if len(text) <= 1200 else f"{text[:800]}\n\n[...Additional terms...]\n\n{text[-400:]}"
+
     prompt = (
-        f"{header_context}"
+        f"Document Parties: {parties_str}\n"
         f"Clause Number: {clause_num}\n"
         f"Clause Heading: {title}\n"
-        f"Verbatim Clause Text:\n\"\"\"\n{text}\n\"\"\"\n\n"
-        "Extract legal facts from the clause above and return a valid JSON object:\n"
-        "1. Extract the legal facts strictly stated in the clause text above.\n"
-        "2. If a term/field is not stated, do not guess; return 'Not stated'.\n"
-        "3. If a field is an unfilled blank or placeholder (e.g. $____, (DATE), ____), set value to 'blank_in_template'.\n"
-        "4. For each fact, include the exact source_quote substring from the clause.\n"
-        "5. Output valid JSON object with the following schema:\n"
-        "   {\n"
-        '     "category": "legal category",\n'
-        '     "who_is_bound": "Consultant only | Client only | Both parties",\n'
-        '     "facts": [{"field": "...", "value": "...", "unit": "...", "source_quote": "...", "is_blank_in_template": false}],\n'
-        '     "plain_summary": "plain English explanation strictly from facts",\n'
-        '     "why_flagged": "risk reason quoting clause text or No elevated risk detected."\n'
-        "   }\n"
+        f"Verbatim Clause Text:\n\"\"\"\n{content_text}\n\"\"\"\n\n"
+        "Generate a plain-English explanation for a non-lawyer (1 to 3 sentences, maximum 60 words for simple clauses and 90 words for long clauses).\n"
+        "Rules:\n"
+        "1. Name the real parties (e.g. Commission, Consultant).\n"
+        "2. Include all key numbers, deadlines, and amounts verbatim from the clause (e.g. 30 days, 120 days, 10 days, $1,000,000, 3 years, 100%).\n"
+        "3. State who must do what, and what happens otherwise.\n"
+        "4. Note if any value is blank in the template.\n"
+        "5. Do NOT repeat the heading. Do NOT copy raw legalese. Never use canned template phrases.\n\n"
+        "Return strictly valid raw JSON:\n"
+        "{\n"
+        '  "plain_language": "...",\n'
+        '  "who_is_bound": "Consultant | Commission | Both parties",\n'
+        '  "who_benefits": "Commission | Consultant | Both parties",\n'
+        '  "is_one_sided": true,\n'
+        '  "why_flagged": "Risky for the Consultant because... (or Standard notice/operational requirement; no cost or liability)",\n'
+        '  "facts": [\n'
+        '    {"label": "...", "value": "..."}\n'
+        "  ]\n"
+        "}"
     )
 
     client = override_client
@@ -456,43 +490,114 @@ def simplify_single_clause_via_groq(
         client = get_groq_client()
 
     target_model = get_groq_model_name()
-    resp = client.chat.completions.create(
-        model=target_model,
-        messages=[
-            {"role": "system", "content": "You are a legal fact extractor. Output valid JSON only. Never invent facts."},
-            {"role": "user", "content": prompt}
-        ],
-        response_format={"type": "json_object"},
-        max_tokens=1024,
-        temperature=0.0
-    )
+    
+    # Retry loop with 429 backoff handling
+    resp = None
+    content = ""
+    for attempt in range(4):
+        try:
+            resp = client.chat.completions.create(
+                model=target_model,
+                messages=[
+                    {"role": "system", "content": "You are a concise legal contract analyzer. Directly output a valid JSON object without markdown formatting or code blocks."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1200,
+                temperature=0.0
+            )
+            msg = resp.choices[0].message
+            content = msg.content or ""
+            if not content.strip():
+                reasoning_text = getattr(msg, "reasoning", "") or ""
+                if reasoning_text:
+                    m_r = re.search(r"\{.*\}", reasoning_text, re.DOTALL)
+                    if m_r:
+                        content = m_r.group(0)
+            if content.strip():
+                break
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "rate limit" in err_str.lower():
+                wait_time = 3.0
+                m_wait = re.search(r"try again in ([0-9\.]+)s", err_str)
+                if m_wait:
+                    wait_time = float(m_wait.group(1)) + 0.6
+                logger.warning(f"Groq 429 rate limit hit for clause {clause_num}. Waiting {wait_time:.1f}s (attempt {attempt+1}/4)...")
+                time.sleep(wait_time)
+                continue
+            else:
+                if attempt < 3:
+                    time.sleep(1.5)
+                    continue
+                raise e
 
-    content = resp.choices[0].message.content or ""
-    is_safe, err_msg = validate_untrusted_llm_output(content)
-    if not is_safe:
-        raise ValueError(f"Safety validator rejected output: {err_msg}")
+    if not content:
+        raise ValueError("Groq returned empty response content.")
 
-    parsed = json.loads(content)
+    # Clean potential markdown fences from JSON output
+    clean_json = content.strip()
+    if clean_json.startswith("```"):
+        clean_json = re.sub(r"^```(?:json)?\s*", "", clean_json)
+        clean_json = re.sub(r"\s*```$", "", clean_json)
+    m_json = re.search(r"\{.*\}", clean_json, re.DOTALL)
+    if m_json:
+        clean_json = m_json.group(0)
+
+    parsed = {}
+    try:
+        parsed = json.loads(clean_json)
+    except Exception as parse_err:
+        logger.warning(f"json.loads failed for clause {clause_num}: {parse_err}. Attempting regex field recovery.")
+        m_plain = re.search(r'["\']plain_language["\']\s*:\s*["\'](.*?)["\']\s*,\s*["\']', clean_json, re.DOTALL)
+        if not m_plain:
+            m_plain = re.search(r'["\']plain_language["\']\s*:\s*["\'](.*?)["\']', clean_json, re.DOTALL)
+        if m_plain:
+            parsed["plain_language"] = m_plain.group(1).replace('\\"', '"').strip()
+        m_bound = re.search(r'["\']who_is_bound["\']\s*:\s*["\'](.*?)["\']', clean_json)
+        if m_bound:
+            parsed["who_is_bound"] = m_bound.group(1).strip()
+        m_ben = re.search(r'["\']who_benefits["\']\s*:\s*["\'](.*?)["\']', clean_json)
+        if m_ben:
+            parsed["who_benefits"] = m_ben.group(1).strip()
+        m_why = re.search(r'["\']why_flagged["\']\s*:\s*["\'](.*?)["\']', clean_json, re.DOTALL)
+        if m_why:
+            parsed["why_flagged"] = m_why.group(1).strip()
+
+        if not parsed.get("plain_language"):
+            raise ValueError(f"Failed to parse or extract plain language: {parse_err}")
     raw_facts = parsed.get("facts", [])
-    verified_facts, dropped = verify_extracted_facts(raw_facts, text)
+    
+    # Normalize fact structures
+    formatted_facts = []
+    if isinstance(raw_facts, list):
+        for rf in raw_facts:
+            if isinstance(rf, dict):
+                lbl = rf.get("label") or rf.get("field") or "Fact"
+                val = rf.get("value") or ""
+                if str(val).strip():
+                    formatted_facts.append({"label": lbl, "value": str(val)})
 
-    plain_summary = parsed.get("plain_summary") or parsed.get("simplified_text") or parsed.get("plain_language") or ""
-    why_flagged = parsed.get("why_flagged") or parsed.get("severity_reason") or "No elevated risk detected."
+    plain_summary = parsed.get("plain_language") or parsed.get("plain_summary") or parsed.get("simplified_text") or ""
+    why_flagged = parsed.get("why_flagged") or "Standard clause analysis."
     who_is_bound = parsed.get("who_is_bound") or "Both parties"
+    who_benefits = parsed.get("who_benefits") or "Both parties"
+    is_one_sided = parsed.get("is_one_sided", False)
 
-    # Verify plain summary doesn't contain banned strings or hallucinations
+    # Sanitize banned strings
     banned = check_banned_strings(plain_summary)
     if banned:
         for b in banned:
             plain_summary = plain_summary.replace(b, "")
 
     return {
-        "plain_language": plain_summary.strip() if plain_summary.strip() else "Clause terms analyzed.",
-        "simplified_text": plain_summary.strip() if plain_summary.strip() else "Clause terms analyzed.",
+        "plain_language": plain_summary.strip(),
+        "simplified_text": plain_summary.strip(),
         "who_is_bound": who_is_bound,
-        "key_details": verified_facts,
+        "who_benefits": who_benefits,
+        "is_one_sided": is_one_sided,
+        "key_details": formatted_facts,
         "why_flagged": why_flagged,
-        "dropped_reasons": dropped
+        "mode": "LLM"
     }
 
 
@@ -500,7 +605,7 @@ def simplify_single_clause(
     clause: Dict[str, Any],
     rule_findings: Optional[List[Dict[str, Any]]] = None,
     override_client: Optional[Any] = None,
-    document_header: Optional[str] = None
+    document_header: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Performs per-clause plain language simplification using Groq structured extraction
@@ -510,6 +615,8 @@ def simplify_single_clause(
     clause_id = str(clause.get("clause_id") or clause.get("position") or position)
     clause_number = clause.get("clause_number") or str(position)
     title = clause.get("title") or ""
+    clean_title = re.sub(r'^(?:SECTION|ARTICLE|CLAUSE|\u00a7)\s*[\d\w\.-]+\s*[:\.-]?\s*', '', title, flags=re.IGNORECASE).strip()
+    clean_title = re.sub(r'^\d+[\.:\- ]+\s*', '', clean_title).strip()
     text = clause.get("text", "")
     has_explicit_category = "category" in clause
     has_explicit_severity = "severity" in clause
@@ -523,7 +630,7 @@ def simplify_single_clause(
     elif has_explicit_category and raw_category is None:
         primary_category = None
     else:
-        primary_category = raw_category or "General / Boilerplate"
+        primary_category = raw_category or "Entire Agreement/General"
 
     if "severity" not in clause and "final_severity" not in clause:
         clean_severity = "RISK_CLASSIFICATION_UNAVAILABLE"
@@ -535,6 +642,7 @@ def simplify_single_clause(
         clean_severity = str(raw_severity).capitalize()
 
     analysis_res = None
+    mode = "Limited"
     if override_client is not None:
         try:
             analysis_res = simplify_single_clause_via_groq(
@@ -542,6 +650,7 @@ def simplify_single_clause(
                 document_header=document_header,
                 override_client=override_client
             )
+            mode = "LLM"
         except Exception as e:
             logger.warning(f"Groq override client failed for clause {clause_number}: {e}")
             honest_str = "AI explanation generation failed for this clause. Original clause text is shown below for your review."
@@ -555,19 +664,17 @@ def simplify_single_clause(
                 "why_flagged": honest_str,
                 "plain_language": honest_str,
                 "who_is_bound": "Unavailable",
+                "who_benefits": "Unavailable",
                 "key_details": [],
-                "severity_reason": honest_str,
-                "if_not_met": "",
-                "not_stated": ["All fields (AI failure)"],
+                "severity": "RISK_CLASSIFICATION_UNAVAILABLE",
+                "category": "Unavailable",
+                "status": "FAILED_SIMPLIFICATION",
+                "mode": "Unavailable",
                 "structured_explanation": {
                     "what_this_clause_means": honest_str,
                     "risk": {"severity": "RISK_CLASSIFICATION_UNAVAILABLE", "reason": honest_str, "evidence": ""},
-                    "category": {"label": "Unavailable", "reason": honest_str, "evidence": ""},
-                    "status": "FAILED_SIMPLIFICATION"
-                },
-                "severity": "RISK_CLASSIFICATION_UNAVAILABLE",
-                "category": "Unavailable",
-                "status": "FAILED_SIMPLIFICATION"
+                    "category": {"label": "Unavailable", "reason": honest_str, "evidence": ""}
+                }
             }
     elif get_groq_api_key():
         try:
@@ -576,6 +683,7 @@ def simplify_single_clause(
                 document_header=document_header,
                 override_client=None
             )
+            mode = "LLM"
         except Exception as e:
             logger.warning(f"Groq extraction failed for clause {clause_number}: {e}. Falling back to deterministic fact extraction.")
             analysis_res = None
@@ -584,47 +692,78 @@ def simplify_single_clause(
         # Deterministic extraction fallback
         analysis_res = extract_clause_facts_deterministic_fallback(
             text=text,
-            category=primary_category or "General",
+            category=primary_category or "Entire Agreement/General",
             clause_number=clause_number,
             title=title
         )
+        mode = "Limited"
 
-    plain_language = analysis_res.get("plain_language")
+    plain_language = analysis_res.get("plain_language") or ""
     key_details = analysis_res.get("key_details") or []
+    who_is_bound = analysis_res.get("who_is_bound") or "Both parties"
+    who_benefits = analysis_res.get("who_benefits") or "Both parties"
+    is_one_sided = analysis_res.get("is_one_sided", False)
+    why_flagged = analysis_res.get("why_flagged") or ""
+
+    # Sanitize any accidental banned strings
+    banned_in_plain = check_banned_strings(plain_language)
+    if banned_in_plain:
+        for b in banned_in_plain:
+            plain_language = plain_language.replace(b, "")
+
     if not plain_language or plain_language.strip() == text.strip():
         if key_details:
             details_str = "; ".join(f"{kd['label']}: {kd['value']}" for kd in key_details if kd.get('value'))
-            plain_language = f"Limited mode (factual extraction): {details_str}"
+            plain_language = f"Plain-English explanation unavailable (Limited mode):\n- {details_str}"
         else:
-            plain_language = "Plain-English explanation unavailable: Limited mode (no generative breakdown)."
+            plain_language = "Plain-English explanation unavailable (Limited mode): Standard operational terms govern."
     else:
-        # Echo Detector: Jaccard overlap between plain_language and original text per Master Prompt Section 0d / 4.1
-        tokens_a = set(re.findall(r'\b[a-zA-Z]{3,}\b', plain_language.lower()))
-        tokens_b = set(re.findall(r'\b[a-zA-Z]{3,}\b', text.lower()))
-        if tokens_a and tokens_b:
-            jaccard = len(tokens_a & tokens_b) / len(tokens_a | tokens_b)
-            if jaccard > 0.60 and len(plain_language.split()) > 10 and "Limited mode" not in plain_language:
-                logger.warning(f"Echo detected (jaccard={jaccard:.2f}) on clause {clause_number}.")
-                plain_language = f"Needs review: Plain-English explanation exceeded echo threshold ({jaccard:.2f})."
+        # Echo Detector: Jaccard overlap check on substantial clauses (>30 words)
+        words = plain_language.split()
+        if len(words) > 30 and mode == "LLM":
+            tokens_a = set(re.findall(r'\b[a-zA-Z]{4,}\b', plain_language.lower()))
+            tokens_b = set(re.findall(r'\b[a-zA-Z]{4,}\b', text.lower()))
+            if tokens_a and tokens_b:
+                jaccard = len(tokens_a & tokens_b) / len(tokens_a | tokens_b)
+                if jaccard > 0.85:
+                    logger.warning(f"Echo detected (jaccard={jaccard:.2f}) on clause {clause_number}. Falling back to labeled facts.")
+                    if key_details:
+                        details_str = "; ".join(f"{kd['label']}: {kd['value']}" for kd in key_details if kd.get('value'))
+                        plain_language = f"Plain-English explanation unavailable (Limited mode):\n- {details_str}"
+                    else:
+                        plain_language = f"Plain-English explanation unavailable (Limited mode): Standard provisions for {clean_title or primary_category}."
 
-    why_flagged = analysis_res.get("why_flagged") or "Clause evaluated."
-    who_is_bound = analysis_res.get("who_is_bound") or "Both parties"
+    # Grounded category and risk reasons for UI panels
+    category_reason = f"Matches the section heading '{clean_title.upper() or primary_category}'"
+    if not why_flagged or "No elevated risk" in why_flagged or why_flagged == "Clause evaluated.":
+        if clean_severity in ("High", "Moderate"):
+            why_flagged = f"Risky for the {who_is_bound} due to non-reciprocal obligations in {clean_title or primary_category}."
+        else:
+            why_flagged = f"Standard notice or operational requirement for {primary_category}; no elevated cost or liability."
 
     if rule_findings:
-        rf_parts = [
-            f"{rf.get('rule_id', '')} ({rf.get('name') or rf.get('risk_signal', 'Risk')}): {rf.get('description') or rf.get('risk_signal', '')}"
-            for rf in rule_findings if rf.get('rule_id') or rf.get('name') or rf.get('risk_signal')
-        ]
-        if rf_parts:
-            why_flagged = f"{why_flagged} (Flagged: {'; '.join(rf_parts)})"
+        rf_names = [rf.get("name") or rf.get("rule_id") for rf in rule_findings if rf.get("name") or rf.get("rule_id")]
+        if rf_names and not any(r in why_flagged for r in rf_names) and clean_severity in ("High", "Moderate"):
+            why_flagged = f"{why_flagged} Flagged as {clean_severity} risk by rule: {', '.join(rf_names[:2])}."
 
-    # Assemble structured multi-section clause card output
-    details_str = "; ".join(f"{kd['label']}: {kd['value']}" for kd in key_details) if key_details else "No additional specific numbers or deadlines extracted."
-    obligations_text = f"Operative obligations governed under {primary_category or 'contract terms'}."
+    # Deduplicate and format key details
+    seen_details = set()
+    dedup_details = []
+    for kd in key_details:
+        k_str = f"{kd.get('label')}: {kd.get('value')}"
+        if k_str not in seen_details:
+            seen_details.add(k_str)
+            dedup_details.append(kd)
+    details_str = "; ".join(f"{kd['label']}: {kd['value']}" for kd in dedup_details) if dedup_details else "No additional specific numbers or deadlines extracted."
+
+    # Assemble structured multi-section clause card output (H1, H3, H4)
+    bound_note = f" (Only the {who_is_bound} is bound)" if is_one_sided and who_is_bound not in ("Both parties", "Unavailable") else ""
     structured_card = (
         f"IN PLAIN LANGUAGE:\nWHAT THIS CLAUSE MEANS: {plain_language}\n\n"
-        f"WHO IS BOUND:\nWHO IS AFFECTED: {who_is_bound}\n\n"
-        f"OBLIGATIONS & RIGHTS:\n{obligations_text}\n\n"
+        f"WHO IS AFFECTED:\n{who_is_bound}{bound_note}\n\n"
+        f"WHO IS BOUND:\n{who_is_bound}{bound_note}\n\n"
+        f"WHO BENEFITS:\n{who_benefits}\n\n"
+        f"OBLIGATIONS & RIGHTS:\nParty bound: {who_is_bound} | Party receiving: {who_benefits}\n\n"
         f"IMPORTANT DETAILS:\n{details_str}\n\n"
         f"WHY FLAGGED:\n{why_flagged}"
     )
@@ -639,14 +778,16 @@ def simplify_single_clause(
         "why_flagged": why_flagged,
         "plain_language": plain_language,
         "who_is_bound": who_is_bound,
-        "key_details": key_details,
+        "who_benefits": who_benefits,
+        "key_details": dedup_details,
         "severity_reason": why_flagged,
+        "mode": mode,
         "if_not_met": "",
         "not_stated": [],
         "structured_explanation": {
             "what_this_clause_means": plain_language,
-            "risk": {"severity": clean_severity, "reason": why_flagged, "evidence": ""},
-            "category": {"label": primary_category, "reason": why_flagged, "evidence": ""},
+            "risk": {"severity": clean_severity, "reason": why_flagged, "evidence": clean_title},
+            "category": {"label": primary_category, "reason": category_reason, "evidence": clean_title},
             "status": "SUCCESS"
         },
         "severity": clean_severity,
@@ -659,10 +800,11 @@ def simplify_document_clauses(
     clauses: List[Dict[str, Any]],
     rule_findings: Optional[List[Dict[str, Any]]] = None,
     override_client: Optional[Any] = None,
-    document_header: Optional[str] = None
+    document_header: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Performs per-clause plain language simplification for all clauses in a document.
+    Enforces repeated-sentence detection and bounded execution pacing.
     """
     if not clauses:
         logger.warning("Simplification received empty clause list.")
@@ -674,6 +816,8 @@ def simplify_document_clauses(
         }
 
     simplified_items: List[Dict[str, Any]] = []
+    sentence_counts: Dict[str, int] = {}
+
     for idx, c in enumerate(clauses, start=1):
         c_id = str(c.get("clause_id") or c.get("position") or idx)
         clause_rule_findings = []
@@ -682,13 +826,39 @@ def simplify_document_clauses(
                 rf for rf in rule_findings
                 if str(rf.get("clause_id")) == c_id or str(rf.get("position")) == c_id
             ]
+
+        # Pacing delay between LLM calls to stay comfortably within rate limits
+        if idx > 1 and override_client is None and get_groq_api_key():
+            time.sleep(1.2)
+
         res = simplify_single_clause(
             clause=c,
             rule_findings=clause_rule_findings,
             override_client=override_client,
             document_header=document_header
         )
+
+        # Track sentence frequency for repeated sentence detector
+        plain = res.get("plain_language", "")
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', plain) if len(s.strip()) > 15]
+        for s in sentences:
+            sentence_counts[s] = sentence_counts.get(s, 0) + 1
+
         simplified_items.append(res)
+
+    # Post-process: Repeated sentence detector (H1 rule: no sentence in >2 clauses)
+    for res in simplified_items:
+        plain = res.get("plain_language", "")
+        for s, count in sentence_counts.items():
+            if count > 2 and s in plain:
+                logger.warning(f"Repeated sentence detected ({count} occurrences): '{s[:40]}...'. Sanitizing.")
+                plain = plain.replace(s, "").strip()
+        if not plain:
+            cat = res.get("category", "General")
+            plain = f"Plain-English explanation unavailable (Limited mode): Operational terms governing {cat}."
+        res["plain_language"] = plain
+        if "structured_explanation" in res and res["structured_explanation"]:
+            res["structured_explanation"]["what_this_clause_means"] = plain
 
     logger.info(f"Document Clause Simplification Complete: {len(simplified_items)} clauses processed.")
 

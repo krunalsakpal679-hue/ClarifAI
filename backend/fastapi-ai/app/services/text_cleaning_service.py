@@ -90,7 +90,7 @@ def extract_structured_document_header(text: str) -> Tuple[Dict[str, Any], str]:
         header_info["effective_date"] = eff_match.group(1).strip()
 
     # 5. Title & Agreement Type
-    title_match = re.search(r"\b(?:MASTER\s+SERVICES\s+AGREEMENT|CLOUD\s+INFRASTRUCTURE\s+CONSULTING\s+AGREEMENT|STRATEGIC\s+CONSULTING\s+SERVICES\s+AGREEMENT|COMMERCIAL\s+LEASE\s+AGREEMENT|SERVICES\s+AGREEMENT|NON-DISCLOSURE\s+AGREEMENT|EXECUTIVE\s+EMPLOYMENT\s+AGREEMENT|EMPLOYMENT\s+AGREEMENT|TERMS\s+OF\s+SERVICE)\b", text, re.IGNORECASE)
+    title_match = re.search(r"\b(?:PROFESSIONAL\s+SERVICES\s+AGREEMENT|MASTER\s+SERVICES\s+AGREEMENT|CLOUD\s+INFRASTRUCTURE\s+CONSULTING\s+AGREEMENT|STRATEGIC\s+CONSULTING\s+SERVICES\s+AGREEMENT|COMMERCIAL\s+LEASE\s+AGREEMENT|SERVICES\s+AGREEMENT|NON-DISCLOSURE\s+AGREEMENT|EXECUTIVE\s+EMPLOYMENT\s+AGREEMENT|EMPLOYMENT\s+AGREEMENT|TERMS\s+OF\s+SERVICE)\b", text, re.IGNORECASE)
     if title_match:
         header_info["title"] = title_match.group(0).strip()
         header_info["agreement_type"] = title_match.group(0).strip()
@@ -105,6 +105,26 @@ def extract_structured_document_header(text: str) -> Tuple[Dict[str, Any], str]:
             parties.append({
                 "name": p_name,
                 "role": p_role.strip()
+            })
+
+    # Preamble patterns: "by and between ... hereinafter called ..." or "and ... hereinafter called ..."
+    p_called_pattern = re.compile(
+        r'(?:by and between(?:\s+the)?|and)\s+([A-Za-z0-9\s,\.\-&_]+?),\s*hereinafter\s+(?:called|referred\s+to\s+as)\s+([A-Za-z]+)',
+        re.IGNORECASE
+    )
+    for m in p_called_pattern.finditer(text[:3000]):
+        raw_name = m.group(1).strip(" ,.\n\r_")
+        role = m.group(2).strip(" ,.\n\r_")
+        if "by and between" in raw_name.lower():
+            raw_name = re.sub(r'^.*?by and between(?:\s+the)?\s*', '', raw_name, flags=re.IGNORECASE).strip()
+        if not raw_name or set(raw_name) <= {'_', ' ', '-'}:
+            raw_name = f"{role.title()} (name left blank in template)"
+        elif raw_name.isupper() and len(raw_name) > 10:
+            raw_name = raw_name.title()
+        if role and len(raw_name) > 2:
+            parties.append({
+                "name": raw_name,
+                "role": role.title()
             })
 
     seen_names = set()
@@ -249,6 +269,7 @@ def clean_legal_text(raw_text: str, preserve_page_markers: bool = True) -> Dict[
             page_furniture.append(stripped)
             rules_applied.append("strip_page_furniture")
             rules_applied.append("strip_running_headers_footers")
+            cleaned_lines.append("")
             continue
         cleaned_lines.append(line)
     text = "\n".join(cleaned_lines)

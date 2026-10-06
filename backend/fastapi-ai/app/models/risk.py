@@ -40,6 +40,7 @@ class ClassifiedClauseItem(BaseModel):
 class DocumentRiskRequest(BaseModel):
     clauses: List[Dict[str, Any]] = Field(..., description="List of clause dict items to classify")
     rule_findings: Optional[List[Dict[str, Any]]] = Field(None, description="Optional Stage 1 rule engine findings")
+    reviewing_party: Optional[str] = Field(None, description="Target reviewing party perspective")
 
 
 class DocumentRiskResponse(BaseModel):

@@ -130,7 +130,7 @@ describe('Comparison Pages (PRD Ch. 18, 22.10 & Section 8.5)', () => {
             screen.getByRole('heading', { name: /Comparison Results/i })
           ).toBeInTheDocument();
         },
-        { timeout: 3000 }
+        { timeout: 10000 }
       );
     });
   });

@@ -191,7 +191,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AI_SERVICE_USE_MOCK = os.getenv('AI_SERVICE_USE_MOCK', 'False').lower() == 'true'
 AI_SERVICE_BASE_URL = os.getenv('AI_SERVICE_BASE_URL', 'http://localhost:8001')
 AI_SERVICE_SECRET = os.getenv('AI_SERVICE_SECRET', 'clarifai_internal_secret_token_2026')
-AI_SERVICE_TIMEOUT = int(os.getenv('AI_SERVICE_TIMEOUT', 300))
+AI_SERVICE_TIMEOUT = int(os.getenv('AI_SERVICE_TIMEOUT', 600))
 
 
 

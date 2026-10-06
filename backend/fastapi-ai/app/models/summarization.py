@@ -30,6 +30,7 @@ class SummarizationResponse(BaseModel):
 class DocumentSummaryRequest(BaseModel):
     clauses: List[Dict[str, Any]] = Field(..., description="List of document clause dict items")
     rule_findings: Optional[List[Dict[str, Any]]] = Field(None, description="Optional Stage 1 rule engine findings")
+    document_header: Optional[Dict[str, Any]] = Field(None, description="Optional document header metadata")
 
 
 class DocumentSummaryResponse(BaseModel):
@@ -39,6 +40,11 @@ class DocumentSummaryResponse(BaseModel):
     obligations_text: Optional[str] = Field(None, description="Executive summary of primary obligations")
     key_terms_text: Optional[str] = Field(None, description="Executive summary of key terms & provisions")
     key_risks_text: Optional[str] = Field(None, description="Executive roll-up summary of flagged legal risks")
+    key_figures: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Extracted key figures")
+    top_risks: Optional[List[Dict[str, Any]]] = Field(default_factory=list, description="Top identified risks")
+    blank_template_fields: Optional[List[str]] = Field(default_factory=list, description="Blank template placeholders")
+    risk_counts: Optional[Dict[str, int]] = Field(default_factory=dict, description="Risk counts breakdown")
+    structured_overview: Optional[Dict[str, Any]] = Field(None, description="Complete structured overview")
     summary_error: Optional[str] = Field(None, description="Error reason if summary is UNAVAILABLE")
     latency_ms: Optional[float] = Field(None, description="Total summarization execution latency in ms")
     model_name: str = Field(..., description="BART model checkpoint string")
